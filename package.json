@@ -1,0 +1,24 @@
+{
+  "name": "spaceos",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "start": "node src/index.js",
+    "dev": "tsc && node src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "@langchain/openai": "^0.0.28",
+    "dotenv": "^16.4.5",
+    "langchain": "^0.1.36"
+  }
+}
