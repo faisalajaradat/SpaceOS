@@ -30,14 +30,17 @@ function getUserInput(){
   return new Promise<string>(resolve => {
     rl.question("please input your question: ", (answer) => {
         rl.close();
-        resolve(answer);
+        resolve(answer.trim());
     });
   });
 }
 
 
-async function createMessagearray(){
+async function createMessageArray(){
   const userInput = await getUserInput();
+  if (userInput.toLowerCase() === 'exit') {
+    return null;
+  }
   const messages = [
     new SystemMessage(spaceOSInformation),
     new HumanMessage(userInput),
@@ -52,9 +55,9 @@ export async function makeCall(){
     model : "gpt-3.5-turbo-0125"
   });
 
-  let messages = await createMessagearray();
-  const response = await chatModel.invoke(messages);
-
+  let messages = await createMessageArray();
+  if (messages !== null){const response = await chatModel.invoke(messages);}
+  else return null;
 }
 
 
