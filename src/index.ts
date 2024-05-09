@@ -1,18 +1,31 @@
-import { ChatOpenAI } from "@langchain/openai";
-import { ChatPromptTemplate } from "@langchain/core/prompts";
+const remoteChatModel = require('./chatmodel');
+const localChatModel = require('./LocalLLM');
 import * as dotenv from 'dotenv';
 
-//just to show import (doesnt need to be set if .env exists)
+//init env variable
 dotenv.config();
+const preferRemote = process.env.preferRemote;
 
 
-const chatModel = new ChatOpenAI();
-const prompt = ChatPromptTemplate.fromMessages([
-    ["system", "You are a world class technical documentation writer."],
-    ["user", "{input}"],
-  ]);
+if(preferRemote){
+  try {
+    remoteChatModel.makeCall();
+  } catch(err){
+    console.log("Error invoking remote chatmodel");
+    
+  }
 
-const chain = prompt.pipe(chatModel);
+}else{
+  try {
+    localChatModel.makeCall();
+  } catch(err){
+    console.log("Error invoking remote chatmodel");
+    
+  }
+}
 
-const test = await chatModel.invoke("wassup");
-console.log(test);
+
+
+
+
+
