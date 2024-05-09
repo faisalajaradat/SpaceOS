@@ -4,7 +4,6 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 
 
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-
 import { ChatOllama } from "@langchain/community/chat_models/ollama";
 import * as dotenv from 'dotenv';
 import readline from 'readline';
