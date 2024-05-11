@@ -1,14 +1,17 @@
-const remoteChatModel = require('./chatmodel');
-const localChatModel = require('./LocalLLM');
+import * as remoteChatModel from './RemoteLLM.js';
+import * as localChatModel from './LocalLLM.js';
+
 import * as dotenv from 'dotenv';
 
 //init env variable
 dotenv.config();
+console.log(process.env.PREFER_REMOTE);
 
 
 
 async function handleChatModel() {
-  const preferRemote = process.env.PREFER_REMOTE === 'true';  // Ensure boolean logic
+  const preferRemote = process.env.PREFER_REMOTE === 'true';  // bool logic
+  console.log(preferRemote);
   let chatResponse = undefined;
   while (true) {
     try {
