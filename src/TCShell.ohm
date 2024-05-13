@@ -14,7 +14,8 @@ TCShell {
           | if "(" Exp ")" Stmt (else Stmt)?	--if
           | return (Exp)? ";"		--return
     Exp = "(" Exp ")" 	--parathesese
-    		| ("-" | "+") Exp 	--unnary
+    		| Funcall
+        | ("-" | "+") Exp 	--unnary
     		| Exp op Exp 	--operation
         | Exp "=" Exp 	--assignment
         | identifier
