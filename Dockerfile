@@ -1,7 +1,9 @@
-FROM node:lts
+FROM node:latest
 
 WORKDIR /TCShell
 
 COPY . .
 
 RUN npm install
+
+RUN npm run build
