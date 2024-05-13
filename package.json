@@ -1,0 +1,24 @@
+{
+  "name": "tcshell",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.12.11",
+    "eslint": "^8.57.0",
+    "globals": "^15.2.0",
+    "typescript": "^5.4.5",
+    "typescript-eslint": "^7.8.0"
+  },
+  "dependencies": {
+    "ohm-js": "^17.1.0"
+  }
+}
