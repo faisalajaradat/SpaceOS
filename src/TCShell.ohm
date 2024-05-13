@@ -1,0 +1,60 @@
+TCShell {
+
+    Program = (Stmt | FunDeclaration)* end
+
+    VarDeclaration = NewIdentifier "=" Exp
+    FunDeclaration = NewIdentifier "(" ListOf<NewIdentifier, ","> ")" Block
+
+    NewIdentifier = Type identifier
+
+    Stmt = Block
+    		  | Exp ";"	--exp
+    		  | VarDeclaration ";"	--vardec
+          | while "(" Exp ")" Stmt	--while
+          | if "(" Exp ")" Stmt (else Stmt)?	--if
+          | return (Exp)? ";"		--return
+    Exp = "(" Exp ")" 	--parathesese
+    		| ("-" | "+") Exp 	--unnary
+    		| Exp op Exp 	--operation
+        | Exp "=" Exp 	--assignment
+        | identifier
+        | stringLiteral
+        | booleanLiteral
+    		| numberLiteral
+   	Block = "{" Stmt* "}"
+    Funcall = identifier "(" (Exp ("," Exp)*)? ")"
+
+    Type = number | string | bool | void
+
+    true = "true" ~alnum
+    false = "false" ~alnum
+    number = "number" ~alnum
+    string = "string" ~alnum
+    bool = "bool" ~alnum
+    void = "void" ~alnum
+    op = "<="
+    	  | "<"
+        | ">="
+        | ">"
+        | "!="
+        | "=="
+        | "+"
+        | "-"
+        | "/"
+        | "*"
+        | "%"
+        | "||"
+        | "&&"
+   	while = "while" ~alnum
+    if = "if" ~alnum
+    else = "else" ~alnum
+    return = "return" ~alnum
+
+   	identifier = letter alnum*
+
+	  booleanLiteral = (true | false)
+    numberLiteral = digit+ (("." digit+) (("e" | "E") ("+" | "-") digit+)?)?
+    stringLiteral = ("\"" char* "\"")
+    					| ("\'" char* "\'")
+    char = ~"\"" ~"\n" any
+}
