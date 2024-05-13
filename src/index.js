@@ -1,4 +1,4 @@
-import * as remoteChatModel from './chatmodel.js';
+import * as remoteChatModel from './RemoteLLM.js';
 import * as localChatModel from './LocalLLM.js';
 import * as dotenv from 'dotenv';
 //init env variable
