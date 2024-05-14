@@ -1,29 +1,48 @@
 TCShell {
 
-    Program = (Stmt | FunDeclaration)* end
-
-    VarDeclaration = NewIdentifier "=" Exp
-    FunDeclaration = NewIdentifier "(" ListOf<NewIdentifier, ","> ")" Block
+    File = (Stmt | FunDeclaration)*
+    Interactive = StmtNewline
 
     NewIdentifier = Type identifier
 
-    Stmt = Block
-    		  | Exp ";"	--exp
-    		  | VarDeclaration ";"	--vardec
-          | while "(" Exp ")" Stmt	--while
-          | if "(" Exp ")" Stmt (else Stmt)?	--if
-          | return (Exp)? ";"		--return
-    Exp = "(" Exp ")" 	--parathesese
+	  StmtNewline = FunDeclaration #newline 	--function
+    						| CompoundStmt #newline	--compound
+    						| SimpleStmts	--simple
+                | newline
+                | end
+
+
+    Stmt = SimpleStmts #newline --simple
+    			| CompoundStmt
+
+    SimpleStmts = NonemptyListWithOptionalEndSep<SimpleStmt, ";">
+
+    SimpleStmt = VarDeclaration
+    					  | return (Exp)?		--return
+                          | Exp 	--exp
+
+
+    CompoundStmt = Block
+    		  				| if "(" Exp ")" Stmt (else Stmt)?	--if
+          				| while "(" Exp ")" Stmt	--while
+
+
+    Exp = Exp "=" Exp 	--assignment
+    		| "(" Exp ")" 	--parathesese
     		| Funcall
         | ("-" | "+") Exp 	--unnary
     		| Exp op Exp 	--operation
-        | Exp "=" Exp 	--assignment
         | identifier
         | stringLiteral
         | booleanLiteral
     		| numberLiteral
-   	Block = "{" Stmt* "}"
+
+    Block = "{" Stmt* "}"
+
     Funcall = identifier "(" (Exp ("," Exp)*)? ")"
+
+    VarDeclaration = NewIdentifier "=" Exp
+    FunDeclaration = NewIdentifier "(" ListOf<NewIdentifier, ","> ")" Block
 
     Type = number | string | bool | void
 
@@ -56,6 +75,22 @@ TCShell {
 	  booleanLiteral = (true | false)
     numberLiteral = digit+ (("." digit+) (("e" | "E") ("+" | "-") digit+)?)?
     stringLiteral = ("\"" char* "\"")
-    					| ("\'" char* "\'")
+    					    | ("\'" char* "\'")
     char = ~"\"" ~"\n" any
+
+    whitespace = "\t"
+                | "\x0B"    -- verticalTab
+                | "\x0C"    -- formFeed
+                | " "
+                | "\u00A0"  -- noBreakSpace
+                | "\uFEFF"  -- byteOrderMark
+                | unicodeSpaceSeparator
+
+    lineTerminator = "\n" | "\r" | "\u2028" | "\u2029"
+    lineTerminatorSequence = "\n" | "\r" ~"\n" | "\u2028" | "\u2029" | "\r\n"
+    unicodeSpaceSeparator = "\u2000".."\u200B" | "\u3000"
+    space := whitespace | lineTerminator
+    newline = space* end  	--last
+  				  | whitespace* lineTerminator --whitespace
+    NonemptyListWithOptionalEndSep<elem, sep> = NonemptyListOf<elem, sep> sep?
 }
