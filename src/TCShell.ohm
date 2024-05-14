@@ -3,7 +3,7 @@ TCShell {
     File = (Stmt | FunDeclaration)*
     Interactive = StmtNewline
 
-    NewIdentifier = Type identifier
+    NewIdentifier = type identifier
 
 	  StmtNewline = FunDeclaration #newline 	--function
     						| CompoundStmt #newline	--compound
@@ -23,19 +23,27 @@ TCShell {
 
 
     CompoundStmt = Block
-    		  				| if "(" Exp ")" Stmt (else Stmt)?	--if
-          				| while "(" Exp ")" Stmt	--while
+    		  				| if Exp Stmt (else Stmt)?	--if
+          				| while Exp Stmt	--while
+
+     Exp = Exp9 ("=" Exp)?
+     Exp9 = Exp8 ("||" Exp8)*
+     Exp8 = Exp7 ("&&" Exp7)*
+     Exp7 = Exp6 (("==" | "!=") Exp6)*
+     Exp6 = Exp5 (("<=" | "<" | ">=" | ">") Exp5)*
+     Exp5 = Exp4 (("+" | "-") Exp4)*
+     Exp4 = Exp3 (("*" | "/" | "%") Exp3)*
+     Exp3 = (("+" | "-") Exp3) 	--unary
+     			| Exp2
+     Exp2 = Exp1 ("[" Exp "]")*
+     Exp1 = Funcall
+          | "(" Exp ")" 	--paranthese
+          | stringLiteral
+          | booleanLiteral
+    	    | numberLiteral
+          | identifier
 
 
-    Exp = Exp "=" Exp 	--assignment
-    		| "(" Exp ")" 	--parathesese
-    		| Funcall
-        | ("-" | "+") Exp 	--unnary
-    		| Exp op Exp 	--operation
-        | identifier
-        | stringLiteral
-        | booleanLiteral
-    		| numberLiteral
 
     Block = "{" Stmt* "}"
 
@@ -44,7 +52,7 @@ TCShell {
     VarDeclaration = NewIdentifier "=" Exp
     FunDeclaration = NewIdentifier "(" ListOf<NewIdentifier, ","> ")" Block
 
-    Type = number | string | bool | void
+    type = (number | string | bool | void) "[]"*
 
     true = "true" ~alnum
     false = "false" ~alnum
