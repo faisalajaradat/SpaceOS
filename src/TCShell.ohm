@@ -1,0 +1,104 @@
+TCShell {
+
+    File = (Stmt | FunDeclaration)*
+    Interactive = StmtNewline
+
+    NewIdentifier = type identifier
+
+	  StmtNewline = FunDeclaration #newline 	--function
+    						| CompoundStmt #newline	--compound
+    						| SimpleStmts	--simple
+                | newline
+                | end
+
+
+    Stmt = SimpleStmts #newline --simple
+    			| CompoundStmt
+
+    SimpleStmts = NonemptyListWithOptionalEndSep<SimpleStmt, ";">
+
+    SimpleStmt = VarDeclaration
+    					  | return (Exp)?		--return
+                          | Exp 	--exp
+
+
+    CompoundStmt = Block
+    		  				| if Exp Stmt (else Stmt)?	--if
+          				| while Exp Stmt	--while
+
+     Exp = Exp9 ("=" Exp)?
+     Exp9 = Exp8 ("||" Exp8)*
+     Exp8 = Exp7 ("&&" Exp7)*
+     Exp7 = Exp6 (("==" | "!=") Exp6)*
+     Exp6 = Exp5 (("<=" | "<" | ">=" | ">") Exp5)*
+     Exp5 = Exp4 (("+" | "-") Exp4)*
+     Exp4 = Exp3 (("*" | "/" | "%") Exp3)*
+     Exp3 = (("+" | "-") Exp3) 	--unary
+     			| Exp2
+     Exp2 = Exp1 ("[" Exp "]")*
+     Exp1 = Funcall
+          | "(" Exp ")" 	--paranthese
+          | stringLiteral
+          | booleanLiteral
+    	    | numberLiteral
+          | identifier
+
+
+
+    Block = "{" Stmt* "}"
+
+    Funcall = identifier "(" (Exp ("," Exp)*)? ")"
+
+    VarDeclaration = NewIdentifier "=" Exp
+    FunDeclaration = NewIdentifier "(" ListOf<NewIdentifier, ","> ")" Block
+
+    type = (number | string | bool | void) "[]"*
+
+    true = "true" ~alnum
+    false = "false" ~alnum
+    number = "number" ~alnum
+    string = "string" ~alnum
+    bool = "bool" ~alnum
+    void = "void" ~alnum
+    op = "<="
+    	  | "<"
+        | ">="
+        | ">"
+        | "!="
+        | "=="
+        | "+"
+        | "-"
+        | "/"
+        | "*"
+        | "%"
+        | "||"
+        | "&&"
+   	while = "while" ~alnum
+    if = "if" ~alnum
+    else = "else" ~alnum
+    return = "return" ~alnum
+
+   	identifier = letter alnum*
+
+	  booleanLiteral = (true | false)
+    numberLiteral = digit+ (("." digit+) (("e" | "E") ("+" | "-") digit+)?)?
+    stringLiteral = ("\"" char* "\"")
+    					    | ("\'" char* "\'")
+    char = ~"\"" ~"\n" any
+
+    whitespace = "\t"
+                | "\x0B"    -- verticalTab
+                | "\x0C"    -- formFeed
+                | " "
+                | "\u00A0"  -- noBreakSpace
+                | "\uFEFF"  -- byteOrderMark
+                | unicodeSpaceSeparator
+
+    lineTerminator = "\n" | "\r" | "\u2028" | "\u2029"
+    lineTerminatorSequence = "\n" | "\r" ~"\n" | "\u2028" | "\u2029" | "\r\n"
+    unicodeSpaceSeparator = "\u2000".."\u200B" | "\u3000"
+    space := whitespace | lineTerminator
+    newline = space* end  	--last
+  				  | whitespace* lineTerminator --whitespace
+    NonemptyListWithOptionalEndSep<elem, sep> = NonemptyListOf<elem, sep> sep?
+}
