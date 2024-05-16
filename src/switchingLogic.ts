@@ -1,11 +1,12 @@
-//switching logic will go here 
-import { IChatModel, initializeChatModel } from "./chatModelInitializer";
+
+import { initializedChatModel } from "./Types/chatModelTypes";
 import * as dotenv from 'dotenv';
+//switching logic will go here 
 
 
 dotenv.config();
 
 
-const chatModels: IChatModel[] = [];
+const chatModels: initializedChatModel[] = [];
 
 

@@ -4,6 +4,7 @@ import {RunnableConfig, RunnableWithMessageHistory} from '@langchain/core/runnab
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatGroq } from "@langchain/groq";
 import { ChatOllama } from "@langchain/community/chat_models/ollama";
+import { ChatModelType, initializedChatModel } from './Types/chatModelTypes';
 //prompt management 
 import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts';
 
@@ -31,17 +32,12 @@ Node Interaction Predictor (NIP): Utilizes historical spatial data to predict li
 SpaceBase is built to ensure high reliability and continuous operation, with robust fault tolerance and data replication strategies to manage complex, dynamic environments effectively.`; 
 
 
-export interface IChatModel {
-    generate(input: string): Promise<string>;
-}
 
 
-
-type ChatModelType = "chatgpt" | "groq" | "local";
 const messageHistory =  new ChatMessageHistory();
 
 
-export function initializeChatModel(type:ChatModelType) {
+export function initializeChatModel(type:ChatModelType):initializedChatModel {
     let chatModel;
     
     switch (type.toLowerCase()) {
@@ -69,7 +65,7 @@ export function initializeChatModel(type:ChatModelType) {
   }
 
 
-  function getUserInput(): Promise<string> {
+function getUserInput(): Promise<string> {
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout
@@ -97,8 +93,8 @@ async function createMessageArray(){
   }
 
 
-  export async function makeCall(chatmodel:ChatModelType){
-    const chatModel = initializeChatModel(chatmodel);
+export async function makeCall(chatmodel: initializedChatModel){ // | initializedChatModel[]
+    const chatModel = chatmodel;
     let { messages, userInput } = await createMessageArray();
     if (messages !== null){
       const response = messages.pipe(chatModel);
