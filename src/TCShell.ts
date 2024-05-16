@@ -1,25 +1,20 @@
-import * as ohm from "ohm-js";
 import * as fs from "fs";
-import { dirname } from "path";
-import { fileURLToPath } from "url";
+import { grammar } from "./grammar.js";
+import ast from "./ast.js";
 import { Command } from "commander";
+import path from "path";
 
-const grammarFile = fs.readFileSync(
-  dirname(fileURLToPath(import.meta.url)) + "/TCShell.ohm",
-  "utf-8",
-);
-const grammar = ohm.grammar(grammarFile);
 const program = new Command();
 
 program
   .name("TCShell")
   .description("A spatial-oriented scripting language")
-  .version("0.1.0");
+  .version("0.2.0");
 
 program
-  .command("parse")
-  .description("Parse a tcs file")
-  .argument("<path>", "path to file to parse")
+  .command("match")
+  .description("Match a tcs file")
+  .argument("<path>", "path to file")
   .option("-t, --trace", "display trace information incase of error")
   .action((path, option) => {
     try {
@@ -30,6 +25,18 @@ program
       }
       const output = grammar.match(input).succeeded() ? "Success!" : "Failure!";
       console.log(output);
+    } catch (err) {
+      console.error(err);
+    }
+  })
+  .command("parse")
+  .description("Parse tcs file into AST")
+  .argument("<path>", "path to file")
+  .action((path) => {
+    try {
+      const input = fs.readFileSync(path, "utf-8");
+      const match = grammar.match(input);
+      console.log(match.succeeded() ? ast(match) : match.message);
     } catch (err) {
       console.error(err);
     }
