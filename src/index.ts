@@ -1,6 +1,6 @@
 import * as remoteChatModel from './RemoteLLM';
 import * as localChatModel from './LocalLLM';
-import * as chatmodels from "./chatmodels";
+import * as chatmodels from "./switchingLogic";
 import * as dotenv from 'dotenv';
 
 //init env variable

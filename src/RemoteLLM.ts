@@ -66,10 +66,6 @@ async function createMessageArray(){
 }
 
 export async function makeCall(){
-    //init 
-
-
-
   let { messages, userInput } = await createMessageArray();
   if (messages !== null){
     const response = messages.pipe(chatModel);
