@@ -1,7 +1,7 @@
 import { grammar } from "./grammar.js";
 import * as core from "./core.js";
 
-export default function ast(match) {
+export function ast(match) {
   return astBuilder(match).ast();
 }
 
@@ -358,3 +358,192 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     return children.map((c) => c.ast());
   },
 });
+
+let dotString = "";
+let nodeCount = 0;
+
+export function visitDotPrinter(node: core.ASTNode): string {
+  if (node instanceof core.Program) {
+    dotString = dotString.concat("digraph ast {\n");
+    const programNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(programNodeId + '[label=" Program "];\n');
+    const declsNodeIds = new Array<string>();
+    node
+      .children()
+      .forEach((child) => declsNodeIds.push(visitDotPrinter(child)));
+    declsNodeIds.forEach(
+      (nodeId) =>
+        (dotString = dotString.concat(programNodeId + "->" + nodeId + ";\n")),
+    );
+    return dotString.concat("}");
+  }
+  if (node instanceof core.FunDeclaration) {
+    const funDeclNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(funDeclNodeId + '[label=" FunDecl "];\n');
+    const typeNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      typeNodeId + '[label=" ' + node.funType + ' "];\n',
+    );
+    const identifierNodeId = visitDotPrinter(node.identifier);
+    const argsNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(argsNodeId + '[label=" Args "];\n');
+    const argTypeIds = new Array<string>();
+    const argIdentifierIds = new Array<string>();
+    for (let i = 0; i < node.argTypes.length; i++) {
+      const argTypeId = "Node" + nodeCount++;
+      argTypeIds.push(argTypeId);
+      dotString = dotString.concat(
+        argTypeId + '[label=" ' + node.argTypes[i] + ' "];\n',
+      );
+      argIdentifierIds.push(visitDotPrinter(node.argIdentifiers[i]));
+    }
+    const blockNodeId = visitDotPrinter(node.block);
+    dotString = dotString.concat(funDeclNodeId + "->" + typeNodeId + ";\n");
+    dotString = dotString.concat(
+      funDeclNodeId + "->" + identifierNodeId + ";\n",
+    );
+    dotString = dotString.concat(funDeclNodeId + "->" + argsNodeId + ";\n");
+    for (let i = 0; i < node.argTypes.length; i++) {
+      dotString = dotString.concat(argsNodeId + "->" + argTypeIds[i] + ";\n");
+      dotString = dotString.concat(
+        argsNodeId + "->" + argIdentifierIds[i] + ";\n",
+      );
+    }
+    dotString = dotString.concat(funDeclNodeId + "->" + blockNodeId + ";\n");
+    return funDeclNodeId;
+  }
+  if (node instanceof core.VarDeclaration) {
+    const varDeclNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(varDeclNodeId + '[label=" = "];\n');
+    const typeNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      typeNodeId + "[label= " + node.stmtType + "];\n",
+    );
+    const identifierNodeId = visitDotPrinter(node.identifier);
+    const valueNodeId = visitDotPrinter(node.value);
+    dotString = dotString.concat(varDeclNodeId + "->" + typeNodeId + ";\n");
+    dotString = dotString.concat(
+      varDeclNodeId + "->" + identifierNodeId + ";\n",
+    );
+    dotString = dotString.concat(varDeclNodeId + "->" + valueNodeId + ";\n");
+    return varDeclNodeId;
+  }
+  if (node instanceof core.Return) {
+    const returnNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(returnNodeId + '[label=" return "];\n');
+    if (node.possibleValue == null) return returnNodeId;
+    const valueNodeId = visitDotPrinter(node.possibleValue);
+    dotString = dotString.concat(returnNodeId + "->" + valueNodeId + ";\n");
+    return returnNodeId;
+  }
+  if (node instanceof core.If) {
+    const ifNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(ifNodeId + '[label=" if "];\n');
+    let elseNodeId = "";
+    const conditionNodeId = visitDotPrinter(node.condition);
+    const stmtNodeId = visitDotPrinter(node.ifStmt);
+    if (node.possibleElseStmt != null)
+      elseNodeId = visitDotPrinter(node.possibleElseStmt);
+    dotString = dotString.concat(ifNodeId + "->" + conditionNodeId + ";\n");
+    dotString = dotString.concat(ifNodeId + "->" + stmtNodeId + ";\n");
+    if (elseNodeId != "")
+      dotString = dotString.concat(ifNodeId + "->" + elseNodeId + ";\n");
+    return ifNodeId;
+  }
+  if (node instanceof core.While) {
+    const whileNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(whileNodeId + '[label=" while "];\n');
+    const conditionNodeId = visitDotPrinter(node.condition);
+    const stmtNodeId = visitDotPrinter(node.whileStmt);
+    dotString = dotString.concat(whileNodeId + "->" + conditionNodeId + ";\n");
+    dotString = dotString.concat(whileNodeId + "->" + stmtNodeId + ";\n");
+    return whileNodeId;
+  }
+  if (node instanceof core.Block) {
+    const blockNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(blockNodeId + '[label=" Block "];\n');
+    const stmtIds = new Array<string>();
+    node.stmts.forEach((stmt) => stmtIds.push(visitDotPrinter(stmt)));
+    stmtIds.forEach(
+      (nodeId) =>
+        (dotString = dotString.concat(blockNodeId + "->" + nodeId + ";\n")),
+    );
+    return blockNodeId;
+  }
+  if (node instanceof core.BinaryExpr) {
+    const opNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      opNodeId + '[label=" ' + node.operator + ' "];\n',
+    );
+    const leftExprId = visitDotPrinter(node.leftExpr);
+    const rightExprId = visitDotPrinter(node.rightExpr);
+    dotString = dotString.concat(opNodeId + "->" + leftExprId + ";\n");
+    dotString = dotString.concat(opNodeId + "->" + rightExprId + ";\n");
+    return opNodeId;
+  }
+  if (node instanceof core.UnaryExpr) {
+    const opNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      opNodeId + '[label" ' + node.operator + ' "];\n',
+    );
+    const rightExprId = visitDotPrinter(node.expr);
+    dotString = dotString.concat(opNodeId + "->" + rightExprId + ";\n");
+    return opNodeId;
+  }
+  if (node instanceof core.ArrayAccess) {
+    const arrayAccesseNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(arrayAccesseNodeId + '[label=" at "];\n');
+    const arrayExprId = visitDotPrinter(node.arrayExpr);
+    const accessExprId = visitDotPrinter(node.accessExpr);
+    dotString = dotString.concat(
+      arrayAccesseNodeId + "->" + arrayExprId + ";\n",
+    );
+    dotString = dotString.concat(
+      arrayAccesseNodeId + "->" + accessExprId + ";\n",
+    );
+    return arrayAccesseNodeId;
+  }
+  if (node instanceof core.FunCall) {
+    const funCallNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(funCallNodeId + '[label=" FunCall "];\n');
+    const identifierNodeId = visitDotPrinter(node.identifier);
+    const argNodeIds = new Array<string>();
+    node.args.forEach((arg) => argNodeIds.push(visitDotPrinter(arg)));
+    dotString = dotString.concat(
+      funCallNodeId + "->" + identifierNodeId + ";\n",
+    );
+    argNodeIds.forEach(
+      (nodeId) =>
+        (dotString = dotString.concat(funCallNodeId + "->" + nodeId + ";\n")),
+    );
+    return funCallNodeId;
+  }
+  if (node instanceof core.StringLiteral) {
+    const stringLiteralNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      stringLiteralNodeId + '[label=" ' + node.value + ' "];\n',
+    );
+    return stringLiteralNodeId;
+  }
+  if (node instanceof core.BoolLiteral) {
+    const boolLiteralNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      boolLiteralNodeId + '[label=" ' + node.value + ' "];\n',
+    );
+    return boolLiteralNodeId;
+  }
+  if (node instanceof core.NumberLiteral) {
+    const numberLiteralNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      numberLiteralNodeId + '[label=" ' + node.value + ' "];\n',
+    );
+    return numberLiteralNodeId;
+  }
+  if (node instanceof core.Identifier) {
+    const identifierNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      identifierNodeId + '[label=" ' + node.value + ' "];\n',
+    );
+    return identifierNodeId;
+  }
+}

@@ -1,4 +1,4 @@
-interface ASTNode {
+export interface ASTNode {
   children(): ASTNode[];
 }
 

@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import { grammar } from "./grammar.js";
-import ast from "./ast.js";
+import { ast, visitDotPrinter } from "./ast.js";
 import { Command } from "commander";
 import path from "path";
 
@@ -16,10 +16,10 @@ program
   .description("Match a tcs file")
   .argument("<path>", "path to file")
   .option("-t, --trace", "display trace information incase of error")
-  .action((path, option) => {
+  .action((path, options) => {
     try {
       const input = fs.readFileSync(path, "utf-8");
-      if (option.trace) {
+      if (options.trace) {
         console.log(grammar.trace(input).toString());
         return;
       }
@@ -32,11 +32,21 @@ program
   .command("parse")
   .description("Parse tcs file into AST")
   .argument("<path>", "path to file")
-  .action((path) => {
+  .option("-d, --dot", "print dot representation of AST")
+  .action((path, options) => {
     try {
       const input = fs.readFileSync(path, "utf-8");
       const match = grammar.match(input);
-      console.log(match.succeeded() ? ast(match) : match.message);
+      if (match.failed()) {
+        console.log("Failure!");
+        return;
+      }
+      const astHead = ast(match);
+      if (!options.dot) {
+        console.log(astHead);
+        return;
+      }
+      console.log(visitDotPrinter(astHead));
     } catch (err) {
       console.error(err);
     }
