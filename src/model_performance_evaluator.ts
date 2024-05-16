@@ -15,7 +15,7 @@ export async function measureLatency(model: ChatOpenAI, inputText: BaseMessageLi
 }
 export async function measureCost(model, inputText, costPerToken:number){
 
-
+}
 export async function measureThroughput(model, inputText, durationSeconds = 10){
     const endTime = Date.now() + durationSeconds * 1000;
     let count = 0;
