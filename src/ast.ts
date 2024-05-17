@@ -16,7 +16,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     return funDeclaration.ast();
   },
   Stmt_simple(simpleStatements, _newline) {
-    return simpleStatements.ast();
+    return simpleStatements.ast()[0];
   },
   Stmt_compound(compoundStatement) {
     return compoundStatement.ast();
@@ -217,10 +217,16 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     possibleFuncallArgs,
     _rightParenthesis,
   ) {
-    return new core.FunCall(null, identifier.ast(), possibleFuncallArgs.ast());
+    return new core.FunCall(
+      null,
+      identifier.ast(),
+      possibleFuncallArgs.ast()[0] ?? new Array<core.Expr>(),
+    );
   },
-  FuncallArgs(expression, nextArgs) {
-    return [expression.ast()].concat(nextArgs.ast());
+  FuncallArgs(expr, nextArgs) {
+    const args = nextArgs.ast();
+    args.unshift(expr.ast());
+    return args;
   },
   NextArg(_comma, expression) {
     return expression.ast();
@@ -385,8 +391,11 @@ export function visitDotPrinter(node: core.ASTNode): string {
       typeNodeId + '[label=" ' + node.funType + ' "];\n',
     );
     const identifierNodeId = visitDotPrinter(node.identifier);
-    const argsNodeId = "Node" + nodeCount++;
-    dotString = dotString.concat(argsNodeId + '[label=" Args "];\n');
+    let argsNodeId = "";
+    if (node.argTypes.length > 0) {
+      argsNodeId = "Node" + nodeCount++;
+      dotString = dotString.concat(argsNodeId + '[label=" Args "];\n');
+    }
     const argTypeIds = new Array<string>();
     const argIdentifierIds = new Array<string>();
     for (let i = 0; i < node.argTypes.length; i++) {
@@ -402,12 +411,14 @@ export function visitDotPrinter(node: core.ASTNode): string {
     dotString = dotString.concat(
       funDeclNodeId + "->" + identifierNodeId + ";\n",
     );
-    dotString = dotString.concat(funDeclNodeId + "->" + argsNodeId + ";\n");
-    for (let i = 0; i < node.argTypes.length; i++) {
-      dotString = dotString.concat(argsNodeId + "->" + argTypeIds[i] + ";\n");
-      dotString = dotString.concat(
-        argsNodeId + "->" + argIdentifierIds[i] + ";\n",
-      );
+    if (argsNodeId != "") {
+      dotString = dotString.concat(funDeclNodeId + "->" + argsNodeId + ";\n");
+      for (let i = 0; i < node.argTypes.length; i++) {
+        dotString = dotString.concat(argsNodeId + "->" + argTypeIds[i] + ";\n");
+        dotString = dotString.concat(
+          argsNodeId + "->" + argIdentifierIds[i] + ";\n",
+        );
+      }
     }
     dotString = dotString.concat(funDeclNodeId + "->" + blockNodeId + ";\n");
     return funDeclNodeId;

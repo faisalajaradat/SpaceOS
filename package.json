@@ -14,9 +14,9 @@
   "devDependencies": {
     "@types/node": "^20.12.11",
     "commander": "^12.0.0",
-    "d3-graphviz": "^5.4.0",
     "eslint": "^8.57.0",
     "globals": "^15.2.0",
+    "node-graphviz": "^0.1.1",
     "ohm-js": "^17.1.0",
     "ts-pattern": "^5.1.1",
     "typescript": "^5.4.5",
