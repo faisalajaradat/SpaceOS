@@ -1,5 +1,11 @@
-void Main() {
-  print("Hello World!")
+number add(number x, number y) {
+  return x + y;
 }
 
+void Main() {
+  print("Hello World!")
+  print(add(5, 3))
+}
+
+Main()
 Main()
