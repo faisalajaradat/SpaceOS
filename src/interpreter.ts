@@ -138,6 +138,7 @@ export function interpret(node: core.ASTNode): string | number | boolean {
     const returnValue = interpret(funDecl.block);
     getIdentifier = saveIdentifierState;
     symbolTable = upperSymbolTable;
+    alreadyScoped = saveState;
     return funDecl.funType != "void" ? returnValue : true;
   }
   if (node instanceof core.StringLiteral) return node.value;
