@@ -3,6 +3,7 @@ import { grammar } from "./grammar.js";
 import { ast, visitDotPrinter } from "./ast.js";
 import { Command } from "commander";
 import { graphviz } from "node-graphviz";
+import { interpret } from "./interpreter.js";
 
 const program = new Command();
 
@@ -12,8 +13,8 @@ program
   .version("0.2.0");
 
 program
-  .command("parse <path>")
-  .description("Parse tcs file into AST")
+  .command("interpret <path>")
+  .description("interpret tcs files")
   .option("-t, --trace", "output match trace incase of syntax errors")
   .option("-d, --dot <path>", "save DOT representation of AST to path")
   .action((path, options) => {
@@ -28,10 +29,8 @@ program
         return;
       }
       const astHead = ast(match);
-      if (options.dot === undefined) {
-        console.log("Success!");
-        return;
-      }
+      interpret(astHead);
+      if (options.dot === undefined) return;
       const dotString = visitDotPrinter(astHead);
       graphviz
         .dot(dotString, "svg")
