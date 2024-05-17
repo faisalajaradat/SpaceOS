@@ -299,7 +299,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     return new core.Identifier(null, this.sourceString);
   },
   booleanLiteral(keyword) {
-    return new core.BoolLiteral(Boolean(this.sourceString));
+    return new core.BoolLiteral(JSON.parse(this.sourceString));
   },
   numberLiteral(digits, possibleFloatComponent) {
     return new core.NumberLiteral(Number(this.sourceString));
@@ -450,15 +450,21 @@ export function visitDotPrinter(node: core.ASTNode): string {
   if (node instanceof core.If) {
     const ifNodeId = "Node" + nodeCount++;
     dotString = dotString.concat(ifNodeId + '[label=" if "];\n');
+    let elseStmtNodeId = "";
     let elseNodeId = "";
     const conditionNodeId = visitDotPrinter(node.condition);
     const stmtNodeId = visitDotPrinter(node.ifStmt);
-    if (node.possibleElseStmt != null)
-      elseNodeId = visitDotPrinter(node.possibleElseStmt);
+    if (node.possibleElseStmt != null) {
+      elseNodeId = "Node" + nodeCount++;
+      dotString = dotString.concat(elseNodeId + '[label=" else "];\n');
+      elseStmtNodeId = visitDotPrinter(node.possibleElseStmt);
+    }
     dotString = dotString.concat(ifNodeId + "->" + conditionNodeId + ";\n");
     dotString = dotString.concat(ifNodeId + "->" + stmtNodeId + ";\n");
-    if (elseNodeId != "")
+    if (elseNodeId != "") {
       dotString = dotString.concat(ifNodeId + "->" + elseNodeId + ";\n");
+      dotString = dotString.concat(elseNodeId + "->" + elseStmtNodeId + ";\n");
+    }
     return ifNodeId;
   }
   if (node instanceof core.While) {

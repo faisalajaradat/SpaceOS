@@ -1,0 +1,12 @@
+void Main() {
+  if true
+    if false
+      print("Wrong!")
+    else
+      if true
+        print("Right!")
+      else print("Wrong!")
+  else print("Wrong!")
+}
+
+Main();
