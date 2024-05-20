@@ -7,8 +7,9 @@ This project provides a mechanism to initialize and manage different types of ch
 ## Table of Contents
 
 - [Installation](#installation)
-- [Usage](#usage)
 - [Environment Variables](#environment-variables)
+- [Usage](#usage)
+
 
 
 ## Installation
@@ -28,16 +29,6 @@ This project provides a mechanism to initialize and manage different types of ch
     npm install
     ```
 
-## Usage
-
-### Running the Development Server
-
-To start the development server, run:
-
-```bash
-npm run dev
-```
-
 
 ## environment-variables
 Create a `.env` file in the root directory of the project
@@ -47,13 +38,26 @@ mv .env.example .env
 ```
 
 Supported Env Variables
+```
+PREFER_REMOTE: Whether or not to use a Remote LLM or Local
 
-PREFER_REMOTE=
+OPENAI_API_KEY: API key to use OPENAI Models (ChatGPT)
 
-OPENAI_API_KEY=
+GROQ_API_KEY: API key to use Groq
 
-GROQ_API_KEY=
+OLLAMA_BASE_URL: The URL where Ollama is accessible (ex. http://localhost:11434)
+OLLAMA_MODEL: The Ollama model to use in the API Call
+```
 
-OLLAMA_BASE_URL=
-OLLAMA_MODEL=
+## Usage
+
+### Running the Development Server
+
+To start the development server, run:
+
+```bash
+npm run dev
+```
+Now you should be able to simply ask questions about SpaceOS via the terminal!
+
 
