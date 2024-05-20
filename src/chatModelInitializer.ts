@@ -45,22 +45,25 @@ export function initializeChatModel(type:ChatModelType):initializedChatModel {
         chatModel = new ChatOpenAI({
           model: "gpt-3.5-turbo-0125"
         });
+        console.log("Initializing ChatGPT model");
         break;
       case "groq":
         chatModel = new ChatGroq({
           apiKey: process.env.GROQ_API_KEY
         });
+        console.log("Initializing Groq model");
         break;
       case "local":
         chatModel = new ChatOllama({
           baseUrl: process.env.OLLAMA_BASE_URL, // Default value
           model: process.env.OLLAMA_MODEL
         });
+        console.log("Initializing Local (Ollama) model");
         break;
       default:
         throw new Error("Unsupported model type");
     }
-    
+    console.log(`Model initialized: ${type}`);
     return chatModel;
   }
 
@@ -81,7 +84,7 @@ function getUserInput(): Promise<string> {
 async function createMessageArray(){
     const userInput = await getUserInput();
     if (userInput.toLowerCase() === 'exit') {
-      return  { messages: null, userInput: "" };
+      return  { messages: null, userInput: null };
     }
     const messages = ChatPromptTemplate.fromMessages([
       ["system", spaceOSInformation],  // System message with predefined information
@@ -96,6 +99,7 @@ async function createMessageArray(){
 export async function makeCall(chatmodel: initializedChatModel){ // | initializedChatModel[]
     const chatModel = chatmodel;
     let { messages, userInput } = await createMessageArray();
+    console.log({ messages, userInput })
     if (messages !== null){
       const response = messages.pipe(chatModel);
       
@@ -117,7 +121,7 @@ export async function makeCall(chatmodel: initializedChatModel){ // | initialize
   
   
       console.log("output:", output);
-  
+      console.log("chat message history:", messageHistory.getMessages() );
     }
     else return null;
   }

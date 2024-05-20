@@ -1,9 +1,6 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { BaseMessageLike } from "@langchain/core/messages";
 
-interface ChatModels{
-
-}
 
 //measures the latency of the function (includes network latency atm)
 export async function measureLatency(model: ChatOpenAI, inputText: string) {
@@ -13,9 +10,10 @@ export async function measureLatency(model: ChatOpenAI, inputText: string) {
     const latency = endTime - startTime;  
     return latency;
 }
-export async function measureCost(model: ChatOpenAI, inputText:string, costPerToken:number){
+export async function measureCost(model: ChatOpenAI, inputText:string, costPerToken:number):Promise<number>{
     let TokenAmount = tokenAmount(inputText);
-
+    const cost = TokenAmount * costPerToken;
+    return cost;
 }
 function tokenAmount(inputText:string): number{
     let tokens = inputText.split(" "); //later we can use another method to tokenize 
@@ -33,4 +31,3 @@ export async function measureThroughput(model: ChatOpenAI, inputText:string, dur
 
 }
 
-console.log(tokenAmount("Hello my name is Faisal"));
