@@ -2,10 +2,10 @@
 import * as chatModelInitializer from './chatModelInitializer.js';
 import { initializedChatModel, isChatModelInstance } from "./Types/chatModelTypes.js";
 import * as dotenv from 'dotenv';
-import { ChatModelType } from './Types/chatModelTypes';
+import { ChatModelType } from './Types/chatModelTypes.js';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatGroq } from '@langchain/groq';
-import { ChatOllama } from '@langchain/community/chat_models/ollama.js';
+import { ChatOllama } from '@langchain/community/chat_models/ollama';
 //switching logic will go here 
 
 
@@ -56,6 +56,7 @@ export async function handleChatModel() {
 
         if (chatModel) {
             chatModels.push(chatModel);
+            await chatModelInitializer.makeCall(chatModel);
         } else {
             console.error("Failed to initialize or retrieve a chat model");
         }
