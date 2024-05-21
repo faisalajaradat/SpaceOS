@@ -53,183 +53,127 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   CompoundStmt_while(whileKeyword, expression, statement) {
     return new core.While(null, expression.ast(), statement.ast());
   },
-  Exp(expression9, possibleAssign) {
-    const leftExpr = expression9.ast();
-    const rightExpr = possibleAssign.ast();
-    if (rightExpr.length == 0) return leftExpr;
-    rightExpr[0].leftExpr = leftExpr;
-    return rightExpr[0];
+  Exp(assignExpression) {
+    return assignExpression.ast();
   },
-  Exp9(expression8, logicalOrs) {
-    let leftExpr = expression8.ast();
-    const rightExprs = logicalOrs.ast();
-    rightExprs.forEach((element) => {
-      element.leftExpr = leftExpr;
-      leftExpr = element;
-    });
-    return leftExpr;
-  },
-  Exp8(expression7, logicalAnds) {
-    let leftExpr = expression7.ast();
-    const rightExprs = logicalAnds.ast();
-    rightExprs.forEach((element) => {
-      element.leftExpr = leftExpr;
-      leftExpr = element;
-    });
-    return leftExpr;
-  },
-  Exp7(expression6, equalities) {
-    let leftExpr = expression6.ast();
-    const rightExprs = equalities.ast();
-    rightExprs.forEach((element) => {
-      element.leftExpr = leftExpr;
-      leftExpr = element;
-    });
-    return leftExpr;
-  },
-  Exp6(expression5, inequalities) {
-    let leftExpr = expression5.ast();
-    const rightExprs = inequalities.ast();
-    rightExprs.forEach((element) => {
-      element.leftExpr = leftExpr;
-      leftExpr = element;
-    });
-    return leftExpr;
-  },
-  Exp5(expression4, sums) {
-    let leftExpr = expression4.ast();
-    const rightExprs = sums.ast();
-    rightExprs.forEach((element) => {
-      element.leftExpr = leftExpr;
-      leftExpr = element;
-    });
-    return leftExpr;
-  },
-  Exp4(expression3, products) {
-    let leftExpr = expression3.ast();
-    const rightExprs = products.ast();
-    rightExprs.forEach((element) => {
-      element.leftExpr = leftExpr;
-      leftExpr = element;
-    });
-    return leftExpr;
-  },
-  Exp3_unary(unary) {
-    return unary.ast();
-  },
-  Exp3_other(expression2) {
-    return expression2.ast();
-  },
-  Exp2(expression1, arrayAccesses) {
-    let leftExpr = expression1.ast();
-    const accessExprs = arrayAccesses.ast();
-    accessExprs.forEach((element) => {
-      leftExpr = new core.ArrayAccess(null, leftExpr, element);
-    });
-    return leftExpr;
-  },
-  Exp1_funcall(funCall) {
-    return funCall.ast();
-  },
-  Exp1_parentheses(_leftParenthesis, expression, _rightParenthesis) {
-    return expression.ast();
-  },
-  Exp1_strliteral(stringLiteral) {
-    return stringLiteral.ast();
-  },
-  Exp1_boolliteral(booleanLiteral) {
-    return booleanLiteral.ast();
-  },
-  Exp1_numliteral(numberLiteral) {
-    return numberLiteral.ast();
-  },
-  Exp1_identifier(identifier) {
-    return identifier.ast();
-  },
-  Assign(_equal, expression) {
+  AssignExp_assign(unaryExpression, _equal, assignExpression) {
     return new core.BinaryExpr(
       null,
       _equal.sourceString,
-      null,
-      expression.ast(),
+      unaryExpression.ast(),
+      assignExpression.ast(),
     );
   },
-  LogicalOr(_logicalOr, expression8) {
+  AssignExp(lorExpression) {
+    return lorExpression.ast();
+  },
+  LorExp_lor(lorExpression, _lor, larExpression) {
     return new core.BinaryExpr(
       null,
-      _logicalOr.sourceString,
-      null,
-      expression8.ast(),
+      _lor.sourceString,
+      lorExpression.ast(),
+      larExpression.ast(),
     );
   },
-  LogicalAnd(_logicalAnd, expression7) {
+  LorExp(larExpression) {
+    return larExpression.ast();
+  },
+  LarExp_lar(larExpression, _lar, eqExpression) {
     return new core.BinaryExpr(
       null,
-      _logicalAnd.sourceString,
-      null,
-      expression7.ast(),
+      _lar.sourceString,
+      larExpression.ast(),
+      eqExpression.ast(),
     );
   },
-  Equality(_operator, expression6) {
+  LarExp(eqExpression) {
+    return eqExpression.ast();
+  },
+  EqExp_eq(eqExpression, operator, relExpression) {
     return new core.BinaryExpr(
       null,
-      _operator.sourceString,
-      null,
-      expression6.ast(),
+      operator.sourceString,
+      eqExpression.ast(),
+      relExpression.ast(),
     );
   },
-  Inequality(_operator, expression5) {
+  EqExp(relExpression) {
+    return relExpression.ast();
+  },
+  RelExp_rel(relExpression, operator, addExpression) {
     return new core.BinaryExpr(
       null,
-      _operator.sourceString,
-      null,
-      expression5.ast(),
+      operator.sourceString,
+      relExpression.ast(),
+      addExpression.ast(),
     );
   },
-  Sum(_operator, expression4) {
+  RelExp(addExpression) {
+    return addExpression.ast();
+  },
+  AddExp_add(addExpression, operator, multExpression) {
     return new core.BinaryExpr(
       null,
-      _operator.sourceString,
-      null,
-      expression4.ast(),
+      operator.sourceString,
+      addExpression.ast(),
+      multExpression.ast(),
     );
   },
-  Product(_operator, expression3) {
+  AddExp(multExpression) {
+    return multExpression.ast();
+  },
+  MultExp_mult(multExpression, operator, unaryExpression) {
     return new core.BinaryExpr(
       null,
-      _operator.sourceString,
-      null,
-      expression3.ast(),
+      operator.sourceString,
+      multExpression.ast(),
+      unaryExpression.ast(),
     );
   },
-  Unary(_operator, expression3) {
-    return new core.UnaryExpr(null, _operator.sourceString, expression3.ast());
+  MultExp(unaryExpression) {
+    return unaryExpression.ast();
   },
-  ArrayAccess(_leftSquareBracket, expression, _rightSquareBracket) {
-    return expression.ast();
+  UnaryExp_unary(operator, unaryExpression) {
+    return new core.UnaryExpr(
+      null,
+      operator.sourceString,
+      unaryExpression.ast(),
+    );
   },
-  Block(_leftBracket, statements, _rightBracket) {
-    return new core.Block(null, statements.ast());
+  UnaryExp(leftExpression) {
+    return leftExpression.ast();
   },
-  Funcall(
-    identifier,
+  LeftExp_call(
+    leftExpression,
     _leftParenthesis,
-    possibleFuncallArgs,
+    listOfExpressions,
     _rightParenthesis,
   ) {
     return new core.FunCall(
       null,
-      identifier.ast(),
-      possibleFuncallArgs.ast()[0] ?? new Array<core.Expr>(),
+      leftExpression.ast(),
+      listOfExpressions.asIteration().ast(),
     );
   },
-  FuncallArgs(expr, nextArgs) {
-    const args = nextArgs.ast();
-    args.unshift(expr.ast());
-    return args;
+  LeftExp_array(
+    leftExpression,
+    _leftSquareBracket,
+    expression,
+    _rightSquareBracket,
+  ) {
+    return new core.ArrayAccess(null, leftExpression.ast(), expression.ast());
   },
-  NextArg(_comma, expression) {
+  LeftExp(primaryExpression) {
+    return primaryExpression.ast();
+  },
+  PrimaryExp_group(_leftParenthesis, expression, _rightParenthesis) {
     return expression.ast();
+  },
+  PrimaryExp(expression) {
+    return expression.ast();
+  },
+  Block(_leftBracket, statements, _rightBracket) {
+    return new core.Block(null, statements.ast());
   },
   VarDeclaration(newIdentifier, _equal, expression) {
     const typeAndIdentifier = newIdentifier.ast();
@@ -268,47 +212,21 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   type(keyword, arrayBrackets) {
     return this.sourceString;
   },
-  trueKeyword(_true) {
-    return this.sourceString;
-  },
-  falseKeyword(_false) {
-    return this.sourceString;
-  },
-  numberKeyword(_number) {
-    return this.sourceString;
-  },
-  stringKeyword(_string) {
-    return this.sourceString;
-  },
-  boolKeyword(_bool) {
-    return this.sourceString;
-  },
-  voidKeyword(_void) {
-    return this.sourceString;
-  },
-  whileKeyword(_while) {
-    return this.sourceString;
-  },
-  ifKeyword(_if) {
-    return this.sourceString;
-  },
-  elseKeyword(_else) {
-    return this.sourceString;
-  },
-  identifier(letter, alphanumerics) {
+  identifier(component) {
     return new core.Identifier(null, this.sourceString);
   },
   booleanLiteral(keyword) {
     return new core.BoolLiteral(JSON.parse(this.sourceString));
   },
-  numberLiteral(digits, possibleFloatComponent) {
+  numberLiteral(
+    component0,
+    component1,
+    component2,
+    component3,
+    component4,
+    component5,
+  ) {
     return new core.NumberLiteral(Number(this.sourceString));
-  },
-  floatComponent(_period, digits, possibleScientificNotationComponent) {
-    return null;
-  },
-  scientificNotationComponent(_e, sign, digits) {
-    return null;
   },
   stringLiteral_doublequotes(_leftDoubleQuote, chars, _rightDoubleQuote) {
     const value = this.sourceString.slice(1, this.sourceString.length - 1);
@@ -317,45 +235,6 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   stringLiteral_singlequotes(_leftSingleQuote, chars, _rightSingleQuote) {
     const value = this.sourceString.slice(1, this.sourceString.length - 1);
     return new core.StringLiteral(value);
-  },
-  char(anyChar) {
-    return null;
-  },
-  whitespace_tabchar(tabChar) {
-    return null;
-  },
-  whitespace_verticaltab(verticalTab) {
-    return null;
-  },
-  whitespace_formfeed(formFeed) {
-    return null;
-  },
-  whitespace_space(space) {
-    return null;
-  },
-  whitespace_nobreakspace(noBreakSpace) {
-    return null;
-  },
-  whitespace_byteordermark(byteOrderMark) {
-    return null;
-  },
-  whitespace_spaceseperator(unicodeSpaceSeperator) {
-    return null;
-  },
-  lineTerminator(lineTerminatorString) {
-    return null;
-  },
-  unicodeSpaceSeparator(unicodeSpaceSeperatorString) {
-    return null;
-  },
-  space(whitespaceOrLineTerminator) {
-    return null;
-  },
-  newline_last(spaces, end) {
-    return null;
-  },
-  newline_whitespace(whitespaces, lineTerminator) {
-    return null;
   },
   NonemptyListWithOptionalEndSep(nonemptyList, possibleSeperator) {
     return nonemptyList.asIteration().ast();

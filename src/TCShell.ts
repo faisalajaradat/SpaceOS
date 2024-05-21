@@ -3,7 +3,6 @@ import { grammar } from "./grammar.js";
 import { ast, visitDotPrinter } from "./ast.js";
 import { Command } from "commander";
 import { graphviz } from "node-graphviz";
-import { interpret } from "./interpreter.js";
 
 const program = new Command();
 
@@ -29,7 +28,6 @@ program
         return;
       }
       const astHead = ast(match);
-      interpret(astHead);
       if (options.dot === undefined) return;
       const dotString = visitDotPrinter(astHead);
       graphviz

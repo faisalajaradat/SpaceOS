@@ -18,71 +18,77 @@ TCShell {
     SimpleStmts = NonemptyListWithOptionalEndSep<SimpleStmt, ";">
 
     SimpleStmt = VarDeclaration   --vardeclaration
-    					  | returnKeyword (Exp)?		--return
+    					  | return (Exp)?		--return
                           | Exp 	--exp
 
 
     CompoundStmt = Block    --block
-    		  				| ifKeyword Exp Stmt (elseKeyword Stmt)?	--if
-          				| whileKeyword Exp Stmt	--while
+    		  				| if Exp Stmt (else Stmt)?	--if
+          					| while Exp Stmt	--while
 
-     Exp = Exp9 Assign?
-     Exp9 = Exp8 LogicalOr*
-     Exp8 = Exp7 LogicalAnd*
-     Exp7 = Exp6 Equality*
-     Exp6 = Exp5 Inequality*
-     Exp5 = Exp4 Sum*
-     Exp4 = Exp3 Product*
-     Exp3 = Unary	--unary
-     			| Exp2  --other
-     Exp2 = Exp1 ArrayAccess*
-     Exp1 = Funcall         --funcall
-          | "(" Exp ")" 	  --parentheses
-          | stringLiteral   --strliteral
-          | booleanLiteral  --boolliteral
-    	    | numberLiteral   --numliteral
-          | identifier      --identifier
+     Exp = AssignExp
+     AssignExp = UnaryExp "=" AssignExp		--assign
+     					| LorExp
+     LorExp = LorExp "||" LarExp		--lor
+     				| LarExp
+     LarExp = LarExp "&&" EqExp		--lar
+     				| EqExp
+     EqExp = EqExp ("==" | "!=") RelExp		--eq
+     			| RelExp
+     RelExp = RelExp ( "<=" | "<" | ">=" | ">") AddExp		--rel
+     				| AddExp
+     AddExp = AddExp ("+" | "-") MultExp		--add
+     				| MultExp
+     MultExp = MultExp ( "*" | "/" | "%" ) UnaryExp		--mult
+     				| UnaryExp
+	UnaryExp = ("+" | "-" | "!") UnaryExp	--unary
+    				| LeftExp
+     LeftExp = LeftExp "(" ListOf<Exp, ","> ")"		--call
+     				| LeftExp "[" Exp "]"		--array
+                    | PrimaryExp
 
-    Assign = "=" Exp
-    LogicalOr = "||" Exp8
-    LogicalAnd = "&&" Exp7
-    Equality = ("==" | "!=") Exp6
-    Inequality = ("<=" | "<" | ">=" | ">") Exp5
-    Sum = ("+" | "-") Exp4
-    Product = ("*" | "/") Exp3
-    Unary = ("+" | "-") Exp3
-    ArrayAccess = "[" Exp "]"
+    PrimaryExp = stringLiteral
+    					| identifier
+                        | numberLiteral
+                        | booleanLiteral
+                        | "(" Exp ")"		--group
 
     Block = "{" Stmt* "}"
-
-    Funcall = identifier "(" FuncallArgs? ")"
-
-    FuncallArgs = Exp NextArg*
-    NextArg = "," Exp
 
     VarDeclaration = NewIdentifier "=" Exp
     FunDeclaration = NewIdentifier "(" ListOf<NewIdentifier, ","> ")" Block
 
     NewIdentifier = type identifier
-    type = (numberKeyword | stringKeyword | boolKeyword | voidKeyword) "[]"*
+    type = typeKeyword "[]"*
 
-    trueKeyword = "true" ~alnum
-    falseKeyword = "false" ~alnum
-    numberKeyword = "number" ~alnum
-    stringKeyword = "string" ~alnum
-    boolKeyword = "bool" ~alnum
-    voidKeyword = "void" ~alnum
-    whileKeyword = "while" ~alnum
-    ifKeyword = "if" ~alnum
-    elseKeyword = "else" ~alnum
-    returnKeyword = "return" ~alnum
+    typeKeyword = "number" ~identPart
+    						| "string" ~identPart
+                            | "bool" ~identPart
+                            | "void" ~identPart
 
-   	identifier = letter alnum*
+    keyword = typeKeyword
+    				| booleanLiteral
+                    | while
+                    | if
+                    | else
+                    | return
 
-	  booleanLiteral = (trueKeyword | falseKeyword)
-    numberLiteral = digit+ floatComponent?
-    floatComponent = "." digit+ scientificNotationComponent?
-    scientificNotationComponent = ("e" | "E") ("+" | "-") digit+
+    while = "while" ~identPart
+    if = "if" ~identPart
+    else = "else" ~identPart
+    return = "return" ~identPart
+
+    identStart      = letter | "_"
+    identPart       = identStart | decimalDigit
+    decimalDigit    = "0".."9"
+
+  	identName       = identStart identPart*
+    identifier      = ~keyword identName
+
+	booleanLiteral = "true" ~identPart
+    						| "false" ~identPart
+
+    numberLiteral = digit+ ("." digit+ (("e" | "E") ("+" | "-") digit+)?)?
 
     stringLiteral = ("\"" char* "\"")   --doublequotes
     					    | ("\'" char* "\'")   --singlequotes
