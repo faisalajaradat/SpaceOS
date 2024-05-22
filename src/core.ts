@@ -249,6 +249,20 @@ export class NumberLiteral extends Expr implements ASTNode {
     return new Array<ASTNode>();
   }
 }
+export class ArrayLiteral extends Expr implements ASTNode {
+  value: Expr[];
+
+  constructor(value: Expr[]) {
+    super(null);
+    this.value = value;
+  }
+
+  children(): ASTNode[] {
+    const children = new Array<ASTNode>();
+    children.push(...this.value);
+    return children;
+  }
+}
 export class Identifier extends Expr implements ASTNode {
   value: string;
 

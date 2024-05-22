@@ -42,6 +42,7 @@ TCShell {
      MultExp = MultExp ( "*" | "/" | "%" ) UnaryExp		--mult
      				| UnaryExp
 	UnaryExp = ("+" | "-" | "!") UnaryExp	--unary
+    				| "{" ListOf<Exp, ","> "}"		--array
     				| LeftExp
      LeftExp = LeftExp "(" ListOf<Exp, ","> ")"		--call
      				| LeftExp "[" Exp "]"		--array

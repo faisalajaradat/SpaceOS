@@ -140,6 +140,9 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       unaryExpression.ast(),
     );
   },
+  UnaryExp_array(_leftBracket, listOfExpressions, _rightBracket) {
+    return new core.ArrayLiteral(listOfExpressions.asIteration().ast());
+  },
   UnaryExp(leftExpression) {
     return leftExpression.ast();
   },
@@ -210,7 +213,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     return { type: type.ast(), identifier: identifier.ast() };
   },
   type(keyword, arrayBrackets) {
-    return this.sourceString;
+    return keyword.sourceString;
   },
   identifier(component) {
     return new core.Identifier(null, this.sourceString);
@@ -441,5 +444,16 @@ export function visitDotPrinter(node: core.ASTNode): string {
       identifierNodeId + '[label=" ' + node.value + ' "];\n',
     );
     return identifierNodeId;
+  }
+  if (node instanceof core.ArrayLiteral) {
+    const arrayNode = "Node" + nodeCount++;
+    dotString = dotString.concat(arrayNode + '[label=" Array "];\n');
+    const elementIds = new Array<string>();
+    node.children().forEach((child) => elementIds.push(visitDotPrinter(child)));
+    elementIds.forEach(
+      (nodeId) =>
+        (dotString = dotString.concat(arrayNode + "->" + nodeId + ";\n")),
+    );
+    return arrayNode;
   }
 }
