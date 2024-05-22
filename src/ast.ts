@@ -28,7 +28,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     return varDeclaration.ast();
   },
   SimpleStmt_return(returnKeyword, possibleExpression) {
-    return new core.Return(null, possibleExpression.ast()[0] ?? null);
+    return new core.Return(possibleExpression.ast()[0] ?? null);
   },
   SimpleStmt_exp(expression) {
     return expression.ast();
@@ -44,14 +44,13 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     possibleElseStatement,
   ) {
     return new core.If(
-      null,
       expression.ast(),
       ifStatement.ast(),
       possibleElseStatement.ast()[0] ?? null,
     );
   },
   CompoundStmt_while(whileKeyword, expression, statement) {
-    return new core.While(null, expression.ast(), statement.ast());
+    return new core.While(expression.ast(), statement.ast());
   },
   Exp(assignExpression) {
     return assignExpression.ast();
@@ -176,47 +175,60 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     return expression.ast();
   },
   Block(_leftBracket, statements, _rightBracket) {
-    return new core.Block(null, statements.ast());
+    return new core.Block(statements.ast());
   },
-  VarDeclaration(newIdentifier, _equal, expression) {
-    const typeAndIdentifier = newIdentifier.ast();
+  VarDeclaration(parameter, _equal, expression) {
+    const typeAndIdentifier = parameter.ast();
     return new core.VarDeclaration(
-      typeAndIdentifier.type,
+      typeAndIdentifier.paramType,
       typeAndIdentifier.identifier,
       expression.ast(),
     );
   },
   FunDeclaration(
-    newIdentifier,
+    parameter,
     _leftParenthesis,
-    possibleNewIdentifiers,
+    possibleParameters,
     _rightParenthesis,
     block,
   ) {
-    const typeAndIdentifier = newIdentifier.ast();
-    const argsTypesAndIdentifiers = possibleNewIdentifiers.asIteration().ast();
-    const argTypes = new Array<string>();
-    const argIdentifiers = new Array<core.Identifier>();
-    argsTypesAndIdentifiers.forEach((element) => {
-      argTypes.push(element.type);
-      argIdentifiers.push(element.identifier);
-    });
+    const typeAndIdentifier = parameter.ast();
     return new core.FunDeclaration(
-      typeAndIdentifier.type,
+      typeAndIdentifier.paramType,
       typeAndIdentifier.identifier,
-      argTypes,
-      argIdentifiers,
+      possibleParameters.asIteration().ast(),
       block.ast(),
     );
   },
-  NewIdentifier(type, identifier) {
-    return { type: type.ast(), identifier: identifier.ast() };
+  Parameter(type, identifier) {
+    return new core.Parameter(type.ast(), identifier.ast());
   },
   type(keyword, arrayBrackets) {
-    return keyword.sourceString;
+    let baseTypeKind = core.BaseTypeKind.NONE;
+    switch (keyword.sourceString) {
+      case "number":
+        baseTypeKind = core.BaseTypeKind.NUMBER;
+        break;
+      case "string":
+        baseTypeKind = core.BaseTypeKind.STRING;
+        break;
+      case "bool":
+        baseTypeKind = core.BaseTypeKind.BOOL;
+        break;
+      case "void":
+        baseTypeKind = core.BaseTypeKind.VOID;
+        break;
+    }
+    const baseType = new core.BaseType(baseTypeKind);
+    if (arrayBrackets.children.length === 0) return baseType;
+    let arrayType = new core.ArrayType(baseType);
+    for (let i = 1; i < arrayBrackets.children.length; i++) {
+      arrayType = new core.ArrayType(arrayType);
+    }
+    return arrayType;
   },
   identifier(component) {
-    return new core.Identifier(null, this.sourceString);
+    return new core.Identifier(this.sourceString);
   },
   booleanLiteral(keyword) {
     return new core.BoolLiteral(JSON.parse(this.sourceString));
@@ -268,50 +280,35 @@ export function visitDotPrinter(node: core.ASTNode): string {
   if (node instanceof core.FunDeclaration) {
     const funDeclNodeId = "Node" + nodeCount++;
     dotString = dotString.concat(funDeclNodeId + '[label=" FunDecl "];\n');
-    const typeNodeId = "Node" + nodeCount++;
-    dotString = dotString.concat(
-      typeNodeId + '[label=" ' + node.funType + ' "];\n',
-    );
+    const typeNodeId = visitDotPrinter(node.funType);
     const identifierNodeId = visitDotPrinter(node.identifier);
-    let argsNodeId = "";
-    if (node.argTypes.length > 0) {
-      argsNodeId = "Node" + nodeCount++;
-      dotString = dotString.concat(argsNodeId + '[label=" Args "];\n');
-    }
-    const argTypeIds = new Array<string>();
-    const argIdentifierIds = new Array<string>();
-    for (let i = 0; i < node.argTypes.length; i++) {
-      const argTypeId = "Node" + nodeCount++;
-      argTypeIds.push(argTypeId);
-      dotString = dotString.concat(
-        argTypeId + '[label=" ' + node.argTypes[i] + ' "];\n',
-      );
-      argIdentifierIds.push(visitDotPrinter(node.argIdentifiers[i]));
-    }
+    const paramNodeIds = new Array<string>();
+    node.params.forEach((child) => paramNodeIds.push(visitDotPrinter(child)));
     const blockNodeId = visitDotPrinter(node.block);
     dotString = dotString.concat(funDeclNodeId + "->" + typeNodeId + ";\n");
     dotString = dotString.concat(
       funDeclNodeId + "->" + identifierNodeId + ";\n",
     );
-    if (argsNodeId != "") {
-      dotString = dotString.concat(funDeclNodeId + "->" + argsNodeId + ";\n");
-      for (let i = 0; i < node.argTypes.length; i++) {
-        dotString = dotString.concat(argsNodeId + "->" + argTypeIds[i] + ";\n");
-        dotString = dotString.concat(
-          argsNodeId + "->" + argIdentifierIds[i] + ";\n",
-        );
-      }
-    }
+    paramNodeIds.forEach(
+      (nodeId) =>
+        (dotString = dotString.concat(funDeclNodeId + "->" + nodeId + ";\n")),
+    );
     dotString = dotString.concat(funDeclNodeId + "->" + blockNodeId + ";\n");
     return funDeclNodeId;
+  }
+  if (node instanceof core.Parameter) {
+    const paramNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(paramNodeId + '[label=" Param "];\n');
+    const typeNodeId = visitDotPrinter(node.paramType);
+    const identifierNodeId = visitDotPrinter(node.identifier);
+    dotString = dotString.concat(paramNodeId + "->" + typeNodeId + ";\n");
+    dotString = dotString.concat(paramNodeId + "->" + identifierNodeId + ";\n");
+    return paramNodeId;
   }
   if (node instanceof core.VarDeclaration) {
     const varDeclNodeId = "Node" + nodeCount++;
     dotString = dotString.concat(varDeclNodeId + '[label=" = "];\n');
-    const typeNodeId = "Node" + nodeCount++;
-    dotString = dotString.concat(
-      typeNodeId + "[label= " + node.stmtType + "];\n",
-    );
+    const typeNodeId = visitDotPrinter(node.stmtType);
     const identifierNodeId = visitDotPrinter(node.identifier);
     const valueNodeId = visitDotPrinter(node.value);
     dotString = dotString.concat(varDeclNodeId + "->" + typeNodeId + ";\n");
@@ -446,14 +443,43 @@ export function visitDotPrinter(node: core.ASTNode): string {
     return identifierNodeId;
   }
   if (node instanceof core.ArrayLiteral) {
-    const arrayNode = "Node" + nodeCount++;
-    dotString = dotString.concat(arrayNode + '[label=" Array "];\n');
+    const arrayNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(arrayNodeId + '[label=" Array "];\n');
     const elementIds = new Array<string>();
     node.children().forEach((child) => elementIds.push(visitDotPrinter(child)));
     elementIds.forEach(
       (nodeId) =>
-        (dotString = dotString.concat(arrayNode + "->" + nodeId + ";\n")),
+        (dotString = dotString.concat(arrayNodeId + "->" + nodeId + ";\n")),
     );
-    return arrayNode;
+    return arrayNodeId;
+  }
+  if (node instanceof core.BaseType) {
+    const typeNodeId = "Node" + nodeCount++;
+    let label = "";
+    switch (node.kind) {
+      case core.BaseTypeKind.NUMBER:
+        label = "number";
+        break;
+      case core.BaseTypeKind.STRING:
+        label = "string";
+        break;
+      case core.BaseTypeKind.BOOL:
+        label = "bool";
+        break;
+      case core.BaseTypeKind.VOID:
+        label = "void";
+        break;
+      case core.BaseTypeKind.NONE:
+        break;
+    }
+    dotString = dotString.concat(typeNodeId + '[label=" ' + label + ' "];\n');
+    return typeNodeId;
+  }
+  if (node instanceof core.ArrayType) {
+    const arrayTypeNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(arrayTypeNodeId + '[label=" Array Of "];\n');
+    const typeNodeId = visitDotPrinter(node.type);
+    dotString = dotString.concat(arrayTypeNodeId + "->" + typeNodeId + ";\n");
+    return arrayTypeNodeId;
   }
 }

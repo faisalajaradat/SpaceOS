@@ -2,6 +2,42 @@ export interface ASTNode {
   children(): ASTNode[];
 }
 
+export enum BaseTypeKind {
+  NUMBER,
+  STRING,
+  BOOL,
+  VOID,
+  NONE,
+}
+
+export abstract class Type implements ASTNode {
+  abstract children(): ASTNode[];
+}
+export class BaseType extends Type {
+  kind: BaseTypeKind;
+
+  constructor(kind: BaseTypeKind) {
+    super();
+    this.kind = kind;
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+}
+export class ArrayType extends Type {
+  type: Type;
+  size: number;
+
+  constructor(type: Type) {
+    super();
+    this.type = type;
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+}
 export class Program implements ASTNode {
   declarations: ASTNode[];
 
@@ -17,51 +53,64 @@ export class Program implements ASTNode {
 }
 export abstract class Stmt implements ASTNode {
   abstract children(): ASTNode[];
-  stmtType: string;
+  stmtType: Type;
 
-  constructor(type: string) {
+  constructor(type: Type) {
     this.stmtType = type;
   }
 }
-export abstract class Expr extends Stmt implements ASTNode {
-  constructor(type: string) {
+export abstract class Expr extends Stmt {
+  constructor(type: Type) {
     super(type);
   }
 }
-
-export class FunDeclaration implements ASTNode {
-  funType: string;
+export class Parameter implements ASTNode {
+  paramType: Type;
   identifier: Identifier;
-  argTypes: string[];
-  argIdentifiers: Identifier[];
+
+  constructor(paramType: Type, identifier: Identifier) {
+    this.paramType = paramType;
+    this.identifier = identifier;
+  }
+
+  children(): ASTNode[] {
+    const children = new Array<ASTNode>();
+    children.push(this.paramType);
+    children.push(this.identifier);
+    return children;
+  }
+}
+export class FunDeclaration implements ASTNode {
+  funType: Type;
+  identifier: Identifier;
+  params: Parameter[];
   block: Block;
 
   constructor(
-    type: string,
+    type: Type,
     identifier: Identifier,
-    argTypes: string[],
-    argIdentifiers: Identifier[],
+    params: Parameter[],
     block: Block,
   ) {
     this.funType = type;
     this.identifier = identifier;
-    this.argTypes = argTypes;
-    this.argIdentifiers = argIdentifiers;
+    this.params = params;
     this.block = block;
   }
 
   children(): ASTNode[] {
     const children = new Array<ASTNode>();
-    children.push(...this.argIdentifiers);
+    children.push(this.funType);
+    children.push(...this.params);
     children.push(this.block);
     return children;
   }
 }
-export class VarDeclaration extends Stmt implements ASTNode {
+export class VarDeclaration extends Stmt {
   identifier: Identifier;
   value: Expr;
 
-  constructor(type: string, identifier: Identifier, value: Expr) {
+  constructor(type: Type, identifier: Identifier, value: Expr) {
     super(type);
     this.identifier = identifier;
     this.value = value;
@@ -74,11 +123,11 @@ export class VarDeclaration extends Stmt implements ASTNode {
     return children;
   }
 }
-export class Return extends Stmt implements ASTNode {
+export class Return extends Stmt {
   possibleValue: Expr;
 
-  constructor(type: string, possibleValue: Expr) {
-    super(type);
+  constructor(possibleValue: Expr) {
+    super(new BaseType(BaseTypeKind.NONE));
     this.possibleValue = possibleValue;
   }
 
@@ -88,18 +137,13 @@ export class Return extends Stmt implements ASTNode {
     return children;
   }
 }
-export class If extends Stmt implements ASTNode {
+export class If extends Stmt {
   condition: Expr;
   ifStmt: Stmt;
   possibleElseStmt: Stmt;
 
-  constructor(
-    type: string,
-    condition: Expr,
-    ifStmt: Stmt,
-    possibleElseStmt: Stmt,
-  ) {
-    super(type);
+  constructor(condition: Expr, ifStmt: Stmt, possibleElseStmt: Stmt) {
+    super(new BaseType(BaseTypeKind.NONE));
     this.condition = condition;
     this.ifStmt = ifStmt;
     this.possibleElseStmt = possibleElseStmt;
@@ -113,12 +157,12 @@ export class If extends Stmt implements ASTNode {
     return children;
   }
 }
-export class While extends Stmt implements ASTNode {
+export class While extends Stmt {
   condition: Expr;
   whileStmt: Stmt;
 
-  constructor(type: string, condition: Expr, whileStmt: Stmt) {
-    super(type);
+  constructor(condition: Expr, whileStmt: Stmt) {
+    super(new BaseType(BaseTypeKind.NONE));
     this.condition = condition;
     this.whileStmt = whileStmt;
   }
@@ -130,11 +174,11 @@ export class While extends Stmt implements ASTNode {
     return children;
   }
 }
-export class Block extends Stmt implements ASTNode {
+export class Block extends Stmt {
   stmts: Stmt[];
 
-  constructor(type: string, stmts: Stmt[]) {
-    super(type);
+  constructor(stmts: Stmt[]) {
+    super(new BaseType(BaseTypeKind.NONE));
     this.stmts = stmts;
   }
 
@@ -144,12 +188,12 @@ export class Block extends Stmt implements ASTNode {
     return children;
   }
 }
-export class BinaryExpr extends Expr implements ASTNode {
+export class BinaryExpr extends Expr {
   leftExpr: Expr;
   operator: string;
   rightExpr: Expr;
 
-  constructor(type: string, operator: string, leftExpr: Expr, rightExpr: Expr) {
+  constructor(type: Type, operator: string, leftExpr: Expr, rightExpr: Expr) {
     super(type);
     this.leftExpr = leftExpr;
     this.operator = operator;
@@ -163,11 +207,11 @@ export class BinaryExpr extends Expr implements ASTNode {
     return children;
   }
 }
-export class UnaryExpr extends Expr implements ASTNode {
+export class UnaryExpr extends Expr {
   operator: string;
   expr: Expr;
 
-  constructor(type: string, operator: string, expr: Expr) {
+  constructor(type: Type, operator: string, expr: Expr) {
     super(type);
     this.operator = operator;
     this.expr = expr;
@@ -179,11 +223,11 @@ export class UnaryExpr extends Expr implements ASTNode {
     return children;
   }
 }
-export class ArrayAccess extends Expr implements ASTNode {
+export class ArrayAccess extends Expr {
   arrayExpr: Expr;
   accessExpr: Expr;
 
-  constructor(type: string, arrayExpr: Expr, accessExpr: Expr) {
+  constructor(type: Type, arrayExpr: Expr, accessExpr: Expr) {
     super(type);
     this.arrayExpr = arrayExpr;
     this.accessExpr = accessExpr;
@@ -196,11 +240,11 @@ export class ArrayAccess extends Expr implements ASTNode {
     return children;
   }
 }
-export class FunCall extends Expr implements ASTNode {
+export class FunCall extends Expr {
   identifier: Identifier;
   args: Expr[];
 
-  constructor(type: string, identifier: Identifier, args: Expr[]) {
+  constructor(type: Type, identifier: Identifier, args: Expr[]) {
     super(type);
     this.identifier = identifier;
     this.args = args;
@@ -213,11 +257,11 @@ export class FunCall extends Expr implements ASTNode {
     return children;
   }
 }
-export class StringLiteral extends Expr implements ASTNode {
+export class StringLiteral extends Expr {
   value: string;
 
   constructor(value: string) {
-    super("string");
+    super(new BaseType(BaseTypeKind.STRING));
     this.value = value;
   }
 
@@ -225,11 +269,11 @@ export class StringLiteral extends Expr implements ASTNode {
     return new Array<ASTNode>();
   }
 }
-export class BoolLiteral extends Expr implements ASTNode {
+export class BoolLiteral extends Expr {
   value: boolean;
 
   constructor(value: boolean) {
-    super("bool");
+    super(new BaseType(BaseTypeKind.BOOL));
     this.value = value;
   }
 
@@ -237,11 +281,11 @@ export class BoolLiteral extends Expr implements ASTNode {
     return new Array<ASTNode>();
   }
 }
-export class NumberLiteral extends Expr implements ASTNode {
+export class NumberLiteral extends Expr {
   value: number;
 
   constructor(value: number) {
-    super("number");
+    super(new BaseType(BaseTypeKind.NUMBER));
     this.value = value;
   }
 
@@ -249,11 +293,11 @@ export class NumberLiteral extends Expr implements ASTNode {
     return new Array<ASTNode>();
   }
 }
-export class ArrayLiteral extends Expr implements ASTNode {
+export class ArrayLiteral extends Expr {
   value: Expr[];
 
   constructor(value: Expr[]) {
-    super(null);
+    super(new ArrayType(new BaseType(BaseTypeKind.NONE)));
     this.value = value;
   }
 
@@ -263,11 +307,11 @@ export class ArrayLiteral extends Expr implements ASTNode {
     return children;
   }
 }
-export class Identifier extends Expr implements ASTNode {
+export class Identifier extends Expr {
   value: string;
 
-  constructor(type: string, value: string) {
-    super(type);
+  constructor(value: string) {
+    super(new BaseType(BaseTypeKind.NONE));
     this.value = value;
   }
   children(): ASTNode[] {

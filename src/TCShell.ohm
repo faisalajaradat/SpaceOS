@@ -56,10 +56,10 @@ TCShell {
 
     Block = "{" Stmt* "}"
 
-    VarDeclaration = NewIdentifier "=" Exp
-    FunDeclaration = NewIdentifier "(" ListOf<NewIdentifier, ","> ")" Block
+    VarDeclaration = Parameter "=" Exp
+    FunDeclaration = Parameter "(" ListOf<Parameter, ","> ")" Block
 
-    NewIdentifier = type identifier
+    Parameter = type identifier
     type = typeKeyword "[]"*
 
     typeKeyword = "number" ~identPart
