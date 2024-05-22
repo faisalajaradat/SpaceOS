@@ -120,8 +120,8 @@ export async function makeCall(chatmodel: initializedChatModel){ // | initialize
       );
   
   
-      console.log("output:", output);
-      console.log("chat message history:", messageHistory.getMessages() );
+      //console.log("output:", output);
+      //console.log("chat message history:", messageHistory.getMessages() );
     }
     else return null;
   }
