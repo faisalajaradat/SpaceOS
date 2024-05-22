@@ -12,8 +12,8 @@ program
   .version("0.2.0");
 
 program
-  .command("parse <path>")
-  .description("Parse tcs file into AST")
+  .command("interpret <path>")
+  .description("interpret tcs files")
   .option("-t, --trace", "output match trace incase of syntax errors")
   .option("-d, --dot <path>", "save DOT representation of AST to path")
   .action((path, options) => {
@@ -28,10 +28,7 @@ program
         return;
       }
       const astHead = ast(match);
-      if (options.dot === undefined) {
-        console.log("Success!");
-        return;
-      }
+      if (options.dot === undefined) return;
       const dotString = visitDotPrinter(astHead);
       graphviz
         .dot(dotString, "svg")

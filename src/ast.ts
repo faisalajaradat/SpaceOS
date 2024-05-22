@@ -28,7 +28,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     return varDeclaration.ast();
   },
   SimpleStmt_return(returnKeyword, possibleExpression) {
-    return new core.Return(null, possibleExpression.ast()[0] ?? null);
+    return new core.Return(possibleExpression.ast()[0] ?? null);
   },
   SimpleStmt_exp(expression) {
     return expression.ast();
@@ -44,271 +44,204 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     possibleElseStatement,
   ) {
     return new core.If(
-      null,
       expression.ast(),
       ifStatement.ast(),
       possibleElseStatement.ast()[0] ?? null,
     );
   },
   CompoundStmt_while(whileKeyword, expression, statement) {
-    return new core.While(null, expression.ast(), statement.ast());
+    return new core.While(expression.ast(), statement.ast());
   },
-  Exp(expression9, possibleAssign) {
-    const leftExpr = expression9.ast();
-    const rightExpr = possibleAssign.ast();
-    if (rightExpr.length == 0) return leftExpr;
-    rightExpr[0].leftExpr = leftExpr;
-    return rightExpr[0];
+  Exp(assignExpression) {
+    return assignExpression.ast();
   },
-  Exp9(expression8, logicalOrs) {
-    let leftExpr = expression8.ast();
-    const rightExprs = logicalOrs.ast();
-    rightExprs.forEach((element) => {
-      element.leftExpr = leftExpr;
-      leftExpr = element;
-    });
-    return leftExpr;
-  },
-  Exp8(expression7, logicalAnds) {
-    let leftExpr = expression7.ast();
-    const rightExprs = logicalAnds.ast();
-    rightExprs.forEach((element) => {
-      element.leftExpr = leftExpr;
-      leftExpr = element;
-    });
-    return leftExpr;
-  },
-  Exp7(expression6, equalities) {
-    let leftExpr = expression6.ast();
-    const rightExprs = equalities.ast();
-    rightExprs.forEach((element) => {
-      element.leftExpr = leftExpr;
-      leftExpr = element;
-    });
-    return leftExpr;
-  },
-  Exp6(expression5, inequalities) {
-    let leftExpr = expression5.ast();
-    const rightExprs = inequalities.ast();
-    rightExprs.forEach((element) => {
-      element.leftExpr = leftExpr;
-      leftExpr = element;
-    });
-    return leftExpr;
-  },
-  Exp5(expression4, sums) {
-    let leftExpr = expression4.ast();
-    const rightExprs = sums.ast();
-    rightExprs.forEach((element) => {
-      element.leftExpr = leftExpr;
-      leftExpr = element;
-    });
-    return leftExpr;
-  },
-  Exp4(expression3, products) {
-    let leftExpr = expression3.ast();
-    const rightExprs = products.ast();
-    rightExprs.forEach((element) => {
-      element.leftExpr = leftExpr;
-      leftExpr = element;
-    });
-    return leftExpr;
-  },
-  Exp3_unary(unary) {
-    return unary.ast();
-  },
-  Exp3_other(expression2) {
-    return expression2.ast();
-  },
-  Exp2(expression1, arrayAccesses) {
-    let leftExpr = expression1.ast();
-    const accessExprs = arrayAccesses.ast();
-    accessExprs.forEach((element) => {
-      leftExpr = new core.ArrayAccess(null, leftExpr, element);
-    });
-    return leftExpr;
-  },
-  Exp1_funcall(funCall) {
-    return funCall.ast();
-  },
-  Exp1_parentheses(_leftParenthesis, expression, _rightParenthesis) {
-    return expression.ast();
-  },
-  Exp1_strliteral(stringLiteral) {
-    return stringLiteral.ast();
-  },
-  Exp1_boolliteral(booleanLiteral) {
-    return booleanLiteral.ast();
-  },
-  Exp1_numliteral(numberLiteral) {
-    return numberLiteral.ast();
-  },
-  Exp1_identifier(identifier) {
-    return identifier.ast();
-  },
-  Assign(_equal, expression) {
+  AssignExp_assign(unaryExpression, _equal, assignExpression) {
     return new core.BinaryExpr(
       null,
       _equal.sourceString,
-      null,
-      expression.ast(),
+      unaryExpression.ast(),
+      assignExpression.ast(),
     );
   },
-  LogicalOr(_logicalOr, expression8) {
+  AssignExp(lorExpression) {
+    return lorExpression.ast();
+  },
+  LorExp_lor(lorExpression, _lor, larExpression) {
     return new core.BinaryExpr(
       null,
-      _logicalOr.sourceString,
-      null,
-      expression8.ast(),
+      _lor.sourceString,
+      lorExpression.ast(),
+      larExpression.ast(),
     );
   },
-  LogicalAnd(_logicalAnd, expression7) {
+  LorExp(larExpression) {
+    return larExpression.ast();
+  },
+  LarExp_lar(larExpression, _lar, eqExpression) {
     return new core.BinaryExpr(
       null,
-      _logicalAnd.sourceString,
-      null,
-      expression7.ast(),
+      _lar.sourceString,
+      larExpression.ast(),
+      eqExpression.ast(),
     );
   },
-  Equality(_operator, expression6) {
+  LarExp(eqExpression) {
+    return eqExpression.ast();
+  },
+  EqExp_eq(eqExpression, operator, relExpression) {
     return new core.BinaryExpr(
       null,
-      _operator.sourceString,
-      null,
-      expression6.ast(),
+      operator.sourceString,
+      eqExpression.ast(),
+      relExpression.ast(),
     );
   },
-  Inequality(_operator, expression5) {
+  EqExp(relExpression) {
+    return relExpression.ast();
+  },
+  RelExp_rel(relExpression, operator, addExpression) {
     return new core.BinaryExpr(
       null,
-      _operator.sourceString,
-      null,
-      expression5.ast(),
+      operator.sourceString,
+      relExpression.ast(),
+      addExpression.ast(),
     );
   },
-  Sum(_operator, expression4) {
+  RelExp(addExpression) {
+    return addExpression.ast();
+  },
+  AddExp_add(addExpression, operator, multExpression) {
     return new core.BinaryExpr(
       null,
-      _operator.sourceString,
-      null,
-      expression4.ast(),
+      operator.sourceString,
+      addExpression.ast(),
+      multExpression.ast(),
     );
   },
-  Product(_operator, expression3) {
+  AddExp(multExpression) {
+    return multExpression.ast();
+  },
+  MultExp_mult(multExpression, operator, unaryExpression) {
     return new core.BinaryExpr(
       null,
-      _operator.sourceString,
-      null,
-      expression3.ast(),
+      operator.sourceString,
+      multExpression.ast(),
+      unaryExpression.ast(),
     );
   },
-  Unary(_operator, expression3) {
-    return new core.UnaryExpr(null, _operator.sourceString, expression3.ast());
+  MultExp(unaryExpression) {
+    return unaryExpression.ast();
   },
-  ArrayAccess(_leftSquareBracket, expression, _rightSquareBracket) {
-    return expression.ast();
+  UnaryExp_unary(operator, unaryExpression) {
+    return new core.UnaryExpr(
+      null,
+      operator.sourceString,
+      unaryExpression.ast(),
+    );
   },
-  Block(_leftBracket, statements, _rightBracket) {
-    return new core.Block(null, statements.ast());
+  UnaryExp_array(_leftBracket, listOfExpressions, _rightBracket) {
+    return new core.ArrayLiteral(listOfExpressions.asIteration().ast());
   },
-  Funcall(
-    identifier,
+  UnaryExp(leftExpression) {
+    return leftExpression.ast();
+  },
+  LeftExp_call(
+    leftExpression,
     _leftParenthesis,
-    possibleFuncallArgs,
+    listOfExpressions,
     _rightParenthesis,
   ) {
     return new core.FunCall(
       null,
-      identifier.ast(),
-      possibleFuncallArgs.ast()[0] ?? new Array<core.Expr>(),
+      leftExpression.ast(),
+      listOfExpressions.asIteration().ast(),
     );
   },
-  FuncallArgs(expr, nextArgs) {
-    const args = nextArgs.ast();
-    args.unshift(expr.ast());
-    return args;
+  LeftExp_array(
+    leftExpression,
+    _leftSquareBracket,
+    expression,
+    _rightSquareBracket,
+  ) {
+    return new core.ArrayAccess(null, leftExpression.ast(), expression.ast());
   },
-  NextArg(_comma, expression) {
+  LeftExp(primaryExpression) {
+    return primaryExpression.ast();
+  },
+  PrimaryExp_group(_leftParenthesis, expression, _rightParenthesis) {
     return expression.ast();
   },
-  VarDeclaration(newIdentifier, _equal, expression) {
-    const typeAndIdentifier = newIdentifier.ast();
+  PrimaryExp(expression) {
+    return expression.ast();
+  },
+  Block(_leftBracket, statements, _rightBracket) {
+    return new core.Block(statements.ast());
+  },
+  VarDeclaration(parameter, _equal, expression) {
+    const typeAndIdentifier = parameter.ast();
     return new core.VarDeclaration(
-      typeAndIdentifier.type,
+      typeAndIdentifier.paramType,
       typeAndIdentifier.identifier,
       expression.ast(),
     );
   },
   FunDeclaration(
-    newIdentifier,
+    parameter,
     _leftParenthesis,
-    possibleNewIdentifiers,
+    possibleParameters,
     _rightParenthesis,
     block,
   ) {
-    const typeAndIdentifier = newIdentifier.ast();
-    const argsTypesAndIdentifiers = possibleNewIdentifiers.asIteration().ast();
-    const argTypes = new Array<string>();
-    const argIdentifiers = new Array<core.Identifier>();
-    argsTypesAndIdentifiers.forEach((element) => {
-      argTypes.push(element.type);
-      argIdentifiers.push(element.identifier);
-    });
+    const typeAndIdentifier = parameter.ast();
     return new core.FunDeclaration(
-      typeAndIdentifier.type,
+      typeAndIdentifier.paramType,
       typeAndIdentifier.identifier,
-      argTypes,
-      argIdentifiers,
+      possibleParameters.asIteration().ast(),
       block.ast(),
     );
   },
-  NewIdentifier(type, identifier) {
-    return { type: type.ast(), identifier: identifier.ast() };
+  Parameter(type, identifier) {
+    return new core.Parameter(type.ast(), identifier.ast());
   },
   type(keyword, arrayBrackets) {
-    return this.sourceString;
+    let baseTypeKind = core.BaseTypeKind.NONE;
+    switch (keyword.sourceString) {
+      case "number":
+        baseTypeKind = core.BaseTypeKind.NUMBER;
+        break;
+      case "string":
+        baseTypeKind = core.BaseTypeKind.STRING;
+        break;
+      case "bool":
+        baseTypeKind = core.BaseTypeKind.BOOL;
+        break;
+      case "void":
+        baseTypeKind = core.BaseTypeKind.VOID;
+        break;
+    }
+    const baseType = new core.BaseType(baseTypeKind);
+    if (arrayBrackets.children.length === 0) return baseType;
+    let arrayType = new core.ArrayType(baseType);
+    for (let i = 1; i < arrayBrackets.children.length; i++) {
+      arrayType = new core.ArrayType(arrayType);
+    }
+    return arrayType;
   },
-  trueKeyword(_true) {
-    return this.sourceString;
-  },
-  falseKeyword(_false) {
-    return this.sourceString;
-  },
-  numberKeyword(_number) {
-    return this.sourceString;
-  },
-  stringKeyword(_string) {
-    return this.sourceString;
-  },
-  boolKeyword(_bool) {
-    return this.sourceString;
-  },
-  voidKeyword(_void) {
-    return this.sourceString;
-  },
-  whileKeyword(_while) {
-    return this.sourceString;
-  },
-  ifKeyword(_if) {
-    return this.sourceString;
-  },
-  elseKeyword(_else) {
-    return this.sourceString;
-  },
-  identifier(letter, alphanumerics) {
-    return new core.Identifier(null, this.sourceString);
+  identifier(component) {
+    return new core.Identifier(this.sourceString);
   },
   booleanLiteral(keyword) {
-    return new core.BoolLiteral(Boolean(this.sourceString));
+    return new core.BoolLiteral(JSON.parse(this.sourceString));
   },
-  numberLiteral(digits, possibleFloatComponent) {
+  numberLiteral(
+    component0,
+    component1,
+    component2,
+    component3,
+    component4,
+    component5,
+  ) {
     return new core.NumberLiteral(Number(this.sourceString));
-  },
-  floatComponent(_period, digits, possibleScientificNotationComponent) {
-    return null;
-  },
-  scientificNotationComponent(_e, sign, digits) {
-    return null;
   },
   stringLiteral_doublequotes(_leftDoubleQuote, chars, _rightDoubleQuote) {
     const value = this.sourceString.slice(1, this.sourceString.length - 1);
@@ -317,45 +250,6 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   stringLiteral_singlequotes(_leftSingleQuote, chars, _rightSingleQuote) {
     const value = this.sourceString.slice(1, this.sourceString.length - 1);
     return new core.StringLiteral(value);
-  },
-  char(anyChar) {
-    return null;
-  },
-  whitespace_tabchar(tabChar) {
-    return null;
-  },
-  whitespace_verticaltab(verticalTab) {
-    return null;
-  },
-  whitespace_formfeed(formFeed) {
-    return null;
-  },
-  whitespace_space(space) {
-    return null;
-  },
-  whitespace_nobreakspace(noBreakSpace) {
-    return null;
-  },
-  whitespace_byteordermark(byteOrderMark) {
-    return null;
-  },
-  whitespace_spaceseperator(unicodeSpaceSeperator) {
-    return null;
-  },
-  lineTerminator(lineTerminatorString) {
-    return null;
-  },
-  unicodeSpaceSeparator(unicodeSpaceSeperatorString) {
-    return null;
-  },
-  space(whitespaceOrLineTerminator) {
-    return null;
-  },
-  newline_last(spaces, end) {
-    return null;
-  },
-  newline_whitespace(whitespaces, lineTerminator) {
-    return null;
   },
   NonemptyListWithOptionalEndSep(nonemptyList, possibleSeperator) {
     return nonemptyList.asIteration().ast();
@@ -386,50 +280,35 @@ export function visitDotPrinter(node: core.ASTNode): string {
   if (node instanceof core.FunDeclaration) {
     const funDeclNodeId = "Node" + nodeCount++;
     dotString = dotString.concat(funDeclNodeId + '[label=" FunDecl "];\n');
-    const typeNodeId = "Node" + nodeCount++;
-    dotString = dotString.concat(
-      typeNodeId + '[label=" ' + node.funType + ' "];\n',
-    );
+    const typeNodeId = visitDotPrinter(node.funType);
     const identifierNodeId = visitDotPrinter(node.identifier);
-    let argsNodeId = "";
-    if (node.argTypes.length > 0) {
-      argsNodeId = "Node" + nodeCount++;
-      dotString = dotString.concat(argsNodeId + '[label=" Args "];\n');
-    }
-    const argTypeIds = new Array<string>();
-    const argIdentifierIds = new Array<string>();
-    for (let i = 0; i < node.argTypes.length; i++) {
-      const argTypeId = "Node" + nodeCount++;
-      argTypeIds.push(argTypeId);
-      dotString = dotString.concat(
-        argTypeId + '[label=" ' + node.argTypes[i] + ' "];\n',
-      );
-      argIdentifierIds.push(visitDotPrinter(node.argIdentifiers[i]));
-    }
+    const paramNodeIds = new Array<string>();
+    node.params.forEach((child) => paramNodeIds.push(visitDotPrinter(child)));
     const blockNodeId = visitDotPrinter(node.block);
     dotString = dotString.concat(funDeclNodeId + "->" + typeNodeId + ";\n");
     dotString = dotString.concat(
       funDeclNodeId + "->" + identifierNodeId + ";\n",
     );
-    if (argsNodeId != "") {
-      dotString = dotString.concat(funDeclNodeId + "->" + argsNodeId + ";\n");
-      for (let i = 0; i < node.argTypes.length; i++) {
-        dotString = dotString.concat(argsNodeId + "->" + argTypeIds[i] + ";\n");
-        dotString = dotString.concat(
-          argsNodeId + "->" + argIdentifierIds[i] + ";\n",
-        );
-      }
-    }
+    paramNodeIds.forEach(
+      (nodeId) =>
+        (dotString = dotString.concat(funDeclNodeId + "->" + nodeId + ";\n")),
+    );
     dotString = dotString.concat(funDeclNodeId + "->" + blockNodeId + ";\n");
     return funDeclNodeId;
+  }
+  if (node instanceof core.Parameter) {
+    const paramNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(paramNodeId + '[label=" Param "];\n');
+    const typeNodeId = visitDotPrinter(node.paramType);
+    const identifierNodeId = visitDotPrinter(node.identifier);
+    dotString = dotString.concat(paramNodeId + "->" + typeNodeId + ";\n");
+    dotString = dotString.concat(paramNodeId + "->" + identifierNodeId + ";\n");
+    return paramNodeId;
   }
   if (node instanceof core.VarDeclaration) {
     const varDeclNodeId = "Node" + nodeCount++;
     dotString = dotString.concat(varDeclNodeId + '[label=" = "];\n');
-    const typeNodeId = "Node" + nodeCount++;
-    dotString = dotString.concat(
-      typeNodeId + "[label= " + node.stmtType + "];\n",
-    );
+    const typeNodeId = visitDotPrinter(node.stmtType);
     const identifierNodeId = visitDotPrinter(node.identifier);
     const valueNodeId = visitDotPrinter(node.value);
     dotString = dotString.concat(varDeclNodeId + "->" + typeNodeId + ";\n");
@@ -450,15 +329,21 @@ export function visitDotPrinter(node: core.ASTNode): string {
   if (node instanceof core.If) {
     const ifNodeId = "Node" + nodeCount++;
     dotString = dotString.concat(ifNodeId + '[label=" if "];\n');
+    let elseStmtNodeId = "";
     let elseNodeId = "";
     const conditionNodeId = visitDotPrinter(node.condition);
     const stmtNodeId = visitDotPrinter(node.ifStmt);
-    if (node.possibleElseStmt != null)
-      elseNodeId = visitDotPrinter(node.possibleElseStmt);
+    if (node.possibleElseStmt != null) {
+      elseNodeId = "Node" + nodeCount++;
+      dotString = dotString.concat(elseNodeId + '[label=" else "];\n');
+      elseStmtNodeId = visitDotPrinter(node.possibleElseStmt);
+    }
     dotString = dotString.concat(ifNodeId + "->" + conditionNodeId + ";\n");
     dotString = dotString.concat(ifNodeId + "->" + stmtNodeId + ";\n");
-    if (elseNodeId != "")
+    if (elseNodeId != "") {
       dotString = dotString.concat(ifNodeId + "->" + elseNodeId + ";\n");
+      dotString = dotString.concat(elseNodeId + "->" + elseStmtNodeId + ";\n");
+    }
     return ifNodeId;
   }
   if (node instanceof core.While) {
@@ -556,5 +441,45 @@ export function visitDotPrinter(node: core.ASTNode): string {
       identifierNodeId + '[label=" ' + node.value + ' "];\n',
     );
     return identifierNodeId;
+  }
+  if (node instanceof core.ArrayLiteral) {
+    const arrayNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(arrayNodeId + '[label=" Array "];\n');
+    const elementIds = new Array<string>();
+    node.children().forEach((child) => elementIds.push(visitDotPrinter(child)));
+    elementIds.forEach(
+      (nodeId) =>
+        (dotString = dotString.concat(arrayNodeId + "->" + nodeId + ";\n")),
+    );
+    return arrayNodeId;
+  }
+  if (node instanceof core.BaseType) {
+    const typeNodeId = "Node" + nodeCount++;
+    let label = "";
+    switch (node.kind) {
+      case core.BaseTypeKind.NUMBER:
+        label = "number";
+        break;
+      case core.BaseTypeKind.STRING:
+        label = "string";
+        break;
+      case core.BaseTypeKind.BOOL:
+        label = "bool";
+        break;
+      case core.BaseTypeKind.VOID:
+        label = "void";
+        break;
+      case core.BaseTypeKind.NONE:
+        break;
+    }
+    dotString = dotString.concat(typeNodeId + '[label=" ' + label + ' "];\n');
+    return typeNodeId;
+  }
+  if (node instanceof core.ArrayType) {
+    const arrayTypeNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(arrayTypeNodeId + '[label=" Array Of "];\n');
+    const typeNodeId = visitDotPrinter(node.type);
+    dotString = dotString.concat(arrayTypeNodeId + "->" + typeNodeId + ";\n");
+    return arrayTypeNodeId;
   }
 }
