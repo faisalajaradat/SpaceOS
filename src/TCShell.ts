@@ -3,7 +3,7 @@ import { grammar } from "./grammar.js";
 import { ast, visitDotPrinter } from "./ast.js";
 import { Command } from "commander";
 import { graphviz } from "node-graphviz";
-
+import analyze from "./semantics.js";
 const program = new Command();
 
 program
@@ -28,11 +28,16 @@ program
         return;
       }
       const astHead = ast(match);
-      if (options.dot === undefined) return;
-      const dotString = visitDotPrinter(astHead);
-      graphviz
-        .dot(dotString, "svg")
-        .then((svg) => fs.writeFileSync(options.dot, svg));
+      if (options.dot != undefined) {
+        const dotString = visitDotPrinter(astHead);
+        graphviz
+          .dot(dotString, "svg")
+          .then((svg) => fs.writeFileSync(options.dot, svg));
+      }
+      const semanticsErrors = analyze(astHead);
+      if (semanticsErrors)
+        console.error("Program has " + semanticsErrors + " error(s)!");
+      else console.log("No errors!");
     } catch (err) {
       console.error(err);
     }

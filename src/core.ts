@@ -309,6 +309,7 @@ export class ArrayLiteral extends Expr {
 }
 export class Identifier extends Expr {
   value: string;
+  declaration: VarDeclaration | Parameter | FunDeclaration;
 
   constructor(value: string) {
     super(new BaseType(BaseTypeKind.NONE));
@@ -318,3 +319,12 @@ export class Identifier extends Expr {
     return new Array<ASTNode>();
   }
 }
+
+export const libFunctions = [
+  new FunDeclaration(
+    new BaseType(BaseTypeKind.VOID),
+    new Identifier("print"),
+    [new Parameter(new BaseType(BaseTypeKind.NONE), new Identifier("message"))],
+    new Block(new Array<Stmt>()),
+  ),
+];
