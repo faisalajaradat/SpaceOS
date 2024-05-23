@@ -180,7 +180,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   VarDeclaration(parameter, _equal, expression) {
     const typeAndIdentifier = parameter.ast();
     return new core.VarDeclaration(
-      typeAndIdentifier.paramType,
+      typeAndIdentifier.stmtType,
       typeAndIdentifier.identifier,
       expression.ast(),
     );
@@ -194,7 +194,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   ) {
     const typeAndIdentifier = parameter.ast();
     return new core.FunDeclaration(
-      typeAndIdentifier.paramType,
+      typeAndIdentifier.stmtType,
       typeAndIdentifier.identifier,
       possibleParameters.asIteration().ast(),
       block.ast(),
@@ -299,7 +299,7 @@ export function visitDotPrinter(node: core.ASTNode): string {
   if (node instanceof core.Parameter) {
     const paramNodeId = "Node" + nodeCount++;
     dotString = dotString.concat(paramNodeId + '[label=" Param "];\n');
-    const typeNodeId = visitDotPrinter(node.paramType);
+    const typeNodeId = visitDotPrinter(node.stmtType);
     const identifierNodeId = visitDotPrinter(node.identifier);
     dotString = dotString.concat(paramNodeId + "->" + typeNodeId + ";\n");
     dotString = dotString.concat(paramNodeId + "->" + identifierNodeId + ";\n");

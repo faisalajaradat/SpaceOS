@@ -64,18 +64,17 @@ export abstract class Expr extends Stmt {
     super(type);
   }
 }
-export class Parameter implements ASTNode {
-  paramType: Type;
+export class Parameter extends Stmt {
   identifier: Identifier;
 
   constructor(paramType: Type, identifier: Identifier) {
-    this.paramType = paramType;
+    super(paramType);
     this.identifier = identifier;
   }
 
   children(): ASTNode[] {
     const children = new Array<ASTNode>();
-    children.push(this.paramType);
+    children.push(this.stmtType);
     children.push(this.identifier);
     return children;
   }
