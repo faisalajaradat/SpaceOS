@@ -139,7 +139,6 @@ function conditionIsValidType(node: core.If | core.While): boolean {
     return false;
   }
   return true;
-  const stringType = new core.BaseType(core.BaseTypeKind.STRING);
 }
 
 function visitTypeAnalyzer(node: core.ASTNode): core.Type {
