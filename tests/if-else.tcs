@@ -9,4 +9,4 @@ void Main() {
   else print("Wrong!")
 }
 
-Main();
+Main()

@@ -1,4 +1,8 @@
 void Main() {
   number[] nums = {7, 5, 3}
   string[][] arraysOfStringArrays = {{"hello!"}, {"Hello"}, {" "}, {"World!"}}
+  print(nums)
+  print(arraysOfStringArrays)
 }
+
+Main()

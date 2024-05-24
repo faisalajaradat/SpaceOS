@@ -1,3 +1,5 @@
+import { Scope } from "./semantics.js";
+
 export interface ASTNode {
   children(): ASTNode[];
 }
@@ -40,6 +42,7 @@ export class ArrayType extends Type {
 }
 export class Program implements ASTNode {
   declarations: ASTNode[];
+  scope: Scope;
 
   constructor(declarations: ASTNode[]) {
     this.declarations = declarations;
@@ -84,6 +87,7 @@ export class FunDeclaration implements ASTNode {
   identifier: Identifier;
   params: Parameter[];
   block: Block;
+  scope: Scope;
 
   constructor(
     type: Type,
@@ -132,7 +136,7 @@ export class Return extends Stmt {
 
   children(): ASTNode[] {
     const children = new Array<ASTNode>();
-    if (this.possibleValue != null) children.push(this.possibleValue);
+    if (this.possibleValue !== null) children.push(this.possibleValue);
     return children;
   }
 }
@@ -152,7 +156,7 @@ export class If extends Stmt {
     const children = new Array<ASTNode>();
     children.push(this.condition);
     children.push(this.ifStmt);
-    if (this.possibleElseStmt != null) children.push(this.possibleElseStmt);
+    if (this.possibleElseStmt !== null) children.push(this.possibleElseStmt);
     return children;
   }
 }
@@ -175,6 +179,7 @@ export class While extends Stmt {
 }
 export class Block extends Stmt {
   stmts: Stmt[];
+  scope: Scope;
 
   constructor(stmts: Stmt[]) {
     super(new BaseType(BaseTypeKind.NONE));
@@ -252,7 +257,7 @@ export class FunCall extends Expr {
   children(): ASTNode[] {
     const children = new Array<ASTNode>();
     children.push(this.identifier);
-    if (this.args != null) children.push(...this.args);
+    if (this.args !== null) children.push(...this.args);
     return children;
   }
 }
