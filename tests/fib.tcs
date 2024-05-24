@@ -4,6 +4,6 @@ number fib(number num) {
   return fib(num - 1) + fib(num - 2)
 }
 
-number fibonacci = fib(9)
+number fibonacci = fib(20)
 
 print(fibonacci)

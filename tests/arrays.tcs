@@ -2,7 +2,9 @@ void Main() {
   number[] nums = {7, 5, 3}
   string[][] arraysOfStringArrays = {{"hello!"}, {"Hello"}, {" "}, {"World!"}}
   print(nums)
+  print(nums[0])
   print(arraysOfStringArrays)
+  print(arraysOfStringArrays[3][0])
 }
 
 Main()
