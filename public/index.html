@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Speech API Example</title>
+    <style>
+        body {
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h1 {
+            color: #4A90E2;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4A90E2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background-color: #357ABD;
+        }
+        p {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ccc;
+            min-height: 100px;
+            border-radius: 5px;
+            font-size: 16px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>Web Speech API Integration</h1>
+    <button id="speakBtn" >Speak</button>
+    <button id="stopBtn">Stop</button>
+    <p id="transcript">Transcript will appear here...</p>
+
+    <script>
+        const speakBtn = document.getElementById('speakBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const transcript = document.getElementById('transcript');
+        let recognition = new webkitSpeechRecognition();
+        recognition.continuous = true;
+        recognition.lang = 'en-US';
+        recognition.interimResults = true; // Still capture interim results for real-time effect
+    
+        recognition.onresult = function(event) {
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) { // Only update the transcript with final results
+                    transcript.textContent += event.results[i][0].transcript;
+                }
+            }
+        };
+    
+        speakBtn.onclick = () => {
+            recognition.start();
+            transcript.textContent = ''; // Clear previous transcript if any
+        };
+        stopBtn.onclick = () => recognition.stop();
+    </script>
+</body>
+</html>
