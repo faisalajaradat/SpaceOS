@@ -16,11 +16,6 @@ class ArrayRepresentation {
 function popOutOfScopeVars(
   node: core.Program | core.FunDeclaration | core.Block,
 ) {
-  if (
-    node instanceof core.FunDeclaration &&
-    core.libFunctions.lastIndexOf(node) != -1
-  )
-    return;
   node.scope.symbolTable.forEach((symbol) => {
     if (symbol instanceof FunSymbol) return;
     varStacks.get((<VarSymbol>symbol).varDeclaration).pop();
@@ -51,7 +46,7 @@ function evaluate(node: core.ASTNode): unknown {
   } else if (node instanceof core.FunDeclaration) {
     if (core.libFunctions.has(node)) {
       const args = node.params.map((param) => varStacks.get(param).pop());
-      return core.libFunctions.get(node)(args);
+      return core.libFunctions.get(node)(...args);
     }
     const returnValue = getValueOfExpression(evaluate(node.block));
     popOutOfScopeVars(node);
