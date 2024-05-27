@@ -123,12 +123,12 @@ const boolType = new core.BaseType(core.BaseTypeKind.BOOL);
 const stringType = new core.BaseType(core.BaseTypeKind.STRING);
 
 function typesAreEqual(type1: core.Type, type2: core.Type): boolean {
+  if (type1 instanceof core.BaseType && type1.kind === core.BaseTypeKind.ANY)
+    return true;
+  if (type2 instanceof core.BaseType && type2.kind === core.BaseTypeKind.ANY)
+    return true;
   if (type1 instanceof core.BaseType && type2 instanceof core.BaseType)
-    return (
-      type1.kind === type2.kind ||
-      type1.kind === core.BaseTypeKind.ANY ||
-      type2.kind === core.BaseTypeKind.ANY
-    );
+    return type1.kind === type2.kind;
   if (type1 instanceof core.ArrayType && type2 instanceof core.ArrayType) {
     let type1Base: core.Type = type1;
     let type2Base: core.Type = type2;
