@@ -1,7 +1,9 @@
 number fib(number num) {
   if num <= 1
-    return 1
+    return num
   return fib(num - 1) + fib(num - 2)
 }
 
-fib(1)
+number fibonacci = fib(20)
+
+print(fibonacci)

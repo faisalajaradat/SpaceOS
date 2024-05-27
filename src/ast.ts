@@ -321,7 +321,7 @@ export function visitDotPrinter(node: core.ASTNode): string {
   if (node instanceof core.Return) {
     const returnNodeId = "Node" + nodeCount++;
     dotString = dotString.concat(returnNodeId + '[label=" return "];\n');
-    if (node.possibleValue == null) return returnNodeId;
+    if (node.possibleValue === null) return returnNodeId;
     const valueNodeId = visitDotPrinter(node.possibleValue);
     dotString = dotString.concat(returnNodeId + "->" + valueNodeId + ";\n");
     return returnNodeId;
@@ -333,14 +333,14 @@ export function visitDotPrinter(node: core.ASTNode): string {
     let elseNodeId = "";
     const conditionNodeId = visitDotPrinter(node.condition);
     const stmtNodeId = visitDotPrinter(node.ifStmt);
-    if (node.possibleElseStmt != null) {
+    if (node.possibleElseStmt !== null) {
       elseNodeId = "Node" + nodeCount++;
       dotString = dotString.concat(elseNodeId + '[label=" else "];\n');
       elseStmtNodeId = visitDotPrinter(node.possibleElseStmt);
     }
     dotString = dotString.concat(ifNodeId + "->" + conditionNodeId + ";\n");
     dotString = dotString.concat(ifNodeId + "->" + stmtNodeId + ";\n");
-    if (elseNodeId != "") {
+    if (elseNodeId !== "") {
       dotString = dotString.concat(ifNodeId + "->" + elseNodeId + ";\n");
       dotString = dotString.concat(elseNodeId + "->" + elseStmtNodeId + ";\n");
     }

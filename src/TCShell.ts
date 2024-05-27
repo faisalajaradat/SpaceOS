@@ -4,6 +4,7 @@ import { ast, visitDotPrinter } from "./ast.js";
 import { Command } from "commander";
 import { graphviz } from "node-graphviz";
 import analyze from "./semantics.js";
+import interpetProgram from "./interpreter.js";
 const program = new Command();
 
 program
@@ -35,9 +36,11 @@ program
           .then((svg) => fs.writeFileSync(options.dot, svg));
       }
       const semanticsErrors = analyze(astHead);
-      if (semanticsErrors)
+      if (semanticsErrors) {
         console.error("Program has " + semanticsErrors + " error(s)!");
-      else console.log("No errors!");
+        return;
+      }
+      interpetProgram(astHead);
     } catch (err) {
       console.error(err);
     }

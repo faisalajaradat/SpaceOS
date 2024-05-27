@@ -4,7 +4,7 @@ number add(number x, number y) {
 
 void Main() {
   print("Hello World!")
-  print(add(5, 3))
+  print(add(0.1, 0.05))
 }
 
 Main()
