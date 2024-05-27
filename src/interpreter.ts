@@ -27,6 +27,16 @@ function popOutOfScopeVars(
   });
 }
 
+function getValueOfExpression(value: unknown): unknown {
+  if (value instanceof core.Identifier)
+    value = varStacks
+      .get(<core.VarDeclaration | core.Parameter>value.declaration)
+      .at(-1);
+  else if (value instanceof ArrayRepresentation)
+    value = value.array[value.index];
+  return value;
+}
+
 export default function interpetProgram(node: core.Program) {
   evaluate(node);
 }
@@ -39,47 +49,23 @@ function evaluate(node: core.ASTNode): unknown {
       .forEach((stmt) => evaluate(stmt));
     popOutOfScopeVars(node);
   } else if (node instanceof core.FunDeclaration) {
-    let returnValue = evaluate(node.block);
-    if (returnValue instanceof core.Identifier)
-      returnValue = varStacks
-        .get(<core.VarDeclaration | core.Parameter>returnValue.declaration)
-        .at(-1);
-    else if (returnValue instanceof ArrayRepresentation)
-      returnValue = returnValue.array[returnValue.index];
+    const returnValue = getValueOfExpression(evaluate(node.block));
     popOutOfScopeVars(node);
     return returnValue;
   } else if (node instanceof core.VarDeclaration) {
-    let value = evaluate(node.value);
-    if (value instanceof core.Identifier)
-      value = varStacks
-        .get(<core.VarDeclaration | core.Parameter>value.declaration)
-        .at(-1);
-    else if (value instanceof ArrayRepresentation)
-      value = value.array[value.index];
+    const value = getValueOfExpression(evaluate(node.value));
     const varStack = varStacks.get(node);
     if (varStack === undefined) varStacks.set(node, [value]);
     else varStack.push(evaluate(node.value));
   } else if (node instanceof core.Return) return node;
   else if (node instanceof core.If) {
-    let conditionValue = evaluate(node.condition);
-    if (conditionValue instanceof core.Identifier)
-      conditionValue = varStacks
-        .get(<core.VarDeclaration | core.Parameter>conditionValue.declaration)
-        .at(-1);
-    else if (conditionValue instanceof ArrayRepresentation)
-      conditionValue = conditionValue.array[conditionValue.index];
-    if (<boolean>conditionValue) return evaluate(node.ifStmt);
+    if (<boolean>getValueOfExpression(evaluate(node.condition)))
+      return evaluate(node.ifStmt);
     else if (node.possibleElseStmt !== null)
       return evaluate(node.possibleElseStmt);
   } else if (node instanceof core.While) {
-    let conditionValue = evaluate(node.condition);
-    if (conditionValue instanceof core.Identifier)
-      conditionValue = varStacks
-        .get(<core.VarDeclaration | core.Parameter>conditionValue.declaration)
-        .at(-1);
-    else if (conditionValue instanceof ArrayRepresentation)
-      conditionValue = conditionValue.array[conditionValue.index];
-    while (<boolean>conditionValue) return evaluate(node.whileStmt);
+    while (<boolean>getValueOfExpression(evaluate(node.condition)))
+      return evaluate(node.whileStmt);
   } else if (node instanceof core.Block) {
     let returnNode = undefined;
     for (let i = 0; i < node.stmts.length; i++) {
@@ -91,24 +77,14 @@ function evaluate(node: core.ASTNode): unknown {
       returnNode.possibleValue === null
     )
       return undefined;
-    let returnValue = evaluate(returnNode.possibleValue);
-    if (returnValue instanceof core.Identifier)
-      returnValue = varStacks
-        .get(<core.VarDeclaration | core.Parameter>returnValue.declaration)
-        .at(-1);
-    else if (returnValue instanceof ArrayRepresentation)
-      returnValue = returnValue.array[returnValue.index];
+    const returnValue = getValueOfExpression(
+      evaluate(returnNode.possibleValue),
+    );
     popOutOfScopeVars(node);
     return returnValue;
   } else if (node instanceof core.BinaryExpr) {
     let leftHandExp = evaluate(node.leftExpr);
-    let rightHandExp = evaluate(node.rightExpr);
-    if (rightHandExp instanceof core.Identifier)
-      rightHandExp = varStacks
-        .get(<core.VarDeclaration | core.Parameter>rightHandExp.declaration)
-        .at(-1);
-    else if (rightHandExp instanceof ArrayRepresentation)
-      rightHandExp = rightHandExp.array[rightHandExp.index];
+    const rightHandExp = getValueOfExpression(evaluate(node.rightExpr));
     if (node.operator === "=") {
       if (leftHandExp instanceof core.Identifier) {
         const varStack = varStacks.get(
@@ -121,12 +97,7 @@ function evaluate(node: core.ASTNode): unknown {
         leftHandExp.array[leftHandExp.index] = rightHandExp;
       return rightHandExp;
     }
-    if (leftHandExp instanceof core.Identifier)
-      leftHandExp = varStacks
-        .get(<core.VarDeclaration | core.Parameter>leftHandExp.declaration)
-        .at(-1);
-    else if (leftHandExp instanceof ArrayRepresentation)
-      leftHandExp = leftHandExp.array[leftHandExp.index];
+    leftHandExp = getValueOfExpression(leftHandExp);
     switch (node.operator) {
       case "||":
         return <boolean>leftHandExp || <boolean>rightHandExp;
@@ -158,13 +129,7 @@ function evaluate(node: core.ASTNode): unknown {
         return <number>leftHandExp % <number>rightHandExp;
     }
   } else if (node instanceof core.UnaryExpr) {
-    let expression = evaluate(node.expr);
-    if (expression instanceof core.Identifier)
-      expression = varStacks
-        .get(<core.VarDeclaration | core.Parameter>expression.declaration)
-        .at(-1);
-    else if (expression instanceof ArrayRepresentation)
-      expression = expression.array[expression.index];
+    const expression = getValueOfExpression(evaluate(node.expr));
     switch (node.operator) {
       case "+":
         return +(<number>expression);
@@ -175,23 +140,11 @@ function evaluate(node: core.ASTNode): unknown {
     }
   } else if (node instanceof core.FunCall) {
     if (node.identifier.value === "print") {
-      let message = evaluate(node.args[0]);
-      if (message instanceof core.Identifier)
-        message = varStacks
-          .get(<core.VarDeclaration | core.Parameter>message.declaration)
-          .at(-1);
-      else if (message instanceof ArrayRepresentation)
-        message = message.array[message.index];
+      const message = getValueOfExpression(evaluate(node.args[0]));
       console.log(message);
     }
     node.args.forEach((arg, pos) => {
-      let value = evaluate(arg);
-      if (value instanceof core.Identifier)
-        value = varStacks
-          .get(<core.VarDeclaration | core.Parameter>value.declaration)
-          .at(-1);
-      else if (value instanceof ArrayRepresentation)
-        value = value.array[value.index];
+      const value = getValueOfExpression(evaluate(arg));
       const paramStack = varStacks.get(
         (<core.FunDeclaration>node.identifier.declaration).params[pos],
       );
@@ -208,16 +161,7 @@ function evaluate(node: core.ASTNode): unknown {
   else if (node instanceof core.NumberLiteral) return node.value;
   else if (node instanceof core.Identifier) return node;
   else if (node instanceof core.ArrayLiteral) {
-    return node.value.map((exp) => {
-      let returnValue = evaluate(exp);
-      if (returnValue instanceof core.Identifier)
-        varStacks
-          .get(<core.VarDeclaration | core.Parameter>returnValue.declaration)
-          .at(-1);
-      else if (returnValue instanceof ArrayRepresentation)
-        returnValue = returnValue.array[returnValue.index];
-      return returnValue;
-    });
+    return node.value.map((exp) => getValueOfExpression(evaluate(exp)));
   } else if (node instanceof core.ArrayAccess) {
     const indices = new Array<number>();
     let arrayBase = node;
