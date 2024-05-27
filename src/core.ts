@@ -9,6 +9,7 @@ export enum BaseTypeKind {
   STRING,
   BOOL,
   VOID,
+  ANY,
   NONE,
 }
 
@@ -324,11 +325,17 @@ export class Identifier extends Expr {
   }
 }
 
-export const libFunctions = [
+export const libFunctions = new Map<
+  FunDeclaration,
+  (...args: unknown[]) => unknown
+>();
+
+libFunctions.set(
   new FunDeclaration(
     new BaseType(BaseTypeKind.VOID),
     new Identifier("print"),
-    [new Parameter(new BaseType(BaseTypeKind.NONE), new Identifier("message"))],
+    [new Parameter(new BaseType(BaseTypeKind.ANY), new Identifier("message"))],
     new Block(new Array<Stmt>()),
   ),
-];
+  (...args) => console.log(args[0]),
+);

@@ -49,6 +49,10 @@ function evaluate(node: core.ASTNode): unknown {
       .forEach((stmt) => evaluate(stmt));
     popOutOfScopeVars(node);
   } else if (node instanceof core.FunDeclaration) {
+    if (core.libFunctions.has(node)) {
+      const args = node.params.map((param) => varStacks.get(param).pop());
+      return core.libFunctions.get(node)(args);
+    }
     const returnValue = getValueOfExpression(evaluate(node.block));
     popOutOfScopeVars(node);
     return returnValue;
@@ -139,23 +143,14 @@ function evaluate(node: core.ASTNode): unknown {
         return !(<boolean>expression);
     }
   } else if (node instanceof core.FunCall) {
-    if (node.identifier.value === "print") {
-      const message = getValueOfExpression(evaluate(node.args[0]));
-      console.log(message);
-    }
+    const funDecl = <core.FunDeclaration>node.identifier.declaration;
     node.args.forEach((arg, pos) => {
       const value = getValueOfExpression(evaluate(arg));
-      const paramStack = varStacks.get(
-        (<core.FunDeclaration>node.identifier.declaration).params[pos],
-      );
-      if (paramStack === undefined)
-        varStacks.set(
-          (<core.FunDeclaration>node.identifier.declaration).params[pos],
-          [value],
-        );
+      const paramStack = varStacks.get(funDecl.params[pos]);
+      if (paramStack === undefined) varStacks.set(funDecl.params[pos], [value]);
       else paramStack.push(value);
     });
-    return evaluate(node.identifier.declaration);
+    return evaluate(funDecl);
   } else if (node instanceof core.StringLiteral) return node.value;
   else if (node instanceof core.BoolLiteral) return node.value;
   else if (node instanceof core.NumberLiteral) return node.value;
