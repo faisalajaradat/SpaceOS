@@ -101,7 +101,7 @@ TCShell {
     numberLiteral = digit+ ("." digit+ (("e" | "E") ("+" | "-") digit+)?)?
 
     stringLiteral = ("\"" char* "\"")   --doublequotes
-    					    | ("\'" char* "\'")   --singlequotes
+    					    | ("'" char* "'")   --singlequotes
     char = ~"\"" ~"\n" any
 
     whitespace = "\t"       --tabchar
