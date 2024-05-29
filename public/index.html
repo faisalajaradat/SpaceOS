@@ -3,9 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Speech API Example</title>
+    <title>Web-Speech API Testing</title>
     <style>
         body {
+            display: flex;
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0; 
             padding: 20px;
             font-family: Arial, sans-serif;
             background-color: #f4f4f9;
@@ -13,6 +19,7 @@
         }
         h1 {
             color: #4A90E2;
+            justify-content: start;
         }
         button {
             padding: 10px 20px;
@@ -25,6 +32,9 @@
         }
         button:hover {
             background-color: #357ABD;
+        }.button-container {
+            display: flex; /* Uses Flexbox to arrange buttons side by side */
+            gap: 10px; /* Adds space between the buttons */
         }
         p {
             margin-top: 20px;
@@ -35,37 +45,93 @@
             border-radius: 5px;
             font-size: 16px;
             color: #555;
+            width: calc(100% - 42px); 
+            flex-grow: 1;
+        } input[type="text"]  {
+            width: calc(100% - 42px); 
+            height: 50px;
+            border-width: 0;
+            border-color: blue;
+            margin: 0,auto;
         }
     </style>
 </head>
 <body>
     <h1>Web Speech API Integration</h1>
-    <button id="speakBtn" >Speak</button>
-    <button id="stopBtn">Stop</button>
+    <div class="button-container">
+        <button id="speakBtn">Speak</button>
+        <button id="stopBtn">Stop</button>
+    </div>
     <p id="transcript">Transcript will appear here...</p>
+    <div class="button-container" style="width:100%">
+        <input type="text" id="inputField" placeholder="Type here...">
+        <button id="LLM" style="padding: 0; width: 10%;">Call LLM</button>
+    </div>
+    <script src="bundle.js" type="module"></script>
+    <script type="module" src="../dist/switchingLogic.js"></script>
+    <script type="module">
+        document.getElementById('LLM').addEventListener('click', async () => {
+            const inputField = document.getElementById('inputField');
+            const transcript = document.getElementById('transcript');
+            const userInput = inputField.value; // Taking user input
+            transcript.textContent = "Processing..."; // Update display to show processing status
 
-    <script>
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userInput })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                transcript.textContent = data.response; // Display the server's response
+                speakResponse(data.response);
+            } catch (e) {
+                console.error('Error fetching data:', e);
+                transcript.textContent = "Failed to process input.";
+            }
+        });
+
+        // Web Speech API scripts start here
         const speakBtn = document.getElementById('speakBtn');
         const stopBtn = document.getElementById('stopBtn');
-        const transcript = document.getElementById('transcript');
         let recognition = new webkitSpeechRecognition();
         recognition.continuous = true;
         recognition.lang = 'en-US';
-        recognition.interimResults = true; // Still capture interim results for real-time effect
-    
+        recognition.interimResults = true;
+
+        recognition.onstart = function() {
+            console.log('Speech recognition started');
+            transcript.textContent = ''; // Clear transcript on start
+        };
+
+        recognition.onerror = function(event) {
+            console.error('Speech recognition error:', event.error);
+        };
+
         recognition.onresult = function(event) {
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                if (event.results[i].isFinal) { // Only update the transcript with final results
-                    transcript.textContent += event.results[i][0].transcript;
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                if (event.results[i].isFinal) {
+                    inputField.value = event.results[i][0].transcript;  // Display recognized text
                 }
             }
         };
-    
-        speakBtn.onclick = () => {
-            recognition.start();
-            transcript.textContent = ''; // Clear previous transcript if any
-        };
+
+        speakBtn.onclick = () => recognition.start();
         stopBtn.onclick = () => recognition.stop();
+
+        function speakResponse(text) {
+        const synth = window.speechSynthesis;
+        const utterance = new SpeechSynthesisUtterance(text);
+        synth.speak(utterance);
+    }
     </script>
+    
 </body>
 </html>

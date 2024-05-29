@@ -11,7 +11,7 @@ import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts
 import { ChatMessageHistory } from '@langchain/community/stores/message/in_memory';
 //Env Variables
 import * as dotenv from 'dotenv';
-import readline from 'readline';
+import getUserInput from './getUserInput.js';
 
 
 dotenv.config();
@@ -68,27 +68,19 @@ export function initializeChatModel(type:ChatModelType):initializedChatModel {
   }
 
 
-function getUserInput(): Promise<string> {
-    const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-    });
-    return new Promise<string>(resolve => {
-        rl.question("please input your question: ", (answer:string) => {
-            rl.close();
-            resolve(answer);
-        });
-    });
-}
 
-async function createMessageArray(){
-    const userInput = await getUserInput();
-    if (userInput.toLowerCase() === 'exit') {
+
+async function createMessageArray(userInput?: string ){
+    if (userInput === undefined){
+      userInput = await getUserInput();
+    }
+    
+    if (userInput!.toLowerCase() === 'exit') {
       return  { messages: null, userInput: null };
     }
     const messages = ChatPromptTemplate.fromMessages([
       ["system", spaceOSInformation],  // System message with predefined information
-      ["human", userInput],            // Human message based on user input
+      ["human", userInput!],            // Human message based on user input
       new MessagesPlaceholder("history"),
     ]);
     return { messages, userInput }
@@ -96,12 +88,20 @@ async function createMessageArray(){
   }
 
 
-export async function makeCall(chatmodel: initializedChatModel){ // | initializedChatModel[]
+export async function makeCall(chatmodel: initializedChatModel, passedInput:string= ''){ // | initializedChatModel[]
     const chatModel = chatmodel;
-    let { messages, userInput } = await createMessageArray();
-    console.log({ messages, userInput })
+    let messages, userInput;
+    if (passedInput === ''){
+      ({ messages, userInput } = await createMessageArray());
+      
+    }else{
+      ({ messages, userInput } = await createMessageArray(passedInput));
+    }
+    //console.log({ messages, userInput })
+
+   
     if (messages !== null){
-      const response = messages.pipe(chatModel);
+      const response = messages!.pipe(chatModel);
       
       
       const withHistory = new RunnableWithMessageHistory({
@@ -118,6 +118,11 @@ export async function makeCall(chatmodel: initializedChatModel){ // | initialize
         {input: userInput},
         config
       );
+      
+      console.log(output.lc_kwargs.content);
+      
+      
+      return output.lc_kwargs.content;
   
   
       //console.log("output:", output);
