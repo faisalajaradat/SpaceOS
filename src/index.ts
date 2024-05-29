@@ -7,17 +7,15 @@ import express from 'express';
 const app = express();
 const PORT = 7000;
 
-app.use(express.json()); // Middleware for parsing JSON bodies
+app.use(express.json()); //parse the json
 app.use(express.static('public'));
-app.use('/dist', express.static('dist')); // Serves files from the 'dist' directory
-app.use('/node_modules', express.static('node_modules')); // Serves files from the 'node_modules' directory
 
 app.get('/', (req, res) => {
     res.sendFile('index.html', { root: __dirname });
 });
 
 
-app.post('/chat', async (req, res) => {
+app.post('/chat', async (req, res) => { //chat API endpoint for use with front-end
     const userInput = req.body.userInput;
 
     try {

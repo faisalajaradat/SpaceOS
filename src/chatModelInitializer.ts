@@ -37,7 +37,7 @@ SpaceBase is built to ensure high reliability and continuous operation, with rob
 const messageHistory =  new ChatMessageHistory();
 
 
-export function initializeChatModel(type:ChatModelType):initializedChatModel {
+export function initializeChatModel(type:ChatModelType):initializedChatModel { //depending on enum, inits each type.
     let chatModel;
     
     switch (type.toLowerCase()) {
@@ -55,7 +55,7 @@ export function initializeChatModel(type:ChatModelType):initializedChatModel {
         break;
       case "local":
         chatModel = new ChatOllama({
-          baseUrl: process.env.OLLAMA_BASE_URL, // Default value
+          baseUrl: process.env.OLLAMA_BASE_URL, 
           model: process.env.OLLAMA_MODEL
         });
         console.log("Initializing Local (Ollama) model");
@@ -70,7 +70,7 @@ export function initializeChatModel(type:ChatModelType):initializedChatModel {
 
 
 
-async function createMessageArray(userInput?: string ){
+async function createMessageArray(userInput?: string ){ //creates the ChatPromptTemplate
     if (userInput === undefined){
       userInput = await getUserInput();
     }
@@ -97,7 +97,6 @@ export async function makeCall(chatmodel: initializedChatModel, passedInput:stri
     }else{
       ({ messages, userInput } = await createMessageArray(passedInput));
     }
-    //console.log({ messages, userInput })
 
    
     if (messages !== null){

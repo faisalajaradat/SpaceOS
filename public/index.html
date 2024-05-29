@@ -33,8 +33,8 @@
         button:hover {
             background-color: #357ABD;
         }.button-container {
-            display: flex; /* Uses Flexbox to arrange buttons side by side */
-            gap: 10px; /* Adds space between the buttons */
+            display: flex; 
+            gap: 10px; /* space in between buttons*/
         }
         p {
             margin-top: 20px;
@@ -74,10 +74,10 @@
             const inputField = document.getElementById('inputField');
             const transcript = document.getElementById('transcript');
             const userInput = inputField.value; // Taking user input
-            transcript.textContent = "Processing..."; // Update display to show processing status
+            transcript.textContent = "Processing..."; // update to processing to give the user some feedback
 
             try {
-                const response = await fetch('/chat', {
+                const response = await fetch('/chat', { //express chat endpoint
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -90,15 +90,15 @@
                 }
                 
                 const data = await response.json();
-                transcript.textContent = data.response; // Display the server's response
-                speakResponse(data.response);
-            } catch (e) {
+                transcript.textContent = data.response; // Display the server's response all in one go
+                speakResponse(data.response); //speak the response
+            } catch (e) { //error handling
                 console.error('Error fetching data:', e);
                 transcript.textContent = "Failed to process input.";
             }
         });
 
-        // Web Speech API scripts start here
+        // Web Speech API 
         const speakBtn = document.getElementById('speakBtn');
         const stopBtn = document.getElementById('stopBtn');
         let recognition = new webkitSpeechRecognition();
@@ -108,7 +108,7 @@
 
         recognition.onstart = function() {
             console.log('Speech recognition started');
-            transcript.textContent = ''; // Clear transcript on start
+            transcript.textContent = ''; // Clear when re-recognizing voice
         };
 
         recognition.onerror = function(event) {
@@ -118,7 +118,7 @@
         recognition.onresult = function(event) {
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 if (event.results[i].isFinal) {
-                    inputField.value = event.results[i][0].transcript;  // Display recognized text
+                    inputField.value = event.results[i][0].transcript;  // Display recognized text at the end to prevent duplicates
                 }
             }
         };
@@ -126,7 +126,7 @@
         speakBtn.onclick = () => recognition.start();
         stopBtn.onclick = () => recognition.stop();
 
-        function speakResponse(text) {
+        function speakResponse(text) { //function for speaking
         const synth = window.speechSynthesis;
         const utterance = new SpeechSynthesisUtterance(text);
         synth.speak(utterance);
