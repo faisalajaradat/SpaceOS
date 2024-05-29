@@ -42,10 +42,10 @@ TCShell {
      MultExp = MultExp ( "*" | "/" | "%" ) UnaryExp		--mult
      				| UnaryExp
 	UnaryExp = ("+" | "-" | "!") UnaryExp	--unary
-    				| "{" ListOf<Exp, ","> "}"		--array
     				| LeftExp
      LeftExp = LeftExp "(" ListOf<Exp, ","> ")"		--call
      				| LeftExp "[" Exp "]"		--array
+            | LeftExp "." LeftExp --method
                     | PrimaryExp
 
     PrimaryExp = stringLiteral
@@ -53,14 +53,21 @@ TCShell {
                         | numberLiteral
                         | booleanLiteral
                         | "(" Exp ")"		--group
+                        | "{" ListOf<Exp, ","> "}"		--array
 
     Block = "{" Stmt* "}"
 
     VarDeclaration = Parameter "=" Exp
     FunDeclaration = Parameter "(" ListOf<Parameter, ","> ")" Block
 
-    Parameter = type identifier
-    type = typeKeyword "[]"*
+    Parameter = Type identifier
+
+    ResultType = result "<" Type "," Type ">" ArrayBrackets
+
+    Type = (typeKeyword | ResultType) ArrayBrackets
+
+    ArrayBrackets = "[]"*
+
 
     typeKeyword = "number" ~identPart
     						| "string" ~identPart
@@ -73,11 +80,13 @@ TCShell {
                     | if
                     | else
                     | return
+                    | result
 
     while = "while" ~identPart
     if = "if" ~identPart
     else = "else" ~identPart
     return = "return" ~identPart
+    result = "result" ~identPart
 
     identStart      = letter | "_"
     identPart       = identStart | decimalDigit

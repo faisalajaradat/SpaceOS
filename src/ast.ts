@@ -139,9 +139,6 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       unaryExpression.ast(),
     );
   },
-  UnaryExp_array(_leftBracket, listOfExpressions, _rightBracket) {
-    return new core.ArrayLiteral(listOfExpressions.asIteration().ast());
-  },
   UnaryExp(leftExpression) {
     return leftExpression.ast();
   },
@@ -170,6 +167,9 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   },
   PrimaryExp_group(_leftParenthesis, expression, _rightParenthesis) {
     return expression.ast();
+  },
+  PrimaryExp_array(_leftBracket, listOfExpressions, _rightBracket) {
+    return new core.ArrayLiteral(listOfExpressions.asIteration().ast());
   },
   PrimaryExp(expression) {
     return expression.ast();
@@ -220,12 +220,16 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
         break;
     }
     const baseType = new core.BaseType(baseTypeKind);
-    if (arrayBrackets.children.length === 0) return baseType;
+    const numOfBrackets = arrayBrackets.ast();
+    if (numOfBrackets === 0) return baseType;
     let arrayType = new core.ArrayType(baseType);
-    for (let i = 1; i < arrayBrackets.children.length; i++) {
+    for (let i = 1; i < numOfBrackets; i++) {
       arrayType = new core.ArrayType(arrayType);
     }
     return arrayType;
+  },
+  ArrayBrackets(possibleArrayBrackets) {
+    return this.sourceString.trim().split("[]").length - 1;
   },
   identifier(component) {
     return new core.Identifier(this.sourceString);
