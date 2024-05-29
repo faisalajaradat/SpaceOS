@@ -10,7 +10,7 @@ const program = new Command();
 program
   .name("TCShell")
   .description("A spatial-oriented scripting language")
-  .version("0.3.0");
+  .version("0.1.0");
 
 program
   .command("interpret <path>")

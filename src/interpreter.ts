@@ -63,8 +63,10 @@ function evaluate(node: core.ASTNode): unknown {
     else if (node.possibleElseStmt !== null)
       return evaluate(node.possibleElseStmt);
   } else if (node instanceof core.While) {
+    let returnValue = undefined;
     while (<boolean>getValueOfExpression(evaluate(node.condition)))
-      return evaluate(node.whileStmt);
+      returnValue = evaluate(node.whileStmt);
+    return returnValue;
   } else if (node instanceof core.Block) {
     let returnNode = undefined;
     for (let i = 0; i < node.stmts.length; i++) {
