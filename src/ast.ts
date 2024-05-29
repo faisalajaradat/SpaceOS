@@ -160,7 +160,10 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     expression,
     _rightSquareBracket,
   ) {
-    return new core.ArrayAccess(null, leftExpression.ast(), expression.ast());
+    return new core.ArrayAccess(leftExpression.ast(), expression.ast());
+  },
+  LeftExp_attribute(leftExpression, _dot, expression) {
+    return new core.AttributeAccess(leftExpression.ast(), expression.ast());
   },
   LeftExp(primaryExpression) {
     return primaryExpression.ast();
@@ -405,6 +408,19 @@ export function visitDotPrinter(node: core.ASTNode): string {
       arrayAccesseNodeId + "->" + accessExprId + ";\n",
     );
     return arrayAccesseNodeId;
+  }
+  if (node instanceof core.AttributeAccess) {
+    const attributeAccessNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(attributeAccessNodeId + '[label=" . "];\n');
+    const containerExprId = visitDotPrinter(node.containerExpr);
+    const callExprId = visitDotPrinter(node.callExpr);
+    dotString = dotString.concat(
+      attributeAccessNodeId + "->" + containerExprId + ";\n",
+    );
+    dotString = dotString.concat(
+      attributeAccessNodeId + "->" + callExprId + ";\n",
+    );
+    return attributeAccessNodeId;
   }
   if (node instanceof core.FunCall) {
     const funCallNodeId = "Node" + nodeCount++;

@@ -99,6 +99,14 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
           " already defined within scope!",
       );
     } else scope.put(new VarSymbol(node));
+    if (node.stmtType instanceof core.ContainerType) {
+      node.stmtType.scope = new Scope(null);
+      const curScope = node.stmtType.scope;
+      node.stmtType._attributes.forEach((value, fun) => {
+        fun.identifier.declaration = fun;
+        curScope.put(new FunSymbol(fun));
+      });
+    }
   } else if (node instanceof core.Block) {
     const curScope = new Scope(scope);
     node.children().forEach((child) => visitNameAnalyzer(child, curScope));
@@ -113,7 +121,9 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
       node.declaration = programSymbol.funDeclaration;
     else if (programSymbol instanceof VarSymbol)
       node.declaration = programSymbol.varDeclaration;
-  } else node.children().forEach((child) => visitNameAnalyzer(child, scope));
+  } else if (node instanceof core.AttributeAccess)
+    visitNameAnalyzer(node.containerExpr, scope);
+  else node.children().forEach((child) => visitNameAnalyzer(child, scope));
 }
 
 let returnFunction: core.FunDeclaration = null;
@@ -350,6 +360,32 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
       }
       errors++;
       console.log("Cannot access type that is not an array!");
+    }
+  } else if (node instanceof core.AttributeAccess) {
+    const containerType = visitTypeAnalyzer(node.containerExpr);
+    if (!(containerType instanceof core.ContainerType)) {
+      errors++;
+      console.log("Type does not have attributes!");
+      return new core.BaseType(core.BaseTypeKind.NONE);
+    }
+    const scope = containerType.scope;
+    if (!(node.callExpr instanceof core.FunCall)) {
+      errors++;
+      console.log("Attributes must be called!");
+      return new core.BaseType(core.BaseTypeKind.NONE);
+    }
+    const attributeSymbol = <FunSymbol>(
+      scope.lookup(node.callExpr.identifier.value)
+    );
+    if (attributeSymbol === null) {
+      errors++;
+      console.log(
+        "Attribute " + node.callExpr.identifier.value + " does not exist!",
+      );
+    } else {
+      node.callExpr.identifier.declaration = attributeSymbol.funDeclaration;
+      node.stmtType = visitTypeAnalyzer(node.callExpr);
+      return node.stmtType;
     }
   } else if (node instanceof core.FunCall) {
     const funDeclaration = <core.FunDeclaration>node.identifier.declaration;

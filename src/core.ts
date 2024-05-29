@@ -28,6 +28,17 @@ export class BaseType extends Type {
     return new Array<ASTNode>();
   }
 }
+export abstract class ContainerType extends Type {
+  _attributes: Map<FunDeclaration, (...args: unknown[]) => unknown>;
+  scope: Scope;
+
+  constructor(
+    attributes: Map<FunDeclaration, (...args: unknown[]) => unknown>,
+  ) {
+    super();
+    this._attributes = attributes;
+  }
+}
 export class ArrayType extends Type {
   _type: Type;
   _size: number;
@@ -233,8 +244,8 @@ export class ArrayAccess extends Expr {
   arrayExpr: Expr;
   accessExpr: Expr;
 
-  constructor(type: Type, arrayExpr: Expr, accessExpr: Expr) {
-    super(type);
+  constructor(arrayExpr: Expr, accessExpr: Expr) {
+    super(null);
     this.arrayExpr = arrayExpr;
     this.accessExpr = accessExpr;
   }
@@ -243,6 +254,23 @@ export class ArrayAccess extends Expr {
     const children = new Array<ASTNode>();
     children.push(this.arrayExpr);
     children.push(this.accessExpr);
+    return children;
+  }
+}
+export class AttributeAccess extends Expr {
+  containerExpr: Expr;
+  callExpr: Expr;
+
+  constructor(containerExpr: Expr, callExpr: Expr) {
+    super(null);
+    this.containerExpr = containerExpr;
+    this.callExpr = callExpr;
+  }
+
+  children(): ASTNode[] {
+    const children = new Array<ASTNode>();
+    children.push(this.containerExpr);
+    children.push(this.callExpr);
     return children;
   }
 }
@@ -339,4 +367,18 @@ libFunctions.set(
     new Block(new Array<Stmt>()),
   ),
   (...args) => console.log(args[0]),
+);
+libFunctions.set(
+  new FunDeclaration(
+    new BaseType(BaseTypeKind.NUMBER),
+    new Identifier("len"),
+    [
+      new Parameter(
+        new ArrayType(new BaseType(BaseTypeKind.ANY), -1),
+        new Identifier("array"),
+      ),
+    ],
+    new Block(new Array<Stmt>()),
+  ),
+  (...args) => (<unknown[]>args[0]).length,
 );

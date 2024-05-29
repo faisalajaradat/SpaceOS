@@ -45,7 +45,7 @@ TCShell {
     				| LeftExp
      LeftExp = LeftExp "(" ListOf<Exp, ","> ")"		--call
      				| LeftExp "[" Exp "]"		--array
-            | LeftExp "." LeftExp --method
+            | LeftExp "." LeftExp --attribute
                     | PrimaryExp
 
     PrimaryExp = stringLiteral
