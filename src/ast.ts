@@ -203,7 +203,17 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   Parameter(type, identifier) {
     return new core.Parameter(type.ast(), identifier.ast());
   },
-  type(keyword, arrayBrackets) {
+  Type(baseTypeDef, arrayBrackets) {
+    const baseType = baseTypeDef.ast();
+    const numOfBrackets = arrayBrackets.ast();
+    if (numOfBrackets === 0) return baseType;
+    let arrayType = new core.ArrayType(baseType, -1);
+    for (let i = 1; i < numOfBrackets; i++) {
+      arrayType = new core.ArrayType(arrayType, -1);
+    }
+    return arrayType;
+  },
+  typeKeyword(keyword) {
     let baseTypeKind = core.BaseTypeKind.NONE;
     switch (keyword.sourceString) {
       case "number":
@@ -219,14 +229,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
         baseTypeKind = core.BaseTypeKind.VOID;
         break;
     }
-    const baseType = new core.BaseType(baseTypeKind);
-    const numOfBrackets = arrayBrackets.ast();
-    if (numOfBrackets === 0) return baseType;
-    let arrayType = new core.ArrayType(baseType);
-    for (let i = 1; i < numOfBrackets; i++) {
-      arrayType = new core.ArrayType(arrayType);
-    }
-    return arrayType;
+    return new core.BaseType(baseTypeKind);
   },
   ArrayBrackets(possibleArrayBrackets) {
     return this.sourceString.trim().split("[]").length - 1;
@@ -482,7 +485,7 @@ export function visitDotPrinter(node: core.ASTNode): string {
   if (node instanceof core.ArrayType) {
     const arrayTypeNodeId = "Node" + nodeCount++;
     dotString = dotString.concat(arrayTypeNodeId + '[label=" Array Of "];\n');
-    const typeNodeId = visitDotPrinter(node.type);
+    const typeNodeId = visitDotPrinter(node._type);
     dotString = dotString.concat(arrayTypeNodeId + "->" + typeNodeId + ";\n");
     return arrayTypeNodeId;
   }

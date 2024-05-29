@@ -136,12 +136,24 @@ function typesAreEqual(type1: core.Type, type2: core.Type): boolean {
       type1Base instanceof core.ArrayType &&
       type2Base instanceof core.ArrayType
     ) {
-      type1Base = type1Base.type;
-      type2Base = type2Base.type;
+      type1Base = type1Base._type;
+      type2Base = type2Base._type;
     }
     return typesAreEqual(type1Base, type2Base);
   }
   return false;
+}
+
+function assignArraySize(type1: core.ArrayType, type2: core.ArrayType) {
+  while (
+    type1._type instanceof core.ArrayType &&
+    type2._type instanceof core.ArrayType
+  ) {
+    type1._size = type2._size;
+    type1 = type1._type;
+    type2._type = type2._type;
+  }
+  type1._size = type2._size;
 }
 
 function conditionIsValidType(node: core.If | core.While): boolean {
@@ -180,7 +192,14 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
       ) {
         errors++;
         console.log("Both sides of assignment must be the same type!");
-      } else node.value.stmtType = node.stmtType;
+      } else {
+        if (
+          node.stmtType instanceof core.ArrayType &&
+          valueType instanceof core.ArrayType
+        )
+          assignArraySize(node.stmtType, valueType);
+        node.value.stmtType = node.stmtType;
+      }
     }
   } else if (node instanceof core.Return) {
     if (node.possibleValue === null) {
@@ -290,6 +309,11 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
           console.log("Both sides of assigment must be same type!");
           break;
         } else {
+          if (
+            leftHandType instanceof core.ArrayType &&
+            rightHandType instanceof core.ArrayType
+          )
+            assignArraySize(leftHandType, rightHandType);
           node.stmtType = leftHandType;
           node.rightExpr.stmtType = node.stmtType;
           return node.stmtType;
@@ -368,12 +392,15 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
   )
     return node.stmtType;
   else if (node instanceof core.ArrayLiteral) {
-    if (node.value.length === 0) return node.stmtType;
-    node.stmtType = new core.ArrayType(visitTypeAnalyzer(node.value[0]));
+    if ((<core.ArrayType>node.stmtType)._size === 0) return node.stmtType;
+    node.stmtType = new core.ArrayType(
+      visitTypeAnalyzer(node.value[0]),
+      (<core.ArrayType>node.stmtType)._size,
+    );
     const listOfArraysIncorrectTypes = node.value.filter(
       (exp) =>
         !typesAreEqual(
-          (<core.ArrayType>node.stmtType).type,
+          (<core.ArrayType>node.stmtType)._type,
           visitTypeAnalyzer(exp),
         ),
     );

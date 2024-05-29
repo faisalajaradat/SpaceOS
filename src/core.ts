@@ -29,12 +29,13 @@ export class BaseType extends Type {
   }
 }
 export class ArrayType extends Type {
-  type: Type;
-  size: number;
+  _type: Type;
+  _size: number;
 
-  constructor(type: Type) {
+  constructor(type: Type, size: number) {
     super();
-    this.type = type;
+    this._type = type;
+    this._size = size;
   }
 
   children(): ASTNode[] {
@@ -302,7 +303,7 @@ export class ArrayLiteral extends Expr {
   value: Expr[];
 
   constructor(value: Expr[]) {
-    super(new ArrayType(new BaseType(BaseTypeKind.NONE)));
+    super(new ArrayType(new BaseType(BaseTypeKind.NONE), value.length));
     this.value = value;
   }
 
