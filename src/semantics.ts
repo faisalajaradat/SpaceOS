@@ -394,40 +394,14 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
     } else {
       const arrayElementType = visitTypeAnalyzer(node.arrayExpr);
       if (arrayElementType instanceof core.ArrayType) {
-        node.stmtType = arrayElementType;
+        node.stmtType = arrayElementType._type;
         return node.stmtType;
       }
       errors++;
       console.log("Cannot access type that is not an array!");
     }
-  } else if (node instanceof core.AttributeAccess) {
-    const containerType = visitTypeAnalyzer(node.containerExpr);
-    if (!(containerType instanceof core.ContainerType)) {
-      errors++;
-      console.log("Type does not have attributes!");
-      return new core.BaseType(core.BaseTypeKind.NONE);
-    }
-    const scope = containerType.scope;
-    if (!(node.callExpr instanceof core.FunCall)) {
-      errors++;
-      console.log("Attributes must be called!");
-      return new core.BaseType(core.BaseTypeKind.NONE);
-    }
-    const attributeSymbol = <FunSymbol>(
-      scope.lookup(node.callExpr.identifier.value)
-    );
-    if (attributeSymbol === null) {
-      errors++;
-      console.log(
-        "Attribute " + node.callExpr.identifier.value + " does not exist!",
-      );
-    } else {
-      node.callExpr.identifier.declaration = attributeSymbol.funDeclaration;
-      node.stmtType = visitTypeAnalyzer(node.callExpr);
-      return node.stmtType;
-    }
   } else if (node instanceof core.FunCall) {
-    const funType = node.identifier.declaration.stmtType;
+    const funType = visitTypeAnalyzer(node.identifier);
     if (!(funType instanceof core.FunctionType)) {
       errors++;
       console.log("Can only perform call on function types");
@@ -437,7 +411,7 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
       errors++;
       console.log(
         "Funtion " +
-          node.identifier.value +
+          node.identifier +
           " called with incorrect number of arguments!",
       );
       return new core.BaseType(core.BaseTypeKind.NONE);
@@ -454,7 +428,7 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
       errors++;
       console.log(
         "Function " +
-          node.identifier.value +
+          node.identifier +
           " called with argument not matching paramater type!",
       );
     });

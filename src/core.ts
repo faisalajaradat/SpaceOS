@@ -290,10 +290,10 @@ export class AttributeAccess extends Expr {
   }
 }
 export class FunCall extends Expr {
-  identifier: Identifier;
+  identifier: Expr;
   args: Expr[];
 
-  constructor(type: Type, identifier: Identifier, args: Expr[]) {
+  constructor(type: Type, identifier: Expr, args: Expr[]) {
     super(type);
     this.identifier = identifier;
     this.args = args;

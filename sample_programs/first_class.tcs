@@ -9,10 +9,21 @@ void(number, number, number(number)) executeOperationOnXYtimes = void(number x, 
   }
 }
 
+void (number, number(number)[]) executeOperationsSequentialOnNumber = void (number x, number(number)[] operations) {
+  number numOfOperations = len(operations)
+  number iteration = 0
+  while iteration < numOfOperations {
+    x = operations[iteration](x)
+    iteration = iteration + 1
+  }
+}
+
 number(number) incrementAndLogNumber = number(number x) {
   number incremented = x + 1
   print(incremented)
   return incremented
 }
 
-executeOperationOnXYtimes(x, 10, incrementAndLogNumber)
+number(number)[] operations = { incrementAndLogNumber, incrementAndLogNumber, incrementAndLogNumber, incrementAndLogNumber}
+
+executeOperationsSequentialOnNumber(x, operations)
