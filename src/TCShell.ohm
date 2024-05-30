@@ -1,12 +1,10 @@
 TCShell {
 
-    Program = Declaration*
-    Declaration = Stmt    --stmt
-                | FunDeclaration    --function
+    Program = Stmt*
+
     Interactive = StmtNewline
 
-	  StmtNewline = FunDeclaration #newline 	--function
-    						| CompoundStmt #newline	--compound
+	  StmtNewline = CompoundStmt #newline	--compound
     						| SimpleStmts	--simple
                 | newline
                 | end
@@ -17,9 +15,10 @@ TCShell {
 
     SimpleStmts = NonemptyListWithOptionalEndSep<SimpleStmt, ";">
 
-    SimpleStmt = VarDeclaration   --vardeclaration
+    SimpleStmt = VarDeclaration
+                | FunDeclaration
     					  | return (Exp)?		--return
-                          | Exp 	--exp
+                | Exp
 
 
     CompoundStmt = Block    --block
@@ -50,24 +49,26 @@ TCShell {
 
     PrimaryExp = stringLiteral
     					| identifier
-                        | numberLiteral
-                        | booleanLiteral
-                        | "(" Exp ")"		--group
-                        | "{" ListOf<Exp, ","> "}"		--array
+              | numberLiteral
+              | booleanLiteral
+              | Type "(" ListOf<Parameter, ","> ")" Stmt  --function
+              | "(" Exp ")"		--group
+              | "{" ListOf<Exp, ","> "}"		--array
+
 
     Block = "{" Stmt* "}"
 
     VarDeclaration = Parameter "=" Exp
-    FunDeclaration = Parameter "(" ListOf<Parameter, ","> ")" Block
+    FunDeclaration = Parameter "(" ListOf<Parameter, ","> ")" Stmt
 
     Parameter = Type identifier
 
-    ResultType = result "<" Type "," Type ">" ArrayBrackets
+    TypeSpecifier = "[]"   --array
+                  |"(" ListOf<Type, ","> ")"    --function
 
-    Type = (typeKeyword | ResultType) ArrayBrackets
+    ResultType = result "<" Type "," Type ">" TypeSpecifier*
 
-    ArrayBrackets = "[]"*
-
+    Type = (typeKeyword | ResultType) TypeSpecifier*
 
     typeKeyword = "number" ~identPart
     						| "string" ~identPart

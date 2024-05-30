@@ -39,6 +39,20 @@ export abstract class ContainerType extends Type {
     this._attributes = attributes;
   }
 }
+export class FunctionType extends Type {
+  returnType: Type;
+  paramTypes: Type[];
+
+  constructor(returnType: Type, paramTypes: Type[]) {
+    super();
+    this.returnType = returnType;
+    this.paramTypes = paramTypes;
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+}
 export class ArrayType extends Type {
   _type: Type;
   _size: number;
@@ -54,16 +68,16 @@ export class ArrayType extends Type {
   }
 }
 export class Program implements ASTNode {
-  declarations: ASTNode[];
+  stmts: ASTNode[];
   scope: Scope;
 
-  constructor(declarations: ASTNode[]) {
-    this.declarations = declarations;
+  constructor(stmts: ASTNode[]) {
+    this.stmts = stmts;
   }
 
   children(): ASTNode[] {
     const children: ASTNode[] = new Array<ASTNode>();
-    children.push(...this.declarations);
+    children.push(...this.stmts);
     return children;
   }
 }
@@ -95,30 +109,31 @@ export class Parameter extends Stmt {
     return children;
   }
 }
-export class FunDeclaration implements ASTNode {
-  funType: Type;
+export class FunDeclaration extends Stmt {
   identifier: Identifier;
   params: Parameter[];
-  block: Block;
+  _body: Stmt;
   scope: Scope;
 
   constructor(
     type: Type,
     identifier: Identifier,
     params: Parameter[],
-    block: Block,
+    body: Stmt,
   ) {
-    this.funType = type;
+    const paramTypes: Type[] = params.map((param) => param.stmtType);
+    super(new FunctionType(type, paramTypes));
     this.identifier = identifier;
     this.params = params;
-    this.block = block;
+    this._body = body;
   }
 
   children(): ASTNode[] {
     const children = new Array<ASTNode>();
-    children.push(this.funType);
+    children.push(this.stmtType);
+    children.push(this.identifier);
     children.push(...this.params);
-    children.push(this.block);
+    children.push(this._body);
     return children;
   }
 }
@@ -288,6 +303,26 @@ export class FunCall extends Expr {
     const children = new Array<ASTNode>();
     children.push(this.identifier);
     if (this.args !== null) children.push(...this.args);
+    return children;
+  }
+}
+export class AnonymousFunDeclaration extends Expr {
+  params: Parameter[];
+  _body: Stmt;
+  scope: Scope;
+
+  constructor(type: Type, params: Parameter[], body: Stmt) {
+    const paramTypes: Type[] = params.map((param) => param.stmtType);
+    super(new FunctionType(type, paramTypes));
+    this.params = params;
+    this._body = body;
+  }
+
+  children(): ASTNode[] {
+    const children = new Array<ASTNode>();
+    children.push(this.stmtType);
+    children.push(...this.params);
+    children.push(this._body);
     return children;
   }
 }

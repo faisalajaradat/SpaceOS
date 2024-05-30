@@ -1,5 +1,4 @@
-number add(number x, number y) {
+number add(number x, number y)
   return x + y
-}
 
 print(add(5.5, 1.0e+1))
