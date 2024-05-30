@@ -1,0 +1,18 @@
+number x = 0
+
+void(number, number, number(number)) executeOperationOnXYtimes = void(number x, number y, number(number) operation) {
+  number i = 0
+  number value = x
+  while i < y {
+    x = operation(x)
+    i = i + 1
+  }
+}
+
+number(number) incrementAndLogNumber = number(number x) {
+  number incremented = x + 1
+  print(incremented)
+  return incremented
+}
+
+executeOperationOnXYtimes(x, 10, incrementAndLogNumber)

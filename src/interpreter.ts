@@ -56,7 +56,10 @@ function evaluate(node: core.ASTNode): unknown {
       return core.libFunctions.get(node)(...args);
     }
     let returnValue = evaluate(node._body);
-    if (returnValue instanceof core.Return)
+    if (
+      returnValue instanceof core.Return &&
+      returnValue.possibleValue !== null
+    )
       returnValue = getValueOfExpression(evaluate(returnValue.possibleValue));
     popOutOfScopeVars(node);
     return returnValue;
@@ -85,6 +88,8 @@ function evaluate(node: core.ASTNode): unknown {
       returnNode = evaluate(node.stmts[i]);
       if (returnNode instanceof core.Return) break;
     }
+    if (returnNode instanceof core.Return && returnNode.possibleValue !== null)
+      returnNode = getValueOfExpression(evaluate(returnNode.possibleValue));
     popOutOfScopeVars(node);
     return returnNode;
   } else if (node instanceof core.BinaryExpr) {
