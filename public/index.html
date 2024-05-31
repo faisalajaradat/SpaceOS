@@ -12,10 +12,11 @@
             justify-content: center;
             min-height: 100vh;
             margin: 0; 
-            padding: 20px;
+            padding: 0px 20px;
             font-family: Arial, sans-serif;
             background-color: #f4f4f9;
             color: #333;
+            overflow-y: hidden;
         }
         h1 {
             color: #4A90E2;
@@ -35,6 +36,17 @@
         }.button-container {
             display: flex; 
             gap: 10px; /* space in between buttons*/
+        }.transcript {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ccc;
+            min-height: 70vh;
+            border-radius: 5px;
+            font-size: 16px;
+            color: #555;
+            width: calc(100% - 42px); 
+            overflow-y: auto; /* Enables scrolling */
         }
         p {
             margin-top: 20px;
@@ -57,46 +69,79 @@
     </style>
 </head>
 <body>
+    
     <h1>Web Speech API Integration</h1>
     <div class="button-container">
         <button id="speakBtn">Speak</button>
         <button id="stopBtn">Stop</button>
     </div>
-    <p id="transcript">Transcript will appear here...</p>
+    <p class="transcript" id="transcript">Transcript will appear here...</p>
     <div class="button-container" style="width:100%">
         <input type="text" id="inputField" placeholder="Type here...">
         <button id="LLM" style="padding: 0; width: 10%;">Call LLM</button>
     </div>
-    <script src="bundle.js" type="module"></script>
-    <script type="module" src="../dist/switchingLogic.js"></script>
     <script type="module">
-        document.getElementById('LLM').addEventListener('click', async () => {
-            const inputField = document.getElementById('inputField');
-            const transcript = document.getElementById('transcript');
-            const userInput = inputField.value; // Taking user input
-            transcript.textContent = "Processing..."; // update to processing to give the user some feedback
-
-            try {
-                const response = await fetch('/chat', { //express chat endpoint
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ userInput })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                transcript.textContent = data.response; // Display the server's response all in one go
-                speakResponse(data.response); //speak the response
-            } catch (e) { //error handling
-                console.error('Error fetching data:', e);
-                transcript.textContent = "Failed to process input.";
+        
+        document.getElementById('LLM').addEventListener('click', () => {
+            const userInput = document.getElementById('inputField').value;
+            document.getElementById('transcript').textContent = "Processing..."; // Update UI to show processing
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(userInput)); // Send user input if the WebSocket is open
+            } else {
+                console.log('WebSocket is not open. Current State: ', ws.readyState);
             }
         });
+          
+        const ws = new WebSocket('ws://localhost:7000/ws/echo');
+
+        ws.onopen = function() {
+            console.log('WebSocket connection established');
+            document.getElementById('LLM').addEventListener('click', () => {
+            const userInput = document.getElementById('inputField').value;
+            ws.send(JSON.stringify(userInput));
+            document.getElementById('transcript').textContent = "Processing...";
+            });
+        };
+
+        ws.onerror = function(error) {
+            console.error('WebSocket Error:', error);
+        };
+
+        ws.onmessage = function(event) {
+            console.log('Received:', event.data);
+            const transcript = document.getElementById('transcript');
+
+            if (transcript.textContent.includes("Processing...")) {
+            transcript.textContent = ""; // Clear the "Processing..." text
+            }
+            transcript.textContent += event.data  // Append received data to transcript
+        };
+
+            
+
+            // try {
+            //     const response = await fetch('/chat', { //express chat endpoint
+            //         method: 'POST',
+            //         headers: {
+            //             'Content-Type': 'application/json',
+            //         },
+            //         body: JSON.stringify({ userInput })
+            //     });
+
+            //     if (!response.ok) {
+            //         throw new Error(`HTTP error! Status: ${response.status}`);
+            //     }
+                
+            //     const data = await response.json();
+            //     transcript.textContent = data.response; // Display the server's response all in one go
+            //     speakResponse(data.response); //speak the response
+            // } catch (e) { //error handling
+            //     console.error('Error fetching data:', e);
+            //     transcript.textContent = "Failed to process input.";
+            // }
+
+
+
 
         // Web Speech API 
         const speakBtn = document.getElementById('speakBtn');

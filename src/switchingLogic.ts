@@ -8,7 +8,8 @@ import { fetchConfig } from './fetchconfig.js';
 
 
 const preferRemote = fetchConfig();
-
+const MODELCLASSES =  [ChatOpenAI, ChatGroq, ChatOllama]
+const MODELCLASSTYPES = [ChatModelType.ChatGPT, ChatModelType.Groq, ChatModelType.Local]
 
 const chatModels: initializedChatModel[] = [];
 const modelFailures: {[model: string]: number} = {};
@@ -16,19 +17,15 @@ const modelFailures: {[model: string]: number} = {};
 
 
 //,main logic for handling which chat Model to use next
-export async function handleChatModel(userInput:string = "") {
+export async function* handleChatModel(userInput:string = "", attempts = 0, maxRetries = 3): AsyncGenerator<string, void, unknown> {
 
     console.log(preferRemote);
     let chatResponse = undefined;
     let chatModel: initializedChatModel | undefined = undefined;
-
-
         try {
-
-        
             chatModel = await getModelWithLeastFailures(
-                [ChatOpenAI, ChatGroq, ChatOllama],  // All model classes
-                [ChatModelType.ChatGPT, ChatModelType.Groq, ChatModelType.Local],  // Corresponding types
+                MODELCLASSES,  // All model classes
+                MODELCLASSTYPES,  // Corresponding types
                 preferRemote
             );
         
@@ -37,8 +34,11 @@ export async function handleChatModel(userInput:string = "") {
             if(!chatModels.some(x => x.constructor === chatModel!.constructor )){
                 chatModels.push(chatModel);
             }
-            
-            chatResponse = await chatModelInitializer.makeCall(chatModel, userInput);
+            for await (const chunk of chatModelInitializer.makeCall(chatModel, userInput)) {
+                yield chunk;
+                process.stdout.write(chunk);
+            }
+            //chatResponse = chatModelInitializer.makeCall(chatModel, userInput);
             modelFailures[chatModel.constructor.name] = 0;
             
         } else {
@@ -53,12 +53,14 @@ export async function handleChatModel(userInput:string = "") {
                 const modelName = chatModel.constructor.name;
                 modelFailures[modelName] = (modelFailures[modelName] || 0) + 1;
             }
+            yield* handleChatModel(userInput, attempts + 1, maxRetries);
             
         }
         console.log(chatModels.map(model => `${model.constructor.name} - Failures: ${modelFailures[model.constructor.name] || 0
         }`));
-        return chatResponse;
-    }    
+        
+
+}    
     
 
   /*
@@ -72,6 +74,7 @@ async function getModelWithLeastFailures(allModelClasses: any[], allModelTypes: 
     let leastFailures = Number.MAX_SAFE_INTEGER;
     let selectedModel = undefined;
     let modelInitialized; //checks if there is a model of this type already
+    let selectedModelInitialized = false;
     let existingModel //the existing Model of certain type
 
     for (let i = 0; i < allModelClasses.length; i++) {
@@ -97,7 +100,7 @@ async function getModelWithLeastFailures(allModelClasses: any[], allModelTypes: 
         if (failures < leastFailures) {
             leastFailures = failures;
             selectedModel = existingModel; 
-
+            
         }
         if(failures == leastFailures){
             const isRemoteModel = (modelType === ChatModelType.ChatGPT || modelType === ChatModelType.Groq);
@@ -105,10 +108,15 @@ async function getModelWithLeastFailures(allModelClasses: any[], allModelTypes: 
                selectedModel = existingModel 
             }
         }
+        if(modelInitialized && selectedModel ==existingModel){
+            selectedModelInitialized = true;
+        } if (!modelInitialized && selectedModel == existingModel){
+            selectedModelInitialized =false;
+        }
 
-   
+        
     }
-if(modelInitialized == false) selectedModel = chatModelInitializer.initializeChatModel(selectedModel);
 
-return selectedModel;
+    if(selectedModelInitialized == false) selectedModel = chatModelInitializer.initializeChatModel(selectedModel);
+    return selectedModel;
 }

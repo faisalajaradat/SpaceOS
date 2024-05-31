@@ -1,12 +1,23 @@
 import { handleChatModel } from './switchingLogic.js';
 import express from 'express';
+import expressWs from 'express-ws';
+const { app, getWss, applyTo } = expressWs(express());
+const router = express.Router() as expressWs.Router;
+
+router.ws('/echo', (ws, req) => {
+    ws.on('message', async (msg: string) => {
+        for await (const chunk of await handleChatModel(msg)) {
+            ws.send(chunk);
+        }
+    });
+});
 
 
-// handleChatModel();
+handleChatModel();
 
-const app = express();
+// const app = express();
 const PORT = 7000;
-
+app.use('/ws',router);
 app.use(express.json()); //parse the json
 app.use(express.static('public'));
 
@@ -29,4 +40,4 @@ app.post('/chat', async (req, res) => { //chat API endpoint for use with front-e
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
-});
+}); 

@@ -88,7 +88,7 @@ async function createMessageArray(userInput?: string ){ //creates the ChatPrompt
   }
 
 
-export async function makeCall(chatmodel: initializedChatModel, passedInput:string= ''){ // | initializedChatModel[]
+export async function* makeCall(chatmodel: initializedChatModel, passedInput:string= ''){ // | initializedChatModel[]
     const chatModel = chatmodel;
     let messages, userInput;
     if (passedInput === ''){
@@ -113,15 +113,16 @@ export async function makeCall(chatmodel: initializedChatModel, passedInput:stri
       });
       const config: RunnableConfig = { configurable: { sessionId: "1" } };
   
-      const output = await withHistory.invoke(
+      const output = await withHistory.stream(
         {input: userInput},
         config
       );
       
-      console.log(output.lc_kwargs.content);
       
-      
-      return output.lc_kwargs.content;
+      for await (const chunk of output) {
+        yield chunk.lc_kwargs.content;
+      }
+      //return output.lc_kwargs.content;
   
   
       //console.log("output:", output);
