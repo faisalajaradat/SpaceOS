@@ -1,0 +1,9 @@
+type NumOrString = number | string
+
+type NumOrString output = "Hello!"
+
+print(output)
+
+output = 5
+
+print(output)

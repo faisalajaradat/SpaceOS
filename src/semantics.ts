@@ -5,7 +5,7 @@ export default function analyze(astHead: core.Program): number {
   visitTypeAnalyzer(astHead);
   return errors;
 }
-
+//Defines symbols for symbol table
 export abstract class ProgramSymbol {
   name: string;
 
@@ -29,6 +29,15 @@ export class FunSymbol extends ProgramSymbol {
   constructor(funDeclaration: core.FunDeclaration) {
     super(funDeclaration.identifier.value);
     this.funDeclaration = funDeclaration;
+  }
+}
+
+export class TypeSymbol extends ProgramSymbol {
+  typeType: core.TypeType;
+
+  constructor(typeType: core.TypeType) {
+    super(typeType.identifier.value);
+    this.typeType = typeType;
   }
 }
 
@@ -61,6 +70,7 @@ export class Scope {
 
 let errors = 0;
 
+//Performs name analysis to enforce scope rules
 function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
   if (node instanceof core.Program) {
     const curScope = new Scope(scope);
@@ -70,19 +80,26 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
     });
     node.children().forEach((child) => visitNameAnalyzer(child, curScope));
     node.scope = curScope;
-  } else if (node instanceof core.FunDeclaration) {
-    const funSymbol = scope.lookupCurrent(node.identifier.value);
-    if (funSymbol !== null) {
-      errors++;
-      console.log(
-        "Function name: " +
-          node.identifier.value +
-          "already defined within scope!",
-      );
-    } else scope.put(new FunSymbol(node));
-    const curScope = new Scope(scope);
+  } else if (
+    node instanceof core.FunDeclaration ||
+    node instanceof core.AnonymousFunDeclaration
+  ) {
+    if (node instanceof core.FunDeclaration) {
+      const funSymbol = scope.lookupCurrent(node.identifier.value);
+      if (funSymbol !== null) {
+        errors++;
+        console.log(
+          "Function name: " +
+            node.identifier.value +
+            "already defined within scope!",
+        );
+      } else scope.put(new FunSymbol(node));
+    }
+    let curScope = scope;
+    while (curScope.outer !== null) curScope = curScope.outer;
+    curScope = new Scope(curScope);
     node.params.forEach((param) => visitNameAnalyzer(param, curScope));
-    visitNameAnalyzer(node.block, curScope);
+    visitNameAnalyzer(node._body, curScope);
     node.scope = curScope;
   } else if (
     node instanceof core.VarDeclaration ||
@@ -99,6 +116,17 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
           " already defined within scope!",
       );
     } else scope.put(new VarSymbol(node));
+  } else if (node instanceof core.TypeType) {
+    const typeSymbol = scope.lookupCurrent(node.identifier.value);
+    if (typeSymbol !== null && node.types.length > 0) {
+      errors++;
+      console.log(
+        "Type name: " +
+          node.identifier.value +
+          " already defined within scope!",
+      );
+    } else if (typeSymbol === null) scope.put(new TypeSymbol(node));
+    visitNameAnalyzer(node.identifier, scope);
   } else if (node instanceof core.Block) {
     const curScope = new Scope(scope);
     node.children().forEach((child) => visitNameAnalyzer(child, curScope));
@@ -113,10 +141,12 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
       node.declaration = programSymbol.funDeclaration;
     else if (programSymbol instanceof VarSymbol)
       node.declaration = programSymbol.varDeclaration;
+    else if (programSymbol instanceof TypeSymbol)
+      node.declaration = programSymbol.typeType;
   } else node.children().forEach((child) => visitNameAnalyzer(child, scope));
 }
 
-let returnFunction: core.FunDeclaration = null;
+let returnFunction: core.FunDeclaration | core.AnonymousFunDeclaration = null;
 const voidType = new core.BaseType(core.BaseTypeKind.VOID);
 const numberType = new core.BaseType(core.BaseTypeKind.NUMBER);
 const boolType = new core.BaseType(core.BaseTypeKind.BOOL);
@@ -129,19 +159,54 @@ function typesAreEqual(type1: core.Type, type2: core.Type): boolean {
     return true;
   if (type1 instanceof core.BaseType && type2 instanceof core.BaseType)
     return type1.kind === type2.kind;
-  if (type1 instanceof core.ArrayType && type2 instanceof core.ArrayType) {
-    let type1Base: core.Type = type1;
-    let type2Base: core.Type = type2;
-    while (
+  let type1Base: core.Type = type1;
+  let type2Base: core.Type = type2;
+  let iter = 0;
+  while (
+    (type1Base instanceof core.ArrayType &&
+      type2Base instanceof core.ArrayType) ||
+    (type1Base instanceof core.FunctionType &&
+      type2Base instanceof core.FunctionType)
+  ) {
+    iter++;
+    if (
       type1Base instanceof core.ArrayType &&
       type2Base instanceof core.ArrayType
     ) {
-      type1Base = type1Base.type;
-      type2Base = type2Base.type;
+      type1Base = type1Base._type;
+      type2Base = type2Base._type;
     }
-    return typesAreEqual(type1Base, type2Base);
+    if (
+      type1Base instanceof core.FunctionType &&
+      type2Base instanceof core.FunctionType
+    ) {
+      const incompatibleFunType =
+        type1Base.paramTypes.length !== type2Base.paramTypes.length ||
+        type1Base.paramTypes.filter(
+          (param1Type, pos) =>
+            !typesAreEqual(
+              param1Type,
+              (<core.FunctionType>type2Base).paramTypes[pos],
+            ),
+        ).length !== 0;
+      if (incompatibleFunType) return false;
+      type1Base = type1Base.returnType;
+      type2Base = type2Base.returnType;
+    }
   }
-  return false;
+  return iter > 0 && typesAreEqual(type1Base, type2Base);
+}
+
+function assignArraySize(type1: core.ArrayType, type2: core.ArrayType) {
+  while (
+    type1._type instanceof core.ArrayType &&
+    type2._type instanceof core.ArrayType
+  ) {
+    type1._size = type2._size;
+    type1 = type1._type;
+    type2._type = type2._type;
+  }
+  type1._size = type2._size;
 }
 
 function conditionIsValidType(node: core.If | core.While): boolean {
@@ -154,13 +219,18 @@ function conditionIsValidType(node: core.If | core.While): boolean {
   return true;
 }
 
+//Performs type analysis to enforce typing rules
 function visitTypeAnalyzer(node: core.ASTNode): core.Type {
-  if (node instanceof core.FunDeclaration) {
+  if (
+    node instanceof core.FunDeclaration ||
+    node instanceof core.AnonymousFunDeclaration
+  ) {
     const oldFunDeclaration = returnFunction;
     returnFunction = node;
-    visitTypeAnalyzer(node.block);
+    visitTypeAnalyzer(node._body);
     returnFunction = oldFunDeclaration;
     node.params.forEach((param) => visitTypeAnalyzer(param));
+    return node.stmtType;
   } else if (
     node instanceof core.VarDeclaration ||
     node instanceof core.Parameter
@@ -180,17 +250,29 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
       ) {
         errors++;
         console.log("Both sides of assignment must be the same type!");
-      } else node.value.stmtType = node.stmtType;
+      } else {
+        if (
+          node.stmtType instanceof core.ArrayType &&
+          valueType instanceof core.ArrayType
+        )
+          assignArraySize(node.stmtType, valueType);
+        node.value.stmtType = node.stmtType;
+      }
     }
   } else if (node instanceof core.Return) {
     if (node.possibleValue === null) {
-      if (!typesAreEqual(returnFunction.funType, voidType)) {
+      if (!typesAreEqual(returnFunction.stmtType, voidType)) {
         errors++;
         console.log("Function is not type void!");
       }
     } else {
       const returnType: core.Type = visitTypeAnalyzer(node.possibleValue);
-      if (!typesAreEqual(returnType, returnFunction.funType)) {
+      if (
+        !typesAreEqual(
+          returnType,
+          (<core.FunctionType>returnFunction.stmtType).returnType,
+        )
+      ) {
         errors++;
         console.log("Incorrect return type");
       }
@@ -290,6 +372,11 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
           console.log("Both sides of assigment must be same type!");
           break;
         } else {
+          if (
+            leftHandType instanceof core.ArrayType &&
+            rightHandType instanceof core.ArrayType
+          )
+            assignArraySize(leftHandType, rightHandType);
           node.stmtType = leftHandType;
           node.rightExpr.stmtType = node.stmtType;
           return node.stmtType;
@@ -321,43 +408,42 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
     } else {
       const arrayElementType = visitTypeAnalyzer(node.arrayExpr);
       if (arrayElementType instanceof core.ArrayType) {
-        node.stmtType = arrayElementType;
+        node.stmtType = arrayElementType._type;
         return node.stmtType;
       }
       errors++;
       console.log("Cannot access type that is not an array!");
     }
   } else if (node instanceof core.FunCall) {
-    const funDeclaration = <core.FunDeclaration>node.identifier.declaration;
-    if (node.args.length !== funDeclaration.params.length) {
+    const funType = visitTypeAnalyzer(node.identifier);
+    if (!(funType instanceof core.FunctionType)) {
+      errors++;
+      console.log("Can only perform call on function types");
+      return new core.BaseType(core.BaseTypeKind.NONE);
+    }
+    if (node.args.length !== funType.paramTypes.length) {
       errors++;
       console.log(
         "Funtion " +
-          node.identifier.value +
+          node.identifier +
           " called with incorrect number of arguments!",
       );
       return new core.BaseType(core.BaseTypeKind.NONE);
     }
-    const argParamIncorrectTypingPairArray = node.args
-      .map((arg, pos) => {
-        return { arg: arg, param: funDeclaration.params[pos] };
-      })
-      .filter(
-        (pair) =>
-          !typesAreEqual(visitTypeAnalyzer(pair.arg), pair.param.stmtType),
-      );
-    if (argParamIncorrectTypingPairArray.length === 0) {
-      node.stmtType = funDeclaration.funType;
+    const argsIncorrectTypingArray = node.args.filter(
+      (arg, pos) =>
+        !typesAreEqual(visitTypeAnalyzer(arg), funType.paramTypes[pos]),
+    );
+    if (argsIncorrectTypingArray.length === 0) {
+      node.stmtType = funType.returnType;
       return node.stmtType;
     }
-    argParamIncorrectTypingPairArray.forEach((pair) => {
+    argsIncorrectTypingArray.forEach(() => {
       errors++;
       console.log(
         "Function " +
-          node.identifier.value +
-          " called with argument not matching paramater " +
-          pair.param.identifier.value +
-          " type!",
+          node.identifier +
+          " called with argument not matching paramater type!",
       );
     });
   } else if (
@@ -368,12 +454,15 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
   )
     return node.stmtType;
   else if (node instanceof core.ArrayLiteral) {
-    if (node.value.length === 0) return node.stmtType;
-    node.stmtType = new core.ArrayType(visitTypeAnalyzer(node.value[0]));
+    if ((<core.ArrayType>node.stmtType)._size === 0) return node.stmtType;
+    node.stmtType = new core.ArrayType(
+      visitTypeAnalyzer(node.value[0]),
+      (<core.ArrayType>node.stmtType)._size,
+    );
     const listOfArraysIncorrectTypes = node.value.filter(
       (exp) =>
         !typesAreEqual(
-          (<core.ArrayType>node.stmtType).type,
+          (<core.ArrayType>node.stmtType)._type,
           visitTypeAnalyzer(exp),
         ),
     );

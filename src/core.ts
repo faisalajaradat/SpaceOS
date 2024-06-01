@@ -1,5 +1,5 @@
 import { Scope } from "./semantics.js";
-
+//Define all AST nodes
 export interface ASTNode {
   children(): ASTNode[];
 }
@@ -28,13 +28,52 @@ export class BaseType extends Type {
     return new Array<ASTNode>();
   }
 }
-export class ArrayType extends Type {
-  type: Type;
-  size: number;
+export abstract class ContainerType extends Type {
+  _attributes: Map<FunDeclaration, (...args: unknown[]) => unknown>;
+  scope: Scope;
 
-  constructor(type: Type) {
+  constructor(
+    attributes: Map<FunDeclaration, (...args: unknown[]) => unknown>,
+  ) {
     super();
-    this.type = type;
+    this._attributes = attributes;
+  }
+}
+export class TypeType extends Type {
+  types: Type[];
+  identifier: Identifier;
+
+  constructor(identifier: Identifier, types: Type[]) {
+    super();
+    this.identifier = identifier;
+    this.types = types;
+  }
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+}
+export class FunctionType extends Type {
+  returnType: Type;
+  paramTypes: Type[];
+
+  constructor(returnType: Type, paramTypes: Type[]) {
+    super();
+    this.returnType = returnType;
+    this.paramTypes = paramTypes;
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+}
+export class ArrayType extends Type {
+  _type: Type;
+  _size: number;
+
+  constructor(type: Type, size: number) {
+    super();
+    this._type = type;
+    this._size = size;
   }
 
   children(): ASTNode[] {
@@ -42,16 +81,16 @@ export class ArrayType extends Type {
   }
 }
 export class Program implements ASTNode {
-  declarations: ASTNode[];
+  stmts: ASTNode[];
   scope: Scope;
 
-  constructor(declarations: ASTNode[]) {
-    this.declarations = declarations;
+  constructor(stmts: ASTNode[]) {
+    this.stmts = stmts;
   }
 
   children(): ASTNode[] {
     const children: ASTNode[] = new Array<ASTNode>();
-    children.push(...this.declarations);
+    children.push(...this.stmts);
     return children;
   }
 }
@@ -83,30 +122,31 @@ export class Parameter extends Stmt {
     return children;
   }
 }
-export class FunDeclaration implements ASTNode {
-  funType: Type;
+export class FunDeclaration extends Stmt {
   identifier: Identifier;
   params: Parameter[];
-  block: Block;
+  _body: Stmt;
   scope: Scope;
 
   constructor(
     type: Type,
     identifier: Identifier,
     params: Parameter[],
-    block: Block,
+    body: Stmt,
   ) {
-    this.funType = type;
+    const paramTypes: Type[] = params.map((param) => param.stmtType);
+    super(new FunctionType(type, paramTypes));
     this.identifier = identifier;
     this.params = params;
-    this.block = block;
+    this._body = body;
   }
 
   children(): ASTNode[] {
     const children = new Array<ASTNode>();
-    children.push(this.funType);
+    children.push(this.stmtType);
+    children.push(this.identifier);
     children.push(...this.params);
-    children.push(this.block);
+    children.push(this._body);
     return children;
   }
 }
@@ -232,8 +272,8 @@ export class ArrayAccess extends Expr {
   arrayExpr: Expr;
   accessExpr: Expr;
 
-  constructor(type: Type, arrayExpr: Expr, accessExpr: Expr) {
-    super(type);
+  constructor(arrayExpr: Expr, accessExpr: Expr) {
+    super(null);
     this.arrayExpr = arrayExpr;
     this.accessExpr = accessExpr;
   }
@@ -245,11 +285,28 @@ export class ArrayAccess extends Expr {
     return children;
   }
 }
+export class AttributeAccess extends Expr {
+  containerExpr: Expr;
+  callExpr: Expr;
+
+  constructor(containerExpr: Expr, callExpr: Expr) {
+    super(null);
+    this.containerExpr = containerExpr;
+    this.callExpr = callExpr;
+  }
+
+  children(): ASTNode[] {
+    const children = new Array<ASTNode>();
+    children.push(this.containerExpr);
+    children.push(this.callExpr);
+    return children;
+  }
+}
 export class FunCall extends Expr {
-  identifier: Identifier;
+  identifier: Expr;
   args: Expr[];
 
-  constructor(type: Type, identifier: Identifier, args: Expr[]) {
+  constructor(type: Type, identifier: Expr, args: Expr[]) {
     super(type);
     this.identifier = identifier;
     this.args = args;
@@ -259,6 +316,26 @@ export class FunCall extends Expr {
     const children = new Array<ASTNode>();
     children.push(this.identifier);
     if (this.args !== null) children.push(...this.args);
+    return children;
+  }
+}
+export class AnonymousFunDeclaration extends Expr {
+  params: Parameter[];
+  _body: Stmt;
+  scope: Scope;
+
+  constructor(type: Type, params: Parameter[], body: Stmt) {
+    const paramTypes: Type[] = params.map((param) => param.stmtType);
+    super(new FunctionType(type, paramTypes));
+    this.params = params;
+    this._body = body;
+  }
+
+  children(): ASTNode[] {
+    const children = new Array<ASTNode>();
+    children.push(this.stmtType);
+    children.push(...this.params);
+    children.push(this._body);
     return children;
   }
 }
@@ -302,7 +379,7 @@ export class ArrayLiteral extends Expr {
   value: Expr[];
 
   constructor(value: Expr[]) {
-    super(new ArrayType(new BaseType(BaseTypeKind.NONE)));
+    super(new ArrayType(new BaseType(BaseTypeKind.NONE), value.length));
     this.value = value;
   }
 
@@ -314,7 +391,7 @@ export class ArrayLiteral extends Expr {
 }
 export class Identifier extends Expr {
   value: string;
-  declaration: VarDeclaration | Parameter | FunDeclaration;
+  declaration: VarDeclaration | Parameter | FunDeclaration | TypeType;
 
   constructor(value: string) {
     super(new BaseType(BaseTypeKind.NONE));
@@ -325,6 +402,7 @@ export class Identifier extends Expr {
   }
 }
 
+//Dictionary of predefined functions implemented in TS to be called in TCShell
 export const libFunctions = new Map<
   FunDeclaration,
   (...args: unknown[]) => unknown
@@ -338,4 +416,18 @@ libFunctions.set(
     new Block(new Array<Stmt>()),
   ),
   (...args) => console.log(args[0]),
+);
+libFunctions.set(
+  new FunDeclaration(
+    new BaseType(BaseTypeKind.NUMBER),
+    new Identifier("len"),
+    [
+      new Parameter(
+        new ArrayType(new BaseType(BaseTypeKind.ANY), -1),
+        new Identifier("array"),
+      ),
+    ],
+    new Block(new Array<Stmt>()),
+  ),
+  (...args) => (<unknown[]>args[0]).length,
 );

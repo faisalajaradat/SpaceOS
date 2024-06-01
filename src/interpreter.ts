@@ -1,6 +1,7 @@
 import * as core from "./core.js";
 import { VarSymbol, FunSymbol } from "./semantics.js";
 
+//A map variable declaration and their stack of assigned values
 const varStacks = new Map<core.VarDeclaration | core.Parameter, unknown[]>();
 
 class ArrayRepresentation {
@@ -14,7 +15,11 @@ class ArrayRepresentation {
 }
 
 function popOutOfScopeVars(
-  node: core.Program | core.FunDeclaration | core.Block,
+  node:
+    | core.Program
+    | core.FunDeclaration
+    | core.Block
+    | core.AnonymousFunDeclaration,
 ) {
   node.scope.symbolTable.forEach((symbol) => {
     if (symbol instanceof FunSymbol) return;
@@ -23,11 +28,13 @@ function popOutOfScopeVars(
 }
 
 function getValueOfExpression(value: unknown): unknown {
-  if (value instanceof core.Identifier)
+  if (value instanceof core.Identifier) {
+    if (value.declaration instanceof core.FunDeclaration)
+      return value.declaration;
     value = varStacks
       .get(<core.VarDeclaration | core.Parameter>value.declaration)
       .at(-1);
-  else if (value instanceof ArrayRepresentation)
+  } else if (value instanceof ArrayRepresentation)
     value = value.array[value.index];
   return value;
 }
@@ -36,26 +43,38 @@ export default function interpetProgram(node: core.Program) {
   evaluate(node);
 }
 
+//Recursive AST walker for interpreting
 function evaluate(node: core.ASTNode): unknown {
   if (node instanceof core.Program) {
     node
       .children()
-      .filter((child) => child instanceof core.Stmt)
+      .filter((child) => !(child instanceof core.FunDeclaration))
       .forEach((stmt) => evaluate(stmt));
     popOutOfScopeVars(node);
-  } else if (node instanceof core.FunDeclaration) {
-    if (core.libFunctions.has(node)) {
+  } else if (
+    node instanceof core.FunDeclaration ||
+    node instanceof core.AnonymousFunDeclaration
+  ) {
+    if (node instanceof core.FunDeclaration && core.libFunctions.has(node)) {
       const args = node.params.map((param) => varStacks.get(param).pop());
       return core.libFunctions.get(node)(...args);
     }
-    const returnValue = getValueOfExpression(evaluate(node.block));
+    let returnValue = evaluate(node._body);
+    if (
+      returnValue instanceof core.Return &&
+      returnValue.possibleValue !== null
+    )
+      returnValue = getValueOfExpression(evaluate(returnValue.possibleValue));
     popOutOfScopeVars(node);
     return returnValue;
   } else if (node instanceof core.VarDeclaration) {
-    const value = getValueOfExpression(evaluate(node.value));
+    const value =
+      node.value instanceof core.AnonymousFunDeclaration
+        ? node.value
+        : getValueOfExpression(evaluate(node.value));
     const varStack = varStacks.get(node);
     if (varStack === undefined) varStacks.set(node, [value]);
-    else varStack.push(evaluate(node.value));
+    else varStack.push(value);
   } else if (node instanceof core.Return) return node;
   else if (node instanceof core.If) {
     if (<boolean>getValueOfExpression(evaluate(node.condition)))
@@ -73,19 +92,16 @@ function evaluate(node: core.ASTNode): unknown {
       returnNode = evaluate(node.stmts[i]);
       if (returnNode instanceof core.Return) break;
     }
-    if (
-      !(returnNode instanceof core.Return) ||
-      returnNode.possibleValue === null
-    )
-      return undefined;
-    const returnValue = getValueOfExpression(
-      evaluate(returnNode.possibleValue),
-    );
+    if (returnNode instanceof core.Return && returnNode.possibleValue !== null)
+      returnNode = getValueOfExpression(evaluate(returnNode.possibleValue));
     popOutOfScopeVars(node);
-    return returnValue;
+    return returnNode;
   } else if (node instanceof core.BinaryExpr) {
     let leftHandExp = evaluate(node.leftExpr);
-    const rightHandExp = getValueOfExpression(evaluate(node.rightExpr));
+    const rightHandExp =
+      node.rightExpr instanceof core.AnonymousFunDeclaration
+        ? node.rightExpr
+        : getValueOfExpression(evaluate(node.rightExpr));
     if (node.operator === "=") {
       if (leftHandExp instanceof core.Identifier) {
         const varStack = varStacks.get(
@@ -140,14 +156,28 @@ function evaluate(node: core.ASTNode): unknown {
         return !(<boolean>expression);
     }
   } else if (node instanceof core.FunCall) {
-    const funDecl = <core.FunDeclaration>node.identifier.declaration;
+    const funDecl = <core.FunDeclaration | core.AnonymousFunDeclaration>(
+      getValueOfExpression(evaluate(node.identifier))
+    );
     node.args.forEach((arg, pos) => {
       const value = getValueOfExpression(evaluate(arg));
-      const paramStack = varStacks.get(funDecl.params[pos]);
-      if (paramStack === undefined) varStacks.set(funDecl.params[pos], [value]);
+      const paramStack = varStacks.get(
+        (<core.FunDeclaration | core.AnonymousFunDeclaration>funDecl).params[
+          pos
+        ],
+      );
+      if (paramStack === undefined)
+        varStacks.set(
+          (<core.FunDeclaration | core.AnonymousFunDeclaration>funDecl).params[
+            pos
+          ],
+          [value],
+        );
       else paramStack.push(value);
     });
-    return evaluate(funDecl);
+    return evaluate(
+      <core.FunDeclaration | core.AnonymousFunDeclaration>funDecl,
+    );
   } else if (node instanceof core.StringLiteral) return node.value;
   else if (node instanceof core.BoolLiteral) return node.value;
   else if (node instanceof core.NumberLiteral) return node.value;
@@ -158,7 +188,9 @@ function evaluate(node: core.ASTNode): unknown {
     const indices = new Array<number>();
     let arrayBase = node;
     while (true) {
-      indices.push(<number>evaluate(arrayBase.accessExpr));
+      indices.push(
+        <number>getValueOfExpression(evaluate(arrayBase.accessExpr)),
+      );
       if (
         !((<core.ArrayAccess>arrayBase).arrayExpr instanceof core.ArrayAccess)
       )

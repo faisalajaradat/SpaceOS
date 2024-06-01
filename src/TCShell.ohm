@@ -1,30 +1,28 @@
 TCShell {
 
-    Program = Declaration*
-    Declaration = Stmt    --stmt
-                | FunDeclaration    --function
+    Program = Stmt*
+
     Interactive = StmtNewline
 
-	  StmtNewline = FunDeclaration #newline 	--function
-    						| CompoundStmt #newline	--compound
+	  StmtNewline = CompoundStmt #newline	--compound
     						| SimpleStmts	--simple
                 | newline
                 | end
-
 
     Stmt = SimpleStmts #newline --simple
     			| CompoundStmt  --compound
 
     SimpleStmts = NonemptyListWithOptionalEndSep<SimpleStmt, ";">
 
-    SimpleStmt = VarDeclaration   --vardeclaration
+    SimpleStmt = TypeDeclaration
+                | VarDeclaration
+                | FunDeclaration
     					  | return (Exp)?		--return
-                          | Exp 	--exp
-
+                | Exp
 
     CompoundStmt = Block    --block
     		  				| if Exp Stmt (else Stmt)?	--if
-          					| while Exp Stmt	--while
+          				| while Exp Stmt	--while
 
      Exp = AssignExp
      AssignExp = UnaryExp "=" AssignExp		--assign
@@ -41,43 +39,60 @@ TCShell {
      				| MultExp
      MultExp = MultExp ( "*" | "/" | "%" ) UnaryExp		--mult
      				| UnaryExp
-	UnaryExp = ("+" | "-" | "!") UnaryExp	--unary
-    				| "{" ListOf<Exp, ","> "}"		--array
+	   UnaryExp = ("+" | "-" | "!") UnaryExp	--unary
     				| LeftExp
      LeftExp = LeftExp "(" ListOf<Exp, ","> ")"		--call
      				| LeftExp "[" Exp "]"		--array
-                    | PrimaryExp
+            | LeftExp "." LeftExp --attribute
+            | PrimaryExp
 
     PrimaryExp = stringLiteral
     					| identifier
-                        | numberLiteral
-                        | booleanLiteral
-                        | "(" Exp ")"		--group
+              | numberLiteral
+              | booleanLiteral
+              | Type "(" ListOf<Parameter, ","> ")" Stmt  --function
+              | NonemptyListOf<Type, "|">   --type
+              | "(" Exp ")"		--group
+              | "{" ListOf<Exp, ","> "}"		--array
 
     Block = "{" Stmt* "}"
 
     VarDeclaration = Parameter "=" Exp
-    FunDeclaration = Parameter "(" ListOf<Parameter, ","> ")" Block
+    FunDeclaration = Parameter "(" ListOf<Parameter, ","> ")" Stmt
+    TypeDeclaration = TypeType "=" Exp
 
-    Parameter = type identifier
-    type = typeKeyword "[]"*
+    Parameter = Type identifier
 
-    typeKeyword = "number" ~identPart
-    						| "string" ~identPart
-                            | "bool" ~identPart
-                            | "void" ~identPart
+    TypeSpecifier = "[]"   --array
+                  |"(" ListOf<Type, ","> ")"    --function
 
-    keyword = typeKeyword
+    ResultType = result "<" Type "," Type ">" TypeSpecifier*
+
+    Type = (baseTypeKeyword | TypeType) TypeSpecifier*
+
+    baseTypeKeyword = "number" ~identPart
+    						    | "string" ~identPart
+                    | "bool" ~identPart
+                    | "void" ~identPart
+
+    typeKeyword = "type" ~identPart
+
+    TypeType = typeKeyword identifier
+
+    keyword = baseTypeKeyword
+            | typeKeyword
     				| booleanLiteral
-                    | while
-                    | if
-                    | else
-                    | return
+            | while
+            | if
+            | else
+            | return
+            | result
 
     while = "while" ~identPart
     if = "if" ~identPart
     else = "else" ~identPart
     return = "return" ~identPart
+    result = "result" ~identPart
 
     identStart      = letter | "_"
     identPart       = identStart | decimalDigit
@@ -86,7 +101,7 @@ TCShell {
   	identName       = identStart identPart*
     identifier      = ~keyword identName
 
-	booleanLiteral = "true" ~identPart
+	  booleanLiteral = "true" ~identPart
     						| "false" ~identPart
 
     numberLiteral = digit+ ("." digit+ (("e" | "E") ("+" | "-") digit+)?)?

@@ -5,12 +5,14 @@ import { Command } from "commander";
 import { graphviz } from "node-graphviz";
 import analyze from "./semantics.js";
 import interpetProgram from "./interpreter.js";
+//Entrypoint and CLI for using TCShell interpreter
+
 const program = new Command();
 
 program
   .name("TCShell")
   .description("A spatial-oriented scripting language")
-  .version("0.1.0");
+  .version("0.2.0");
 
 program
   .command("interpret <path>")

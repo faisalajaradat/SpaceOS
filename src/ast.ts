@@ -1,19 +1,14 @@
 import { grammar } from "./grammar.js";
 import * as core from "./core.js";
+import { inspect } from "util";
 
 export function ast(match) {
   return astBuilder(match).ast();
 }
-
+//Describe how to build AST for each Ohm rule
 const astBuilder = grammar.createSemantics().addOperation("ast", {
-  Program(declarations) {
-    return new core.Program(declarations.ast());
-  },
-  Declaration_stmt(stmt) {
-    return stmt.ast();
-  },
-  Declaration_function(funDeclaration) {
-    return funDeclaration.ast();
+  Program(stmts) {
+    return new core.Program(stmts.ast());
   },
   Stmt_simple(simpleStatements, _newline) {
     return simpleStatements.ast()[0];
@@ -24,14 +19,11 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   SimpleStmts(nonemptyListWithOptionalEndSep) {
     return nonemptyListWithOptionalEndSep.ast();
   },
-  SimpleStmt_vardeclaration(varDeclaration) {
-    return varDeclaration.ast();
-  },
   SimpleStmt_return(returnKeyword, possibleExpression) {
     return new core.Return(possibleExpression.ast()[0] ?? null);
   },
-  SimpleStmt_exp(expression) {
-    return expression.ast();
+  SimpleStmt(simpleStmt) {
+    return simpleStmt.ast();
   },
   CompoundStmt_block(block) {
     return block.ast();
@@ -139,9 +131,6 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       unaryExpression.ast(),
     );
   },
-  UnaryExp_array(_leftBracket, listOfExpressions, _rightBracket) {
-    return new core.ArrayLiteral(listOfExpressions.asIteration().ast());
-  },
   UnaryExp(leftExpression) {
     return leftExpression.ast();
   },
@@ -163,13 +152,35 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     expression,
     _rightSquareBracket,
   ) {
-    return new core.ArrayAccess(null, leftExpression.ast(), expression.ast());
+    return new core.ArrayAccess(leftExpression.ast(), expression.ast());
+  },
+  LeftExp_attribute(leftExpression, _dot, expression) {
+    return new core.AttributeAccess(leftExpression.ast(), expression.ast());
   },
   LeftExp(primaryExpression) {
     return primaryExpression.ast();
   },
   PrimaryExp_group(_leftParenthesis, expression, _rightParenthesis) {
     return expression.ast();
+  },
+  PrimaryExp_array(_leftBracket, listOfExpressions, _rightBracket) {
+    return new core.ArrayLiteral(listOfExpressions.asIteration().ast());
+  },
+  PrimaryExp_function(
+    type,
+    _leftParenthesis,
+    listOfParameters,
+    _rightParenthesis,
+    stmt,
+  ) {
+    return new core.AnonymousFunDeclaration(
+      type.ast(),
+      listOfParameters.asIteration().ast(),
+      stmt.ast(),
+    );
+  },
+  PrimaryExp_type(listOfTypes) {
+    return listOfTypes.asIteration().ast();
   },
   PrimaryExp(expression) {
     return expression.ast();
@@ -190,20 +201,41 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     _leftParenthesis,
     possibleParameters,
     _rightParenthesis,
-    block,
+    stmt,
   ) {
     const typeAndIdentifier = parameter.ast();
     return new core.FunDeclaration(
       typeAndIdentifier.stmtType,
       typeAndIdentifier.identifier,
       possibleParameters.asIteration().ast(),
-      block.ast(),
+      stmt.ast(),
     );
+  },
+  TypeDeclaration(typeType, _equal, expression) {
+    const _type = <core.TypeType>typeType.ast();
+    _type.types.push(...expression.ast());
+    return _type;
   },
   Parameter(type, identifier) {
     return new core.Parameter(type.ast(), identifier.ast());
   },
-  type(keyword, arrayBrackets) {
+  Type(baseTypeDef, typeSpecifiers) {
+    const baseType = baseTypeDef.ast();
+    const numOfSpecifiers = <(string | core.FunctionType)[]>(
+      typeSpecifiers.ast()
+    );
+    let fullType = baseType;
+    numOfSpecifiers.forEach((specifier) => {
+      if (typeof specifier === "string" && specifier === "[]")
+        fullType = new core.ArrayType(fullType, -1);
+      else if (specifier instanceof core.FunctionType) {
+        (<core.FunctionType>specifier).returnType = fullType;
+        fullType = specifier;
+      }
+    });
+    return fullType;
+  },
+  baseTypeKeyword(keyword) {
     let baseTypeKind = core.BaseTypeKind.NONE;
     switch (keyword.sourceString) {
       case "number":
@@ -219,13 +251,16 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
         baseTypeKind = core.BaseTypeKind.VOID;
         break;
     }
-    const baseType = new core.BaseType(baseTypeKind);
-    if (arrayBrackets.children.length === 0) return baseType;
-    let arrayType = new core.ArrayType(baseType);
-    for (let i = 1; i < arrayBrackets.children.length; i++) {
-      arrayType = new core.ArrayType(arrayType);
-    }
-    return arrayType;
+    return new core.BaseType(baseTypeKind);
+  },
+  TypeSpecifier_array(specifier) {
+    return this.sourceString;
+  },
+  TypeSpecifier_function(_leftParenthesis, listOfTypes, _rightParenthesis) {
+    return new core.FunctionType(null, listOfTypes.asIteration().ast());
+  },
+  TypeType(_type, identifier) {
+    return new core.TypeType(identifier.ast(), new Array<core.TypeType>());
   },
   identifier(component) {
     return new core.Identifier(this.sourceString);
@@ -262,6 +297,23 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
 let dotString = "";
 let nodeCount = 0;
 
+function writeFunDeclarationDot(
+  node: core.FunDeclaration | core.AnonymousFunDeclaration,
+  funDeclNodeId: string,
+): void {
+  const typeNodeId = visitDotPrinter(node.stmtType);
+  const paramNodeIds = new Array<string>();
+  node.params.forEach((child) => paramNodeIds.push(visitDotPrinter(child)));
+  const blockNodeId = visitDotPrinter(node._body);
+  dotString = dotString.concat(funDeclNodeId + "->" + typeNodeId + ";\n");
+  paramNodeIds.forEach(
+    (nodeId) =>
+      (dotString = dotString.concat(funDeclNodeId + "->" + nodeId + ";\n")),
+  );
+  dotString = dotString.concat(funDeclNodeId + "->" + blockNodeId + ";\n");
+}
+
+//Convert AST into DOT language
 export function visitDotPrinter(node: core.ASTNode): string {
   if (node instanceof core.Program) {
     dotString = dotString.concat("digraph ast {\n");
@@ -280,20 +332,11 @@ export function visitDotPrinter(node: core.ASTNode): string {
   if (node instanceof core.FunDeclaration) {
     const funDeclNodeId = "Node" + nodeCount++;
     dotString = dotString.concat(funDeclNodeId + '[label=" FunDecl "];\n');
-    const typeNodeId = visitDotPrinter(node.funType);
     const identifierNodeId = visitDotPrinter(node.identifier);
-    const paramNodeIds = new Array<string>();
-    node.params.forEach((child) => paramNodeIds.push(visitDotPrinter(child)));
-    const blockNodeId = visitDotPrinter(node.block);
-    dotString = dotString.concat(funDeclNodeId + "->" + typeNodeId + ";\n");
     dotString = dotString.concat(
       funDeclNodeId + "->" + identifierNodeId + ";\n",
     );
-    paramNodeIds.forEach(
-      (nodeId) =>
-        (dotString = dotString.concat(funDeclNodeId + "->" + nodeId + ";\n")),
-    );
-    dotString = dotString.concat(funDeclNodeId + "->" + blockNodeId + ";\n");
+    writeFunDeclarationDot(node, funDeclNodeId);
     return funDeclNodeId;
   }
   if (node instanceof core.Parameter) {
@@ -399,6 +442,19 @@ export function visitDotPrinter(node: core.ASTNode): string {
     );
     return arrayAccesseNodeId;
   }
+  if (node instanceof core.AttributeAccess) {
+    const attributeAccessNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(attributeAccessNodeId + '[label=" . "];\n');
+    const containerExprId = visitDotPrinter(node.containerExpr);
+    const callExprId = visitDotPrinter(node.callExpr);
+    dotString = dotString.concat(
+      attributeAccessNodeId + "->" + containerExprId + ";\n",
+    );
+    dotString = dotString.concat(
+      attributeAccessNodeId + "->" + callExprId + ";\n",
+    );
+    return attributeAccessNodeId;
+  }
   if (node instanceof core.FunCall) {
     const funCallNodeId = "Node" + nodeCount++;
     dotString = dotString.concat(funCallNodeId + '[label=" FunCall "];\n');
@@ -413,6 +469,14 @@ export function visitDotPrinter(node: core.ASTNode): string {
         (dotString = dotString.concat(funCallNodeId + "->" + nodeId + ";\n")),
     );
     return funCallNodeId;
+  }
+  if (node instanceof core.AnonymousFunDeclaration) {
+    const anonymousFunDeclNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      anonymousFunDeclNodeId + '[label=" AnonFunDecl "];\n',
+    );
+    writeFunDeclarationDot(node, anonymousFunDeclNodeId);
+    return anonymousFunDeclNodeId;
   }
   if (node instanceof core.StringLiteral) {
     const stringLiteralNodeId = "Node" + nodeCount++;
@@ -478,8 +542,44 @@ export function visitDotPrinter(node: core.ASTNode): string {
   if (node instanceof core.ArrayType) {
     const arrayTypeNodeId = "Node" + nodeCount++;
     dotString = dotString.concat(arrayTypeNodeId + '[label=" Array Of "];\n');
-    const typeNodeId = visitDotPrinter(node.type);
+    const typeNodeId = visitDotPrinter(node._type);
     dotString = dotString.concat(arrayTypeNodeId + "->" + typeNodeId + ";\n");
     return arrayTypeNodeId;
+  }
+  if (node instanceof core.FunctionType) {
+    const functionTypeNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      functionTypeNodeId + '[label=" Function "];\n',
+    );
+    const typeNodeId = visitDotPrinter(node.returnType);
+    dotString = dotString.concat(
+      functionTypeNodeId + "->" + typeNodeId + ";\n",
+    );
+    node.paramTypes
+      .map((paramType) => visitDotPrinter(paramType))
+      .forEach(
+        (nodeId) =>
+          (dotString = dotString.concat(
+            functionTypeNodeId + "->" + nodeId + ";\n",
+          )),
+      );
+    return functionTypeNodeId;
+  }
+  if (node instanceof core.TypeType) {
+    const typeTypeNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(typeTypeNodeId + '[label=" Type "];\n');
+    const identifierNodeId = visitDotPrinter(node.identifier);
+    dotString = dotString.concat(
+      typeTypeNodeId + "->" + identifierNodeId + ";\n",
+    );
+    node.types
+      .map((_type) => visitDotPrinter(_type))
+      .forEach(
+        (nodeId) =>
+          (dotString = dotString.concat(
+            typeTypeNodeId + "->" + nodeId + ";\n",
+          )),
+      );
+    return typeTypeNodeId;
   }
 }

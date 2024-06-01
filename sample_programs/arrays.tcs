@@ -3,8 +3,14 @@ void Main() {
   string[][] arraysOfStringArrays = {{"hello!"}, {"Hello"}, {" "}, {"World!"}}
   print(nums)
   print(nums[0])
+  nums[0] = 10
+  print(nums[0])
   print(arraysOfStringArrays)
   print(arraysOfStringArrays[3][0])
+  print(len(nums))
+  print(len(arraysOfStringArrays))
+  print(len(arraysOfStringArrays[0]))
+  print(len(arraysOfStringArrays[0]))
 }
 
 Main()

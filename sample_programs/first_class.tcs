@@ -1,0 +1,29 @@
+number x = 0
+
+void(number, number, number(number)) executeOperationOnXYtimes = void(number x, number y, number(number) operation) {
+  number i = 0
+  number value = x
+  while i < y {
+    x = operation(x)
+    i = i + 1
+  }
+}
+
+void (number, number(number)[]) executeOperationsSequentialOnNumber = void (number x, number(number)[] operations) {
+  number numOfOperations = len(operations)
+  number iteration = 0
+  while iteration < numOfOperations {
+    x = operations[iteration](x)
+    iteration = iteration + 1
+  }
+}
+
+number(number) incrementAndLogNumber = number(number x) {
+  number incremented = x + 1
+  print(incremented)
+  return incremented
+}
+
+number(number)[] operations = { incrementAndLogNumber, incrementAndLogNumber, incrementAndLogNumber, incrementAndLogNumber}
+
+executeOperationsSequentialOnNumber(x, operations)
