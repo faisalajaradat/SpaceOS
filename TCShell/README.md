@@ -14,7 +14,11 @@ A Spatial-Oriented scripting language designed for SpaceOS.
     npm install
     ```
 ## Usage
-Execute the CLI's help command for help with usage:
-```bash
-node . --help
-```
+1. Compile TS code:
+   ```bash
+    npm run build
+    ```
+2. Execute the CLI's help command for help with usage:
+   ```bash
+   node . --help
+   ```
