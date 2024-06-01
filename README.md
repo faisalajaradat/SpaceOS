@@ -1,7 +1,7 @@
 # TCShell
 A Spatial-Oriented scripting language designed for SpaceOS.
 
-##Installation
+## Installation
 1. Clone the repository:
    ```bash
    git clone git@github.com:citelab/spaceOS.git
