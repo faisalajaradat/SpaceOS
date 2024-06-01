@@ -12,10 +12,10 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}/dist/src/TCShell.js",
+            "program": "${workspaceFolder}/TCShell/dist/src/TCShell.js",
             "preLaunchTask": "tsc: build - tsconfig.json",
             "outFiles": [
-                "${workspaceFolder}/dist/**/*.js"
+                "${workspaceFolder}/TCShell/dist/**/*.js"
             ]
         }
     ]
