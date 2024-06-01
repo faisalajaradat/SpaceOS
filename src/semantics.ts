@@ -5,7 +5,7 @@ export default function analyze(astHead: core.Program): number {
   visitTypeAnalyzer(astHead);
   return errors;
 }
-
+//Defines symbols for symbol table
 export abstract class ProgramSymbol {
   name: string;
 
@@ -29,6 +29,15 @@ export class FunSymbol extends ProgramSymbol {
   constructor(funDeclaration: core.FunDeclaration) {
     super(funDeclaration.identifier.value);
     this.funDeclaration = funDeclaration;
+  }
+}
+
+export class TypeSymbol extends ProgramSymbol {
+  typeType: core.TypeType;
+
+  constructor(typeType: core.TypeType) {
+    super(typeType.identifier.value);
+    this.typeType = typeType;
   }
 }
 
@@ -61,6 +70,7 @@ export class Scope {
 
 let errors = 0;
 
+//Performs name analysis to enforce scope rules
 function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
   if (node instanceof core.Program) {
     const curScope = new Scope(scope);
@@ -106,14 +116,17 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
           " already defined within scope!",
       );
     } else scope.put(new VarSymbol(node));
-    if (node.stmtType instanceof core.ContainerType) {
-      node.stmtType.scope = new Scope(null);
-      const curScope = node.stmtType.scope;
-      node.stmtType._attributes.forEach((value, fun) => {
-        fun.identifier.declaration = fun;
-        curScope.put(new FunSymbol(fun));
-      });
-    }
+  } else if (node instanceof core.TypeType) {
+    const typeSymbol = scope.lookupCurrent(node.identifier.value);
+    if (typeSymbol !== null && node.types.length > 0) {
+      errors++;
+      console.log(
+        "Type name: " +
+          node.identifier.value +
+          " already defined within scope!",
+      );
+    } else if (typeSymbol === null) scope.put(new TypeSymbol(node));
+    visitNameAnalyzer(node.identifier, scope);
   } else if (node instanceof core.Block) {
     const curScope = new Scope(scope);
     node.children().forEach((child) => visitNameAnalyzer(child, curScope));
@@ -128,9 +141,9 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
       node.declaration = programSymbol.funDeclaration;
     else if (programSymbol instanceof VarSymbol)
       node.declaration = programSymbol.varDeclaration;
-  } else if (node instanceof core.AttributeAccess)
-    visitNameAnalyzer(node.containerExpr, scope);
-  else node.children().forEach((child) => visitNameAnalyzer(child, scope));
+    else if (programSymbol instanceof TypeSymbol)
+      node.declaration = programSymbol.typeType;
+  } else node.children().forEach((child) => visitNameAnalyzer(child, scope));
 }
 
 let returnFunction: core.FunDeclaration | core.AnonymousFunDeclaration = null;
@@ -206,6 +219,7 @@ function conditionIsValidType(node: core.If | core.While): boolean {
   return true;
 }
 
+//Performs type analysis to enforce typing rules
 function visitTypeAnalyzer(node: core.ASTNode): core.Type {
   if (
     node instanceof core.FunDeclaration ||

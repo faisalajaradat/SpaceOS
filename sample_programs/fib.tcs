@@ -1,9 +1,10 @@
-number(number, number(number)) applyFib = number (number num, number(number) fib) {
+number (number) fib = number (number num) {
   if num <= 1
     return num
   return fib(num - 1) + fib(num - 2)
 }
 
-number fibonacci = applyFib(5, applyFib)
+
+number fibonacci = fib(15)
 
 print(fibonacci)

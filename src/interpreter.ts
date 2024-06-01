@@ -1,6 +1,7 @@
 import * as core from "./core.js";
 import { VarSymbol, FunSymbol } from "./semantics.js";
 
+//A map variable declaration and their stack of assigned values
 const varStacks = new Map<core.VarDeclaration | core.Parameter, unknown[]>();
 
 class ArrayRepresentation {
@@ -42,6 +43,7 @@ export default function interpetProgram(node: core.Program) {
   evaluate(node);
 }
 
+//Recursive AST walker for interpreting
 function evaluate(node: core.ASTNode): unknown {
   if (node instanceof core.Program) {
     node

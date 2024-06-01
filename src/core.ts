@@ -1,5 +1,5 @@
 import { Scope } from "./semantics.js";
-
+//Define all AST nodes
 export interface ASTNode {
   children(): ASTNode[];
 }
@@ -37,6 +37,19 @@ export abstract class ContainerType extends Type {
   ) {
     super();
     this._attributes = attributes;
+  }
+}
+export class TypeType extends Type {
+  types: Type[];
+  identifier: Identifier;
+
+  constructor(identifier: Identifier, types: Type[]) {
+    super();
+    this.identifier = identifier;
+    this.types = types;
+  }
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
   }
 }
 export class FunctionType extends Type {
@@ -378,7 +391,7 @@ export class ArrayLiteral extends Expr {
 }
 export class Identifier extends Expr {
   value: string;
-  declaration: VarDeclaration | Parameter | FunDeclaration;
+  declaration: VarDeclaration | Parameter | FunDeclaration | TypeType;
 
   constructor(value: string) {
     super(new BaseType(BaseTypeKind.NONE));
@@ -389,6 +402,7 @@ export class Identifier extends Expr {
   }
 }
 
+//Dictionary of predefined functions implemented in TS to be called in TCShell
 export const libFunctions = new Map<
   FunDeclaration,
   (...args: unknown[]) => unknown

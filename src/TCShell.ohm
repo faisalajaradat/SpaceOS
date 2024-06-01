@@ -9,21 +9,20 @@ TCShell {
                 | newline
                 | end
 
-
     Stmt = SimpleStmts #newline --simple
     			| CompoundStmt  --compound
 
     SimpleStmts = NonemptyListWithOptionalEndSep<SimpleStmt, ";">
 
-    SimpleStmt = VarDeclaration
+    SimpleStmt = TypeDeclaration
+                | VarDeclaration
                 | FunDeclaration
     					  | return (Exp)?		--return
                 | Exp
 
-
     CompoundStmt = Block    --block
     		  				| if Exp Stmt (else Stmt)?	--if
-          					| while Exp Stmt	--while
+          				| while Exp Stmt	--while
 
      Exp = AssignExp
      AssignExp = UnaryExp "=" AssignExp		--assign
@@ -40,26 +39,27 @@ TCShell {
      				| MultExp
      MultExp = MultExp ( "*" | "/" | "%" ) UnaryExp		--mult
      				| UnaryExp
-	UnaryExp = ("+" | "-" | "!") UnaryExp	--unary
+	   UnaryExp = ("+" | "-" | "!") UnaryExp	--unary
     				| LeftExp
      LeftExp = LeftExp "(" ListOf<Exp, ","> ")"		--call
      				| LeftExp "[" Exp "]"		--array
             | LeftExp "." LeftExp --attribute
-                    | PrimaryExp
+            | PrimaryExp
 
     PrimaryExp = stringLiteral
     					| identifier
               | numberLiteral
               | booleanLiteral
               | Type "(" ListOf<Parameter, ","> ")" Stmt  --function
+              | NonemptyListOf<Type, "|">   --type
               | "(" Exp ")"		--group
               | "{" ListOf<Exp, ","> "}"		--array
-
 
     Block = "{" Stmt* "}"
 
     VarDeclaration = Parameter "=" Exp
     FunDeclaration = Parameter "(" ListOf<Parameter, ","> ")" Stmt
+    TypeDeclaration = TypeType "=" Exp
 
     Parameter = Type identifier
 
@@ -68,20 +68,25 @@ TCShell {
 
     ResultType = result "<" Type "," Type ">" TypeSpecifier*
 
-    Type = (typeKeyword | ResultType) TypeSpecifier*
+    Type = (baseTypeKeyword | TypeType) TypeSpecifier*
 
-    typeKeyword = "number" ~identPart
-    						| "string" ~identPart
-                            | "bool" ~identPart
-                            | "void" ~identPart
+    baseTypeKeyword = "number" ~identPart
+    						    | "string" ~identPart
+                    | "bool" ~identPart
+                    | "void" ~identPart
 
-    keyword = typeKeyword
+    typeKeyword = "type" ~identPart
+
+    TypeType = typeKeyword identifier
+
+    keyword = baseTypeKeyword
+            | typeKeyword
     				| booleanLiteral
-                    | while
-                    | if
-                    | else
-                    | return
-                    | result
+            | while
+            | if
+            | else
+            | return
+            | result
 
     while = "while" ~identPart
     if = "if" ~identPart
@@ -96,7 +101,7 @@ TCShell {
   	identName       = identStart identPart*
     identifier      = ~keyword identName
 
-	booleanLiteral = "true" ~identPart
+	  booleanLiteral = "true" ~identPart
     						| "false" ~identPart
 
     numberLiteral = digit+ ("." digit+ (("e" | "E") ("+" | "-") digit+)?)?

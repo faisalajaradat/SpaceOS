@@ -1,10 +1,11 @@
 import { grammar } from "./grammar.js";
 import * as core from "./core.js";
+import { inspect } from "util";
 
 export function ast(match) {
   return astBuilder(match).ast();
 }
-
+//Describe how to build AST for each Ohm rule
 const astBuilder = grammar.createSemantics().addOperation("ast", {
   Program(stmts) {
     return new core.Program(stmts.ast());
@@ -178,6 +179,9 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       stmt.ast(),
     );
   },
+  PrimaryExp_type(listOfTypes) {
+    return listOfTypes.asIteration().ast();
+  },
   PrimaryExp(expression) {
     return expression.ast();
   },
@@ -207,6 +211,11 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       stmt.ast(),
     );
   },
+  TypeDeclaration(typeType, _equal, expression) {
+    const _type = <core.TypeType>typeType.ast();
+    _type.types.push(...expression.ast());
+    return _type;
+  },
   Parameter(type, identifier) {
     return new core.Parameter(type.ast(), identifier.ast());
   },
@@ -226,7 +235,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     });
     return fullType;
   },
-  typeKeyword(keyword) {
+  baseTypeKeyword(keyword) {
     let baseTypeKind = core.BaseTypeKind.NONE;
     switch (keyword.sourceString) {
       case "number":
@@ -249,6 +258,9 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   },
   TypeSpecifier_function(_leftParenthesis, listOfTypes, _rightParenthesis) {
     return new core.FunctionType(null, listOfTypes.asIteration().ast());
+  },
+  TypeType(_type, identifier) {
+    return new core.TypeType(identifier.ast(), new Array<core.TypeType>());
   },
   identifier(component) {
     return new core.Identifier(this.sourceString);
@@ -301,6 +313,7 @@ function writeFunDeclarationDot(
   dotString = dotString.concat(funDeclNodeId + "->" + blockNodeId + ";\n");
 }
 
+//Convert AST into DOT language
 export function visitDotPrinter(node: core.ASTNode): string {
   if (node instanceof core.Program) {
     dotString = dotString.concat("digraph ast {\n");
@@ -551,5 +564,22 @@ export function visitDotPrinter(node: core.ASTNode): string {
           )),
       );
     return functionTypeNodeId;
+  }
+  if (node instanceof core.TypeType) {
+    const typeTypeNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(typeTypeNodeId + '[label=" Type "];\n');
+    const identifierNodeId = visitDotPrinter(node.identifier);
+    dotString = dotString.concat(
+      typeTypeNodeId + "->" + identifierNodeId + ";\n",
+    );
+    node.types
+      .map((_type) => visitDotPrinter(_type))
+      .forEach(
+        (nodeId) =>
+          (dotString = dotString.concat(
+            typeTypeNodeId + "->" + nodeId + ";\n",
+          )),
+      );
+    return typeTypeNodeId;
   }
 }
