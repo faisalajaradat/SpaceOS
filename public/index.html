@@ -37,6 +37,7 @@
             display: flex; 
             gap: 10px; /* space in between buttons*/
         }.transcript {
+            display: flex;
             margin-top: 20px;
             padding: 20px;
             background-color: white;
@@ -46,7 +47,20 @@
             font-size: 16px;
             color: #555;
             width: calc(100% - 42px); 
-            overflow-y: auto; /* Enables scrolling */
+            overflow-y:scroll;
+            flex-direction: column;
+        }.transcript > *{
+            padding: 1rem;
+            margin: .5rem 0;
+        }.bot {
+            width: fit-content;
+            align-self: flex-start;
+            background-color: #e7e7e7; /* light gray for bot */
+        }
+        .user {
+            width: fit-content;
+            align-self: flex-end;
+            background-color: #d1e7dd; /* Light green background for user */
         }
         p {
             margin-top: 20px;
@@ -75,47 +89,70 @@
         <button id="speakBtn">Speak</button>
         <button id="stopBtn">Stop</button>
     </div>
-    <p class="transcript" id="transcript">Transcript will appear here...</p>
+    <div class="transcript" id="transcript">Transcript will appear here...</div>
     <div class="button-container" style="width:100%">
         <input type="text" id="inputField" placeholder="Type here...">
         <button id="LLM" style="padding: 0; width: 10%;">Call LLM</button>
     </div>
     <script type="module">
-        
-        document.getElementById('LLM').addEventListener('click', () => {
-            const userInput = document.getElementById('inputField').value;
-            document.getElementById('transcript').textContent = "Processing..."; // Update UI to show processing
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify(userInput)); // Send user input if the WebSocket is open
-            } else {
-                console.log('WebSocket is not open. Current State: ', ws.readyState);
-            }
-        });
-          
+        let messageTimer = null;
         const ws = new WebSocket('ws://localhost:7000/ws/echo');
 
         ws.onopen = function() {
             console.log('WebSocket connection established');
-            document.getElementById('LLM').addEventListener('click', () => {
-            const userInput = document.getElementById('inputField').value;
-            ws.send(JSON.stringify(userInput));
-            document.getElementById('transcript').textContent = "Processing...";
-            });
         };
 
         ws.onerror = function(error) {
             console.error('WebSocket Error:', error);
+            const transcript = document.getElementById('transcript');
+            transcript.innerHTML += `<div class="error">WebSocket Connection Error: ${error.message}</div>`;
         };
 
         ws.onmessage = function(event) {
             console.log('Received:', event.data);
             const transcript = document.getElementById('transcript');
+            
+            let botMessageDiv;
 
-            if (transcript.textContent.includes("Processing...")) {
-            transcript.textContent = ""; // Clear the "Processing..." text
+            // Check if the last child of the transcript is a bot message
+            const lastElement = transcript.lastElementChild;
+            if (lastElement && lastElement.className === 'bot') {
+                botMessageDiv = lastElement; 
+            } else {
+                botMessageDiv = document.createElement('div');  
+                botMessageDiv.className = 'bot';
+                transcript.appendChild(botMessageDiv);  
             }
-            transcript.textContent += event.data  // Append received data to transcript
+
+            botMessageDiv.textContent += event.data;  // Append new data to the existing or new bot message div
+
+            clearTimeout(messageTimer);
+                messageTimer = setTimeout(() => {
+                    // Assuming 1 second of no response means the response is done.
+                    //later a specific signal should be sent.
+                    speakResponse(botMessageDiv.textContent);
+                }, 1000);
         };
+
+        document.getElementById('LLM').addEventListener('click', () => {
+            const userInput = document.getElementById('inputField').value;
+            if (!userInput.trim()) return; // Avoid empty input 
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify( userInput ));
+                const userText = document.getElementById('inputField').value;
+                if(document.getElementById('transcript').innerHTML == 'Transcript will appear here...'){
+                    transcript.innerHTML = `<div class="user">User: ${userText}</div>`
+                }else{
+                    transcript.innerHTML += `<div class="user">User: ${userText}</div>`
+                }
+                
+                document.getElementById('inputField').value = ''; // Clear input after sending
+            } else {
+                console.log('WebSocket is not open. Current State: ', ws.readyState);
+                const transcript = document.getElementById('transcript');
+                transcript.innerHTML += `<div class="error">Cannot send message, WebSocket is not open.</div>`;
+            }
+        });
 
             
 
