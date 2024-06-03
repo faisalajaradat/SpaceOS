@@ -1,14 +1,14 @@
 import { jest } from "@jest/globals";
+import * as core from "../src/core.js";
 import { grammar } from "../src/grammar.js";
 import { ast } from "../src/ast.js";
 import analyze from "../src/semantics.js";
-import interpretProgram from "../src/interpreter.js";
 import * as test_cases from "./test_cases.js";
 
 function executeTestCase(testCase: string) {
-  const program = ast(grammar.match(testCase));
+  const program: core.Program = ast(grammar.match(testCase));
   analyze(program);
-  interpretProgram(program);
+  program.evaluate();
 }
 
 test("newline as statement seperator", () => {

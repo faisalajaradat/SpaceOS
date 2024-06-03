@@ -1,7 +1,24 @@
 import { Scope } from "./semantics.js";
+import { popOutOfScopeVars, getValueOfExpression } from "./utils.js";
+
+//A map variable declaration and their stack of assigned values
+const varStacks = new Map<VarDeclaration | Parameter, unknown[]>();
+
+export class ArrayRepresentation {
+  array: unknown[];
+  index: number;
+
+  constructor(array: unknown[], index: number) {
+    this.array = array;
+    this.index = index;
+  }
+}
+
 //Define all AST nodes
 export interface ASTNode {
   children(): ASTNode[];
+  //Implement tree walker behaviour for node
+  evaluate(): unknown;
 }
 
 export enum BaseTypeKind {
@@ -15,6 +32,7 @@ export enum BaseTypeKind {
 
 export abstract class Type implements ASTNode {
   abstract children(): ASTNode[];
+  abstract evaluate(): unknown;
 }
 export class BaseType extends Type {
   kind: BaseTypeKind;
@@ -27,6 +45,10 @@ export class BaseType extends Type {
   children(): ASTNode[] {
     return new Array<ASTNode>();
   }
+
+  evaluate(): unknown {
+    return undefined;
+  }
 }
 export abstract class ContainerType extends Type {
   _attributes: Map<FunDeclaration, (...args: unknown[]) => unknown>;
@@ -37,6 +59,10 @@ export abstract class ContainerType extends Type {
   ) {
     super();
     this._attributes = attributes;
+  }
+
+  evaluate(): unknown {
+    return undefined;
   }
 }
 export class TypeType extends Type {
@@ -50,6 +76,9 @@ export class TypeType extends Type {
   }
   children(): ASTNode[] {
     return new Array<ASTNode>();
+  }
+  evaluate(): unknown {
+    return undefined;
   }
 }
 export class FunctionType extends Type {
@@ -65,6 +94,9 @@ export class FunctionType extends Type {
   children(): ASTNode[] {
     return new Array<ASTNode>();
   }
+  evaluate(): unknown {
+    return undefined;
+  }
 }
 export class ArrayType extends Type {
   _type: Type;
@@ -78,6 +110,9 @@ export class ArrayType extends Type {
 
   children(): ASTNode[] {
     return new Array<ASTNode>();
+  }
+  evaluate(): unknown {
+    return undefined;
   }
 }
 export class Program implements ASTNode {
@@ -93,9 +128,17 @@ export class Program implements ASTNode {
     children.push(...this.stmts);
     return children;
   }
+  evaluate(): unknown {
+    this.children()
+      .filter((child) => !(child instanceof FunDeclaration))
+      .forEach((stmt) => stmt.evaluate());
+    popOutOfScopeVars(this, varStacks);
+    return undefined;
+  }
 }
 export abstract class Stmt implements ASTNode {
   abstract children(): ASTNode[];
+  abstract evaluate(): unknown;
   stmtType: Type;
 
   constructor(type: Type) {
@@ -120,6 +163,10 @@ export class Parameter extends Stmt {
     children.push(this.stmtType);
     children.push(this.identifier);
     return children;
+  }
+
+  evaluate(): unknown {
+    return undefined;
   }
 }
 export class FunDeclaration extends Stmt {
@@ -149,6 +196,20 @@ export class FunDeclaration extends Stmt {
     children.push(this._body);
     return children;
   }
+  evaluate(): unknown {
+    if (libFunctions.has(this)) {
+      const args = this.params.map((param) => varStacks.get(param).pop());
+      return libFunctions.get(this)(...args);
+    }
+    let returnValue = this._body.evaluate();
+    if (returnValue instanceof Return && returnValue.possibleValue !== null)
+      returnValue = getValueOfExpression(
+        returnValue.possibleValue.evaluate(),
+        varStacks,
+      );
+    popOutOfScopeVars(this, varStacks);
+    return returnValue;
+  }
 }
 export class VarDeclaration extends Stmt {
   identifier: Identifier;
@@ -166,6 +227,17 @@ export class VarDeclaration extends Stmt {
     children.push(this.value);
     return children;
   }
+
+  evaluate(): unknown {
+    const value =
+      this.value instanceof AnonymousFunDeclaration
+        ? this.value
+        : getValueOfExpression(this.value.evaluate(), varStacks);
+    const varStack = varStacks.get(this);
+    if (varStack === undefined) varStacks.set(this, [value]);
+    else varStack.push(value);
+    return undefined;
+  }
 }
 export class Return extends Stmt {
   possibleValue: Expr;
@@ -179,6 +251,10 @@ export class Return extends Stmt {
     const children = new Array<ASTNode>();
     if (this.possibleValue !== null) children.push(this.possibleValue);
     return children;
+  }
+
+  evaluate(): unknown {
+    return this;
   }
 }
 export class If extends Stmt {
@@ -200,6 +276,13 @@ export class If extends Stmt {
     if (this.possibleElseStmt !== null) children.push(this.possibleElseStmt);
     return children;
   }
+
+  evaluate(): unknown {
+    if (<boolean>getValueOfExpression(this.condition.evaluate(), varStacks))
+      return this.ifStmt.evaluate();
+    else if (this.possibleElseStmt !== null)
+      return this.possibleElseStmt.evaluate();
+  }
 }
 export class While extends Stmt {
   condition: Expr;
@@ -217,6 +300,12 @@ export class While extends Stmt {
     children.push(this.whileStmt);
     return children;
   }
+  evaluate(): unknown {
+    let returnValue = undefined;
+    while (<boolean>getValueOfExpression(this.condition.evaluate(), varStacks))
+      returnValue = this.whileStmt.evaluate();
+    return returnValue;
+  }
 }
 export class Block extends Stmt {
   stmts: Stmt[];
@@ -231,6 +320,21 @@ export class Block extends Stmt {
     const children = new Array<ASTNode>();
     children.push(...this.stmts);
     return children;
+  }
+
+  evaluate(): unknown {
+    let returnNode = undefined;
+    for (let i = 0; i < this.stmts.length; i++) {
+      returnNode = this.stmts[i].evaluate();
+      if (returnNode instanceof Return) break;
+    }
+    if (returnNode instanceof Return && returnNode.possibleValue !== null)
+      returnNode = getValueOfExpression(
+        returnNode.possibleValue.evaluate(),
+        varStacks,
+      );
+    popOutOfScopeVars(this, varStacks);
+    return returnNode;
   }
 }
 export class BinaryExpr extends Expr {
@@ -251,6 +355,55 @@ export class BinaryExpr extends Expr {
     children.push(this.rightExpr);
     return children;
   }
+
+  evaluate(): unknown {
+    let leftHandExp = this.leftExpr.evaluate();
+    const rightHandExp =
+      this.rightExpr instanceof AnonymousFunDeclaration
+        ? this.rightExpr
+        : getValueOfExpression(this.rightExpr.evaluate(), varStacks);
+    if (this.operator === "=") {
+      if (leftHandExp instanceof Identifier) {
+        const varStack = varStacks.get(
+          <VarDeclaration | Parameter>(<Identifier>leftHandExp).declaration,
+        );
+        varStack[varStack.length - 1] = rightHandExp;
+      } else if (leftHandExp instanceof ArrayRepresentation)
+        leftHandExp.array[leftHandExp.index] = rightHandExp;
+      return rightHandExp;
+    }
+    leftHandExp = getValueOfExpression(leftHandExp, varStacks);
+    switch (this.operator) {
+      case "||":
+        return <boolean>leftHandExp || <boolean>rightHandExp;
+      case "&&":
+        return <boolean>leftHandExp && <boolean>rightHandExp;
+      case "==":
+        return leftHandExp === rightHandExp;
+      case "!=":
+        return leftHandExp !== rightHandExp;
+      case "<=":
+        return <number>leftHandExp <= <number>rightHandExp;
+      case "<":
+        return <number>leftHandExp < <number>rightHandExp;
+      case ">=":
+        return <number>leftHandExp >= <number>rightHandExp;
+      case ">":
+        return <number>leftHandExp > <number>rightHandExp;
+      case "+":
+        return typeof leftHandExp === "number"
+          ? <number>leftHandExp + <number>rightHandExp
+          : <string>leftHandExp + <string>rightHandExp;
+      case "-":
+        return <number>leftHandExp - <number>rightHandExp;
+      case "*":
+        return <number>leftHandExp * <number>rightHandExp;
+      case "/":
+        return <number>leftHandExp / <number>rightHandExp;
+      case "%":
+        return <number>leftHandExp % <number>rightHandExp;
+    }
+  }
 }
 export class UnaryExpr extends Expr {
   operator: string;
@@ -266,6 +419,17 @@ export class UnaryExpr extends Expr {
     const children = new Array<ASTNode>();
     children.push(this.expr);
     return children;
+  }
+  evaluate(): unknown {
+    const expression = getValueOfExpression(this.expr.evaluate(), varStacks);
+    switch (this.operator) {
+      case "+":
+        return +(<number>expression);
+      case "-":
+        return -(<number>expression);
+      case "!":
+        return !(<boolean>expression);
+    }
   }
 }
 export class ArrayAccess extends Expr {
@@ -284,6 +448,33 @@ export class ArrayAccess extends Expr {
     children.push(this.accessExpr);
     return children;
   }
+
+  evaluate(): unknown {
+    const indices = new Array<number>();
+    let arrayBase = <ArrayAccess>this;
+    while (true) {
+      indices.push(
+        <number>(
+          getValueOfExpression(arrayBase.accessExpr.evaluate(), varStacks)
+        ),
+      );
+      if (!((<ArrayAccess>arrayBase).arrayExpr instanceof ArrayAccess)) break;
+      arrayBase = <ArrayAccess>arrayBase.arrayExpr;
+    }
+    let returnArray = <unknown[]>(
+      varStacks
+        .get(
+          <VarDeclaration | Parameter>(
+            (<Identifier>arrayBase.arrayExpr).declaration
+          ),
+        )
+        .at(-1)
+    );
+    while (indices.length > 1) {
+      returnArray = <unknown[]>returnArray[indices.pop()];
+    }
+    return new ArrayRepresentation(returnArray, indices.pop());
+  }
 }
 export class AttributeAccess extends Expr {
   containerExpr: Expr;
@@ -301,6 +492,9 @@ export class AttributeAccess extends Expr {
     children.push(this.callExpr);
     return children;
   }
+  evaluate(): unknown {
+    return undefined;
+  }
 }
 export class FunCall extends Expr {
   identifier: Expr;
@@ -317,6 +511,25 @@ export class FunCall extends Expr {
     children.push(this.identifier);
     if (this.args !== null) children.push(...this.args);
     return children;
+  }
+
+  evaluate(): unknown {
+    const funDecl = <FunDeclaration | AnonymousFunDeclaration>(
+      getValueOfExpression(this.identifier.evaluate(), varStacks)
+    );
+    this.args.forEach((arg, pos) => {
+      const value = getValueOfExpression(arg.evaluate(), varStacks);
+      const paramStack = varStacks.get(
+        (<FunDeclaration | AnonymousFunDeclaration>funDecl).params[pos],
+      );
+      if (paramStack === undefined)
+        varStacks.set(
+          (<FunDeclaration | AnonymousFunDeclaration>funDecl).params[pos],
+          [value],
+        );
+      else paramStack.push(value);
+    });
+    return funDecl.evaluate();
   }
 }
 export class AnonymousFunDeclaration extends Expr {
@@ -338,6 +551,16 @@ export class AnonymousFunDeclaration extends Expr {
     children.push(this._body);
     return children;
   }
+  evaluate(): unknown {
+    let returnValue = this._body.evaluate();
+    if (returnValue instanceof Return && returnValue.possibleValue !== null)
+      returnValue = getValueOfExpression(
+        returnValue.possibleValue.evaluate(),
+        varStacks,
+      );
+    popOutOfScopeVars(this, varStacks);
+    return returnValue;
+  }
 }
 export class StringLiteral extends Expr {
   value: string;
@@ -349,6 +572,10 @@ export class StringLiteral extends Expr {
 
   children(): ASTNode[] {
     return new Array<ASTNode>();
+  }
+
+  evaluate(): unknown {
+    return this.value;
   }
 }
 export class BoolLiteral extends Expr {
@@ -362,6 +589,10 @@ export class BoolLiteral extends Expr {
   children(): ASTNode[] {
     return new Array<ASTNode>();
   }
+
+  evaluate(): unknown {
+    return this.value;
+  }
 }
 export class NumberLiteral extends Expr {
   value: number;
@@ -373,6 +604,10 @@ export class NumberLiteral extends Expr {
 
   children(): ASTNode[] {
     return new Array<ASTNode>();
+  }
+
+  evaluate(): unknown {
+    return this.value;
   }
 }
 export class ArrayLiteral extends Expr {
@@ -388,6 +623,11 @@ export class ArrayLiteral extends Expr {
     children.push(...this.value);
     return children;
   }
+  evaluate(): unknown {
+    return this.value.map((exp) =>
+      getValueOfExpression(exp.evaluate(), varStacks),
+    );
+  }
 }
 export class Identifier extends Expr {
   value: string;
@@ -399,6 +639,10 @@ export class Identifier extends Expr {
   }
   children(): ASTNode[] {
     return new Array<ASTNode>();
+  }
+
+  evaluate(): unknown {
+    return this;
   }
 }
 

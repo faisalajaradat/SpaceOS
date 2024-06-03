@@ -1,10 +1,10 @@
 import * as fs from "fs";
+import * as core from "./core.js";
 import { grammar } from "./grammar.js";
 import { ast, visitDotPrinter } from "./ast.js";
 import { Command } from "commander";
 import { graphviz } from "node-graphviz";
 import analyze from "./semantics.js";
-import interpetProgram from "./interpreter.js";
 //Entrypoint and CLI for using TCShell interpreter
 
 const program = new Command();
@@ -30,7 +30,7 @@ program
         console.log(output);
         return;
       }
-      const astHead = ast(match);
+      const astHead: core.Program = ast(match);
       if (options.dot != undefined) {
         const dotString = visitDotPrinter(astHead);
         graphviz
@@ -42,7 +42,7 @@ program
         console.error("Program has " + semanticsErrors + " error(s)!");
         return;
       }
-      interpetProgram(astHead);
+      astHead.evaluate();
     } catch (err) {
       console.error(err);
     }

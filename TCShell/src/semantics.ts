@@ -147,10 +147,6 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
 }
 
 let returnFunction: core.FunDeclaration | core.AnonymousFunDeclaration = null;
-const voidType = new core.BaseType(core.BaseTypeKind.VOID);
-const numberType = new core.BaseType(core.BaseTypeKind.NUMBER);
-const boolType = new core.BaseType(core.BaseTypeKind.BOOL);
-const stringType = new core.BaseType(core.BaseTypeKind.STRING);
 
 function typesAreEqual(type1: core.Type, type2: core.Type): boolean {
   if (type1 instanceof core.BaseType && type1.kind === core.BaseTypeKind.ANY)
@@ -210,6 +206,7 @@ function assignArraySize(type1: core.ArrayType, type2: core.ArrayType) {
 }
 
 function conditionIsValidType(node: core.If | core.While): boolean {
+  const boolType = new core.BaseType(core.BaseTypeKind.BOOL);
   const conditionType = visitTypeAnalyzer(node.condition);
   if (!typesAreEqual(conditionType, boolType)) {
     errors++;
@@ -221,6 +218,10 @@ function conditionIsValidType(node: core.If | core.While): boolean {
 
 //Performs type analysis to enforce typing rules
 function visitTypeAnalyzer(node: core.ASTNode): core.Type {
+  const voidType = new core.BaseType(core.BaseTypeKind.VOID);
+  const numberType = new core.BaseType(core.BaseTypeKind.NUMBER);
+  const boolType = new core.BaseType(core.BaseTypeKind.BOOL);
+  const stringType = new core.BaseType(core.BaseTypeKind.STRING);
   if (
     node instanceof core.FunDeclaration ||
     node instanceof core.AnonymousFunDeclaration
