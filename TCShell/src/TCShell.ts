@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as core from "./core.js";
 import { grammar } from "./grammar.js";
-import { ast, visitDotPrinter } from "./ast.js";
+import { ast } from "./ast.js";
 import { Command } from "commander";
 import { graphviz } from "node-graphviz";
 import analyze from "./semantics.js";
@@ -32,7 +32,7 @@ program
       }
       const astHead: core.Program = ast(match);
       if (options.dot != undefined) {
-        const dotString = visitDotPrinter(astHead);
+        const dotString = astHead.print();
         graphviz
           .dot(dotString, "svg")
           .then((svg) => fs.writeFileSync(options.dot, svg));

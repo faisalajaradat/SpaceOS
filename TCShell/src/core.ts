@@ -14,9 +14,30 @@ export class ArrayRepresentation {
   }
 }
 
+let dotString = "";
+let nodeCount = 0;
+
+function writeFunDeclarationDot(
+  node: FunDeclaration | AnonymousFunDeclaration,
+  funDeclNodeId: string,
+): void {
+  const typeNodeId = this.stmtType.print();
+  const paramNodeIds = new Array<string>();
+  node.params.forEach((child) => paramNodeIds.push(child.print()));
+  const blockNodeId = this._body.print();
+  dotString = dotString.concat(funDeclNodeId + "->" + typeNodeId + ";\n");
+  paramNodeIds.forEach(
+    (nodeId) =>
+      (dotString = dotString.concat(funDeclNodeId + "->" + nodeId + ";\n")),
+  );
+  dotString = dotString.concat(funDeclNodeId + "->" + blockNodeId + ";\n");
+}
+
 //Define all AST nodes
 export interface ASTNode {
   children(): ASTNode[];
+  //Implement dot printer behaviour for node
+  print(): string;
   //Implement tree walker behaviour for node
   evaluate(): unknown;
 }
@@ -32,6 +53,7 @@ export enum BaseTypeKind {
 
 export abstract class Type implements ASTNode {
   abstract children(): ASTNode[];
+  abstract print(): string;
   abstract evaluate(): unknown;
 }
 export class BaseType extends Type {
@@ -44,6 +66,29 @@ export class BaseType extends Type {
 
   children(): ASTNode[] {
     return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const typeNodeId = "Node" + nodeCount++;
+    let label = "";
+    switch (this.kind) {
+      case BaseTypeKind.NUMBER:
+        label = "number";
+        break;
+      case BaseTypeKind.STRING:
+        label = "string";
+        break;
+      case BaseTypeKind.BOOL:
+        label = "bool";
+        break;
+      case BaseTypeKind.VOID:
+        label = "void";
+        break;
+      case BaseTypeKind.NONE:
+        break;
+    }
+    dotString = dotString.concat(typeNodeId + '[label=" ' + label + ' "];\n');
+    return typeNodeId;
   }
 
   evaluate(): unknown {
@@ -59,6 +104,10 @@ export abstract class ContainerType extends Type {
   ) {
     super();
     this._attributes = attributes;
+  }
+
+  print(): string {
+    return "";
   }
 
   evaluate(): unknown {
@@ -77,6 +126,25 @@ export class TypeType extends Type {
   children(): ASTNode[] {
     return new Array<ASTNode>();
   }
+
+  print(): string {
+    const typeTypeNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(typeTypeNodeId + '[label=" Type "];\n');
+    const identifierNodeId = this.identifier.print();
+    dotString = dotString.concat(
+      typeTypeNodeId + "->" + identifierNodeId + ";\n",
+    );
+    this.types
+      .map((_type) => _type.print())
+      .forEach(
+        (nodeId) =>
+          (dotString = dotString.concat(
+            typeTypeNodeId + "->" + nodeId + ";\n",
+          )),
+      );
+    return typeTypeNodeId;
+  }
+
   evaluate(): unknown {
     return undefined;
   }
@@ -94,6 +162,27 @@ export class FunctionType extends Type {
   children(): ASTNode[] {
     return new Array<ASTNode>();
   }
+
+  print(): string {
+    const functionTypeNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      functionTypeNodeId + '[label=" Function "];\n',
+    );
+    const typeNodeId = this.returnType.print();
+    dotString = dotString.concat(
+      functionTypeNodeId + "->" + typeNodeId + ";\n",
+    );
+    this.paramTypes
+      .map((paramType) => paramType.print())
+      .forEach(
+        (nodeId) =>
+          (dotString = dotString.concat(
+            functionTypeNodeId + "->" + nodeId + ";\n",
+          )),
+      );
+    return functionTypeNodeId;
+  }
+
   evaluate(): unknown {
     return undefined;
   }
@@ -111,6 +200,15 @@ export class ArrayType extends Type {
   children(): ASTNode[] {
     return new Array<ASTNode>();
   }
+
+  print(): string {
+    const arrayTypeNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(arrayTypeNodeId + '[label=" Array Of "];\n');
+    const typeNodeId = this._type;
+    dotString = dotString.concat(arrayTypeNodeId + "->" + typeNodeId + ";\n");
+    return arrayTypeNodeId;
+  }
+
   evaluate(): unknown {
     return undefined;
   }
@@ -128,6 +226,20 @@ export class Program implements ASTNode {
     children.push(...this.stmts);
     return children;
   }
+
+  print(): string {
+    dotString = dotString.concat("digraph ast {\n");
+    const programNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(programNodeId + '[label=" Program "];\n');
+    const declsNodeIds = new Array<string>();
+    this.children().forEach((child) => declsNodeIds.push(child.print()));
+    declsNodeIds.forEach(
+      (nodeId) =>
+        (dotString = dotString.concat(programNodeId + "->" + nodeId + ";\n")),
+    );
+    return dotString.concat("}");
+  }
+
   evaluate(): unknown {
     this.children()
       .filter((child) => !(child instanceof FunDeclaration))
@@ -138,6 +250,7 @@ export class Program implements ASTNode {
 }
 export abstract class Stmt implements ASTNode {
   abstract children(): ASTNode[];
+  abstract print(): string;
   abstract evaluate(): unknown;
   stmtType: Type;
 
@@ -163,6 +276,16 @@ export class Parameter extends Stmt {
     children.push(this.stmtType);
     children.push(this.identifier);
     return children;
+  }
+
+  print(): string {
+    const paramNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(paramNodeId + '[label=" Param "];\n');
+    const typeNodeId = this.stmtType.print();
+    const identifierNodeId = this.identifier.print();
+    dotString = dotString.concat(paramNodeId + "->" + typeNodeId + ";\n");
+    dotString = dotString.concat(paramNodeId + "->" + identifierNodeId + ";\n");
+    return paramNodeId;
   }
 
   evaluate(): unknown {
@@ -196,6 +319,18 @@ export class FunDeclaration extends Stmt {
     children.push(this._body);
     return children;
   }
+
+  print(): string {
+    const funDeclNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(funDeclNodeId + '[label=" FunDecl "];\n');
+    const identifierNodeId = this.identifier.print();
+    dotString = dotString.concat(
+      funDeclNodeId + "->" + identifierNodeId + ";\n",
+    );
+    writeFunDeclarationDot(this, funDeclNodeId);
+    return funDeclNodeId;
+  }
+
   evaluate(): unknown {
     if (libFunctions.has(this)) {
       const args = this.params.map((param) => varStacks.get(param).pop());
@@ -228,6 +363,20 @@ export class VarDeclaration extends Stmt {
     return children;
   }
 
+  print(): string {
+    const varDeclNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(varDeclNodeId + '[label=" = "];\n');
+    const typeNodeId = this.stmtType.print();
+    const identifierNodeId = this.identifier.print();
+    const valueNodeId = this.value.print();
+    dotString = dotString.concat(varDeclNodeId + "->" + typeNodeId + ";\n");
+    dotString = dotString.concat(
+      varDeclNodeId + "->" + identifierNodeId + ";\n",
+    );
+    dotString = dotString.concat(varDeclNodeId + "->" + valueNodeId + ";\n");
+    return varDeclNodeId;
+  }
+
   evaluate(): unknown {
     const value =
       this.value instanceof AnonymousFunDeclaration
@@ -251,6 +400,15 @@ export class Return extends Stmt {
     const children = new Array<ASTNode>();
     if (this.possibleValue !== null) children.push(this.possibleValue);
     return children;
+  }
+
+  print(): string {
+    const returnNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(returnNodeId + '[label=" return "];\n');
+    if (this.possibleValue === null) return returnNodeId;
+    const valueNodeId = this.possibleValue.print();
+    dotString = dotString.concat(returnNodeId + "->" + valueNodeId + ";\n");
+    return returnNodeId;
   }
 
   evaluate(): unknown {
@@ -277,6 +435,27 @@ export class If extends Stmt {
     return children;
   }
 
+  print(): string {
+    const ifNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(ifNodeId + '[label=" if "];\n');
+    let elseStmtNodeId = "";
+    let elseNodeId = "";
+    const conditionNodeId = this.condition.print();
+    const stmtNodeId = this.ifStmt.print();
+    if (this.possibleElseStmt !== null) {
+      elseNodeId = "Node" + nodeCount++;
+      dotString = dotString.concat(elseNodeId + '[label=" else "];\n');
+      elseStmtNodeId = this.possibleElseStmt.print();
+    }
+    dotString = dotString.concat(ifNodeId + "->" + conditionNodeId + ";\n");
+    dotString = dotString.concat(ifNodeId + "->" + stmtNodeId + ";\n");
+    if (elseNodeId !== "") {
+      dotString = dotString.concat(ifNodeId + "->" + elseNodeId + ";\n");
+      dotString = dotString.concat(elseNodeId + "->" + elseStmtNodeId + ";\n");
+    }
+    return ifNodeId;
+  }
+
   evaluate(): unknown {
     if (<boolean>getValueOfExpression(this.condition.evaluate(), varStacks))
       return this.ifStmt.evaluate();
@@ -300,6 +479,17 @@ export class While extends Stmt {
     children.push(this.whileStmt);
     return children;
   }
+
+  print(): string {
+    const whileNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(whileNodeId + '[label=" while "];\n');
+    const conditionNodeId = this.condition.print();
+    const stmtNodeId = this.whileStmt.print();
+    dotString = dotString.concat(whileNodeId + "->" + conditionNodeId + ";\n");
+    dotString = dotString.concat(whileNodeId + "->" + stmtNodeId + ";\n");
+    return whileNodeId;
+  }
+
   evaluate(): unknown {
     let returnValue = undefined;
     while (<boolean>getValueOfExpression(this.condition.evaluate(), varStacks))
@@ -320,6 +510,18 @@ export class Block extends Stmt {
     const children = new Array<ASTNode>();
     children.push(...this.stmts);
     return children;
+  }
+
+  print(): string {
+    const blockNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(blockNodeId + '[label=" Block "];\n');
+    const stmtIds = new Array<string>();
+    this.stmts.forEach((stmt) => stmtIds.push(stmt.print()));
+    stmtIds.forEach(
+      (nodeId) =>
+        (dotString = dotString.concat(blockNodeId + "->" + nodeId + ";\n")),
+    );
+    return blockNodeId;
   }
 
   evaluate(): unknown {
@@ -354,6 +556,18 @@ export class BinaryExpr extends Expr {
     children.push(this.leftExpr);
     children.push(this.rightExpr);
     return children;
+  }
+
+  print(): string {
+    const opNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      opNodeId + '[label=" ' + this.operator + ' "];\n',
+    );
+    const leftExprId = this.leftExpr.print();
+    const rightExprId = this.rightExpr.print();
+    dotString = dotString.concat(opNodeId + "->" + leftExprId + ";\n");
+    dotString = dotString.concat(opNodeId + "->" + rightExprId + ";\n");
+    return opNodeId;
   }
 
   evaluate(): unknown {
@@ -420,6 +634,17 @@ export class UnaryExpr extends Expr {
     children.push(this.expr);
     return children;
   }
+
+  print(): string {
+    const opNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      opNodeId + '[label" ' + this.operator + ' "];\n',
+    );
+    const rightExprId = this.expr.print();
+    dotString = dotString.concat(opNodeId + "->" + rightExprId + ";\n");
+    return opNodeId;
+  }
+
   evaluate(): unknown {
     const expression = getValueOfExpression(this.expr.evaluate(), varStacks);
     switch (this.operator) {
@@ -447,6 +672,20 @@ export class ArrayAccess extends Expr {
     children.push(this.arrayExpr);
     children.push(this.accessExpr);
     return children;
+  }
+
+  print(): string {
+    const arrayAccesseNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(arrayAccesseNodeId + '[label=" at "];\n');
+    const arrayExprId = this.arrayExpr.print();
+    const accessExprId = this.accessExpr.print();
+    dotString = dotString.concat(
+      arrayAccesseNodeId + "->" + arrayExprId + ";\n",
+    );
+    dotString = dotString.concat(
+      arrayAccesseNodeId + "->" + accessExprId + ";\n",
+    );
+    return arrayAccesseNodeId;
   }
 
   evaluate(): unknown {
@@ -492,6 +731,21 @@ export class AttributeAccess extends Expr {
     children.push(this.callExpr);
     return children;
   }
+
+  print(): string {
+    const attributeAccessNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(attributeAccessNodeId + '[label=" . "];\n');
+    const containerExprId = this.containerExpr.print();
+    const callExprId = this.callExpr.print();
+    dotString = dotString.concat(
+      attributeAccessNodeId + "->" + containerExprId + ";\n",
+    );
+    dotString = dotString.concat(
+      attributeAccessNodeId + "->" + callExprId + ";\n",
+    );
+    return attributeAccessNodeId;
+  }
+
   evaluate(): unknown {
     return undefined;
   }
@@ -511,6 +765,22 @@ export class FunCall extends Expr {
     children.push(this.identifier);
     if (this.args !== null) children.push(...this.args);
     return children;
+  }
+
+  print(): string {
+    const funCallNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(funCallNodeId + '[label=" FunCall "];\n');
+    const identifierNodeId = this.identifier.print();
+    const argNodeIds = new Array<string>();
+    this.args.forEach((arg) => argNodeIds.push(arg.print()));
+    dotString = dotString.concat(
+      funCallNodeId + "->" + identifierNodeId + ";\n",
+    );
+    argNodeIds.forEach(
+      (nodeId) =>
+        (dotString = dotString.concat(funCallNodeId + "->" + nodeId + ";\n")),
+    );
+    return funCallNodeId;
   }
 
   evaluate(): unknown {
@@ -551,6 +821,16 @@ export class AnonymousFunDeclaration extends Expr {
     children.push(this._body);
     return children;
   }
+
+  print(): string {
+    const anonymousFunDeclNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      anonymousFunDeclNodeId + '[label=" AnonFunDecl "];\n',
+    );
+    writeFunDeclarationDot(this, anonymousFunDeclNodeId);
+    return anonymousFunDeclNodeId;
+  }
+
   evaluate(): unknown {
     let returnValue = this._body.evaluate();
     if (returnValue instanceof Return && returnValue.possibleValue !== null)
@@ -574,6 +854,14 @@ export class StringLiteral extends Expr {
     return new Array<ASTNode>();
   }
 
+  print(): string {
+    const stringLiteralNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      stringLiteralNodeId + '[label=" ' + this.value + ' "];\n',
+    );
+    return stringLiteralNodeId;
+  }
+
   evaluate(): unknown {
     return this.value;
   }
@@ -590,6 +878,14 @@ export class BoolLiteral extends Expr {
     return new Array<ASTNode>();
   }
 
+  print(): string {
+    const boolLiteralNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      boolLiteralNodeId + '[label=" ' + this.value + ' "];\n',
+    );
+    return boolLiteralNodeId;
+  }
+
   evaluate(): unknown {
     return this.value;
   }
@@ -604,6 +900,14 @@ export class NumberLiteral extends Expr {
 
   children(): ASTNode[] {
     return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const numberLiteralNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      numberLiteralNodeId + '[label=" ' + this.value + ' "];\n',
+    );
+    return numberLiteralNodeId;
   }
 
   evaluate(): unknown {
@@ -623,6 +927,19 @@ export class ArrayLiteral extends Expr {
     children.push(...this.value);
     return children;
   }
+
+  print(): string {
+    const arrayNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(arrayNodeId + '[label=" Array "];\n');
+    this.children()
+      .map((child) => child.print())
+      .forEach(
+        (nodeId) =>
+          (dotString = dotString.concat(arrayNodeId + "->" + nodeId + ";\n")),
+      );
+    return arrayNodeId;
+  }
+
   evaluate(): unknown {
     return this.value.map((exp) =>
       getValueOfExpression(exp.evaluate(), varStacks),
@@ -639,6 +956,14 @@ export class Identifier extends Expr {
   }
   children(): ASTNode[] {
     return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const identifierNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      identifierNodeId + '[label=" ' + this.value + ' "];\n',
+    );
+    return identifierNodeId;
   }
 
   evaluate(): unknown {
