@@ -211,9 +211,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     );
   },
   TypeDeclaration(typeType, _equal, expression) {
-    const _type = <core.TypeType>typeType.ast();
-    _type.types.push(...expression.ast());
-    return _type;
+    return new core.TypeDeclaration(typeType.ast(), expression.ast());
   },
   Parameter(type, identifier) {
     return new core.Parameter(type.ast(), identifier.ast());
@@ -259,7 +257,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     return new core.FunctionType(null, listOfTypes.asIteration().ast());
   },
   TypeType(_type, identifier) {
-    return new core.TypeType(identifier.ast(), new Array<core.TypeType>());
+    return identifier.ast();
   },
   identifier(component) {
     return new core.Identifier(this.sourceString);

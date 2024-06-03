@@ -1,9 +1,9 @@
 type NumOrString = number | string
 
-type NumOrString output = "Hello!"
+type NumOrString (type NumOrString, type NumOrString) appendOrAdd = type NumOrString (type NumOrString x, type NumOrString y) {
+  return x + y;
+}
 
-print(output)
+print(appendOrAdd(5, 5));
 
-output = 5
-
-print(output)
+print("Hello ", "World!");

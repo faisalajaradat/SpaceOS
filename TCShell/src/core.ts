@@ -114,41 +114,7 @@ export abstract class ContainerType extends Type {
     return undefined;
   }
 }
-export class TypeType extends Type {
-  types: Type[];
-  identifier: Identifier;
 
-  constructor(identifier: Identifier, types: Type[]) {
-    super();
-    this.identifier = identifier;
-    this.types = types;
-  }
-  children(): ASTNode[] {
-    return new Array<ASTNode>();
-  }
-
-  print(): string {
-    const typeTypeNodeId = "Node" + nodeCount++;
-    dotString = dotString.concat(typeTypeNodeId + '[label=" Type "];\n');
-    const identifierNodeId = this.identifier.print();
-    dotString = dotString.concat(
-      typeTypeNodeId + "->" + identifierNodeId + ";\n",
-    );
-    this.types
-      .map((_type) => _type.print())
-      .forEach(
-        (nodeId) =>
-          (dotString = dotString.concat(
-            typeTypeNodeId + "->" + nodeId + ";\n",
-          )),
-      );
-    return typeTypeNodeId;
-  }
-
-  evaluate(): unknown {
-    return undefined;
-  }
-}
 export class FunctionType extends Type {
   returnType: Type;
   paramTypes: Type[];
@@ -385,6 +351,41 @@ export class VarDeclaration extends Stmt {
     const varStack = varStacks.get(this);
     if (varStack === undefined) varStacks.set(this, [value]);
     else varStack.push(value);
+    return undefined;
+  }
+}
+export class TypeDeclaration extends Type {
+  identifier: Identifier;
+  types: Type[];
+
+  constructor(identifier: Identifier, types: Type[]) {
+    super();
+    this.identifier = identifier;
+    this.types = types;
+  }
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const typeTypeNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(typeTypeNodeId + '[label=" Type "];\n');
+    const identifierNodeId = this.identifier.print();
+    dotString = dotString.concat(
+      typeTypeNodeId + "->" + identifierNodeId + ";\n",
+    );
+    this.types
+      .map((_type) => _type.print())
+      .forEach(
+        (nodeId) =>
+          (dotString = dotString.concat(
+            typeTypeNodeId + "->" + nodeId + ";\n",
+          )),
+      );
+    return typeTypeNodeId;
+  }
+
+  evaluate(): unknown {
     return undefined;
   }
 }
@@ -948,7 +949,7 @@ export class ArrayLiteral extends Expr {
 }
 export class Identifier extends Expr {
   value: string;
-  declaration: VarDeclaration | Parameter | FunDeclaration | TypeType;
+  declaration: VarDeclaration | Parameter | FunDeclaration | TypeDeclaration;
 
   constructor(value: string) {
     super(new BaseType(BaseTypeKind.NONE));
