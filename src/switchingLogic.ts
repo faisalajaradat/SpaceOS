@@ -19,7 +19,6 @@ const modelFailures: {[model: string]: number} = {};
 //,main logic for handling which chat Model to use next
 export async function* handleChatModel(userInput:string = "", attempts = 0, maxRetries = 3): AsyncGenerator<string, void, unknown> {
 
-    console.log(preferRemote);
     let chatResponse = undefined;
     let chatModel: initializedChatModel | undefined = undefined;
         try {
@@ -56,8 +55,7 @@ export async function* handleChatModel(userInput:string = "", attempts = 0, maxR
             yield* handleChatModel(userInput, attempts + 1, maxRetries);
             
         }
-        console.log(chatModels.map(model => `${model.constructor.name} - Failures: ${modelFailures[model.constructor.name] || 0
-        }`));
+        console.log(chatModels.map(model => `${model.constructor.name} - Failures: ${modelFailures[model.constructor.name] || 0}`));
         
 
 }    
@@ -92,7 +90,7 @@ async function getModelWithLeastFailures(allModelClasses: any[], allModelTypes: 
            
         }
 
-        //check to see if the model has failures otherwise set it to 0
+        //check to see if the model has failures otherwise we set it to 0
         const failures = existingModel ? modelFailures[existingModel.constructor.name] || 0 : 0;
 
 

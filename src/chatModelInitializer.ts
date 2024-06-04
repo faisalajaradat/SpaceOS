@@ -16,7 +16,8 @@ import getUserInput from './getUserInput.js';
 
 dotenv.config();
 
-const spaceOSInformation = `SpaceBase functions similarly to a file system in traditional operating systems but is specifically designed for spatial management. It operates across all nodes of Space OS and is responsible for creating a detailed mathematical representation of physical spaces. This allows computational objects and data to be linked directly to these spatial representations.
+const spaceOSInformation = ` respond to the user as you would in a conversation, keep it short sweet and concise. Use the following for context if relevant to the users questions, you can ask the user specifying questions, infact it is encouraged: 
+SpaceBase functions similarly to a file system in traditional operating systems but is specifically designed for spatial management. It operates across all nodes of Space OS and is responsible for creating a detailed mathematical representation of physical spaces. This allows computational objects and data to be linked directly to these spatial representations.
 
 Key functionalities of SpaceBase include:
 
@@ -78,11 +79,19 @@ async function createMessageArray(userInput?: string ){ //creates the ChatPrompt
     if (userInput!.toLowerCase() === 'exit') {
       return  { messages: null, userInput: null };
     }
-    const messages = ChatPromptTemplate.fromMessages([
-      ["system", spaceOSInformation],  // System message with predefined information
-      ["human", userInput!],            // Human message based on user input
-      new MessagesPlaceholder("history"),
-    ]);
+    let messages;
+    if (userInput!.toLowerCase().includes("spacebase") || userInput!.toLowerCase().includes("space base") || userInput!.toLowerCase().includes("space os") || userInput!.toLowerCase().includes("spaceos")) {
+      messages = ChatPromptTemplate.fromMessages([
+          ["system", spaceOSInformation],  // Include detailed system info only if relevant
+          ["human", userInput!],
+          new MessagesPlaceholder("history"),
+      ]);
+    } else {
+      messages = ChatPromptTemplate.fromMessages([
+          ["human", userInput!],            // Standard user input handling
+          new MessagesPlaceholder("history"),
+      ]);
+    }
     return { messages, userInput }
   
   }

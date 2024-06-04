@@ -42,7 +42,7 @@
             padding: 20px;
             background-color: white;
             border: 1px solid #ccc;
-            min-height: 70vh;
+            height: 70vh;
             border-radius: 5px;
             font-size: 16px;
             color: #555;
@@ -84,7 +84,7 @@
 </head>
 <body>
     
-    <h1>Web Speech API Integration</h1>
+    <h1>SpaceOS LLM interface</h1>
     <div class="button-container">
         <button id="speakBtn">Speak</button>
         <button id="stopBtn">Stop speaking</button>
@@ -97,6 +97,7 @@
     <script type="module">
         let messageTimer = null;
         let llmCallStartTime;
+        let firstllmResponse = false;
         const ws = new WebSocket('ws://localhost:7000/ws/echo');
 
         ws.onopen = function() {
@@ -111,14 +112,18 @@
 
 
         ws.onmessage = function(event) {
-            let llmCallEndTime = new Date();
-            let llmCallResponseTime = llmCallEndTime - llmCallStartTime ;
-            console.log('Response Time: '+llmCallResponseTime + 'ms')
+            if(firstllmResponse){
+                let llmCallEndTime = new Date();
+                let llmCallResponseTime = llmCallEndTime - llmCallStartTime ;
+                console.log('Response Time: '+llmCallResponseTime + 'ms');
+                firstllmResponse = false;
+            }
             updateBotResponse(event.data);
         };
 
         function sendMessageToWebSocket(message) {
             if (!message.trim()) return; // return if input is empty
+            firstllmResponse = true;
             if (ws.readyState === WebSocket.OPEN) {
                 llmCallStartTime = new Date();
                 ws.send(JSON.stringify(message));
@@ -218,38 +223,39 @@
             console.error('Speech recognition error:', event.error);
         };
         recognition.onspeechend = () => {
-            lastSoundTime = new Date(); // Capture the time when the last sound ends
-            speechEnded = true;
-            //console.log('Last speech ended at:', lastSoundTime);
-            sendMessageToWebSocket(resultsBuffer.transcript);
-            calculateProcessingTime();
-
+                lastSoundTime = new Date(); // Capture the time when the last sound ends
+                speechEnded = true;
+                //console.log('Last speech ended at:', lastSoundTime);
+                calculateProcessingTime();
         };
 
         recognition.onresult = function(event) {
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                if (event.results[i].isFinal) {
-                    inputField.value = event.results[i][0].transcript;  // Display recognized text at the end to prevent duplicates
-                    resultsBuffer = {
-                        transcript:event.results[i][0].transcript,
-                        endTime:new Date()
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    if (event.results[i].isFinal) {
+                        inputField.value = event.results[i][0].transcript;  // Display recognized text at the end to prevent duplicates
+                        resultsBuffer = {
+                            transcript: event.results[i][0].transcript,
+                            endTime: new Date()
 
+                        }
+                        sendMessageToWebSocket(resultsBuffer.transcript);
+                        //logging for how long recognition takes
+                        let endTime = new Date(); 
+                        let duration = endTime - startTime; //button click to speech end
+                        let lastSoundDuration = endTime - lastSoundTime; //from speech end to transcript
+                        
+
+
+                        calculateProcessingTime();
+                        // if (speechEnded) {
+                        //     let lastSoundDuration = new Date() - lastSoundTime; // Calculate duration from last speech end to now
+                        //     console.log('The time from the last recorded sound to output is: ' + lastSoundDuration + 'ms');
+                        //     speechEnded = false; // Reset flag for next session
+                        // }else{
+                        //     console.log('Speech recognition finished before speech was processed as finished')
+                        // }
                     }
-                    //logging for how long recognition takes
-                    let endTime = new Date(); 
-                    let duration = endTime - startTime; //button click to speech end
-                    let lastSoundDuration = endTime - lastSoundTime; //from speech end to transcript
-                    
-                    
-                    // if (speechEnded) {
-                    //     let lastSoundDuration = new Date() - lastSoundTime; // Calculate duration from last speech end to now
-                    //     console.log('The time from the last recorded sound to output is: ' + lastSoundDuration + 'ms');
-                    //     speechEnded = false; // Reset flag for next session
-                    // }else{
-                    //     console.log('Speech recognition finished before speech was processed as finished')
-                    // }
                 }
-            }
         };
 
 
