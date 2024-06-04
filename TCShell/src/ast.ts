@@ -247,6 +247,9 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       case "void":
         baseTypeKind = core.BaseTypeKind.VOID;
         break;
+      case "None":
+        baseTypeKind = core.BaseTypeKind.NONE;
+        break;
     }
     return new core.BaseType(baseTypeKind);
   },
