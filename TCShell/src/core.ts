@@ -21,10 +21,10 @@ function writeFunDeclarationDot(
   node: FunDeclaration | AnonymousFunDeclaration,
   funDeclNodeId: string,
 ): void {
-  const typeNodeId = this.stmtType.print();
+  const typeNodeId = node.stmtType.print();
   const paramNodeIds = new Array<string>();
   node.params.forEach((child) => paramNodeIds.push(child.print()));
-  const blockNodeId = this._body.print();
+  const blockNodeId = node._body.print();
   dotString = dotString.concat(funDeclNodeId + "->" + typeNodeId + ";\n");
   paramNodeIds.forEach(
     (nodeId) =>
@@ -108,6 +108,31 @@ export abstract class ContainerType extends Type {
 
   print(): string {
     return "";
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+}
+
+export class UnionType extends Type {
+  identifier: Identifier;
+
+  constructor(identifier: Identifier) {
+    super();
+    this.identifier = identifier;
+  }
+
+  children(): ASTNode[] {
+    return [this.identifier];
+  }
+
+  print(): string {
+    const unionType = "Node" + nodeCount++;
+    dotString = dotString.concat(unionType + '[label=" UnionType "];\n');
+    const identifierNodeId = this.identifier.print();
+    dotString = dotString.concat(unionType + "->" + identifierNodeId + ";\n");
+    return unionType;
   }
 
   evaluate(): unknown {
@@ -351,6 +376,40 @@ export class VarDeclaration extends Stmt {
     const varStack = varStacks.get(this);
     if (varStack === undefined) varStacks.set(this, [value]);
     else varStack.push(value);
+    return undefined;
+  }
+}
+export class UnionDeclaration extends Stmt {
+  options: Type[];
+
+  constructor(unionType: Type, options: Type[]) {
+    super(unionType);
+    this.options = options;
+  }
+
+  children(): ASTNode[] {
+    return [...this.options];
+  }
+
+  print(): string {
+    const unionDeclNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(unionDeclNodeId + '[label= "Union"];\n');
+    const unionTypeNodeId = this.stmtType.print();
+    dotString = dotString.concat(
+      unionDeclNodeId + "->" + unionTypeNodeId + ";\n",
+    );
+    this.options
+      .map((option) => option.print())
+      .forEach(
+        (nodeId) =>
+          (dotString = dotString.concat(
+            unionDeclNodeId + "->" + nodeId + ";\n",
+          )),
+      );
+    return unionDeclNodeId;
+  }
+
+  evaluate(): unknown {
     return undefined;
   }
 }
@@ -874,6 +933,28 @@ export class NumberLiteral extends Expr {
       numberLiteralNodeId + '[label=" ' + this.value + ' "];\n',
     );
     return numberLiteralNodeId;
+  }
+
+  evaluate(): unknown {
+    return this.value;
+  }
+}
+export class NoneLiteral extends Expr {
+  value: undefined;
+
+  constructor() {
+    super(new BaseType(BaseTypeKind.NONE));
+    this.value = undefined;
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const noneLiteralNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(noneLiteralNodeId + '[label= " None " ];\n');
+    return noneLiteralNodeId;
   }
 
   evaluate(): unknown {

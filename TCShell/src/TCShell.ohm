@@ -14,7 +14,8 @@ TCShell {
 
     SimpleStmts = NonemptyListWithOptionalEndSep<SimpleStmt, ";">
 
-    SimpleStmt =  VarDeclaration
+    SimpleStmt = UnionDeclaration
+                | VarDeclaration
                 | FunDeclaration
     					  | return (Exp)?		--return
                 | Exp
@@ -49,6 +50,7 @@ TCShell {
     					| identifier
               | numberLiteral
               | booleanLiteral
+              | noneLiteral
               | Type "(" ListOf<Parameter, ","> ")" Stmt  --function
               | NonemptyListOf<Type, "|">   --type
               | "(" Exp ")"		--group
@@ -58,26 +60,32 @@ TCShell {
 
     VarDeclaration = Parameter "=" Exp
     FunDeclaration = Parameter "(" ListOf<Parameter, ","> ")" Stmt
+    UnionDeclaration = UnionType "=" Exp
 
     Parameter = Type identifier
 
     TypeSpecifier = "[]"   --array
                   |"(" ListOf<Type, ","> ")"    --function
 
-    Type = baseTypeKeyword TypeSpecifier*
+    Type = (baseTypeKeyword | UnionType) TypeSpecifier*
 
     baseTypeKeyword = "number" ~identPart
     						    | "string" ~identPart
                     | "bool" ~identPart
                     | "void" ~identPart
 
+    UnionType = union identifier
+
     keyword = baseTypeKeyword
     				| booleanLiteral
+            | noneLiteral
+            | union
             | while
             | if
             | else
             | return
 
+    union = "union" ~identPart
     while = "while" ~identPart
     if = "if" ~identPart
     else = "else" ~identPart
@@ -89,6 +97,8 @@ TCShell {
 
   	identName       = identStart identPart*
     identifier      = ~keyword identName
+
+    noneLiteral = "none" ~identPart
 
 	  booleanLiteral = "true" ~identPart
     						| "false" ~identPart

@@ -210,6 +210,9 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       stmt.ast(),
     );
   },
+  UnionDeclaration(unionType, _equal, exp) {
+    return new core.UnionDeclaration(unionType.ast(), exp.ast());
+  },
   Parameter(type, identifier) {
     return new core.Parameter(type.ast(), identifier.ast());
   },
@@ -247,6 +250,9 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     }
     return new core.BaseType(baseTypeKind);
   },
+  UnionType(_union, identifier) {
+    return new core.UnionType(identifier.ast());
+  },
   TypeSpecifier_array(specifier) {
     return this.sourceString;
   },
@@ -276,6 +282,9 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   stringLiteral_singlequotes(_leftSingleQuote, chars, _rightSingleQuote) {
     const value = this.sourceString.slice(1, this.sourceString.length - 1);
     return new core.StringLiteral(value);
+  },
+  noneLiteral(keyword) {
+    return new core.NoneLiteral();
   },
   NonemptyListWithOptionalEndSep(nonemptyList, possibleSeperator) {
     return nonemptyList.asIteration().ast();

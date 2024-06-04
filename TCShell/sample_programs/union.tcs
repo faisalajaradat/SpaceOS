@@ -1,0 +1,9 @@
+union NumOrString = number | string
+
+union NumOrString (union NumOrString, union NumOrString) appendOrAdd = union NumOrString (union NumOrString x, union NumOrString y) {
+  return x + y
+}
+
+print(appendOrAdd(5, 5))
+
+print(appendOrAdd("Hello ", "World!"))
