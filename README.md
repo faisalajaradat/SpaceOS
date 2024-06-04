@@ -58,6 +58,9 @@ To start the development server, run:
 ```bash
 npm run dev
 ```
-Now you should be able to simply ask questions about SpaceOS via the terminal!
+If everything is working as expected you should see: 
+Server running on http://localhost:7000
+
+and you should be able to type/speak to the bot
 
 
