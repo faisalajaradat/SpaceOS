@@ -131,8 +131,8 @@ export class UnionType extends Type {
 
   equals(_type: Type): boolean {
     return (
-      (<UnionDeclaration>this.identifier.declaration).options.filter(
-        (option) => !option.equals(_type),
+      (<UnionDeclaration>this.identifier.declaration).options.filter((option) =>
+        option.equals(_type),
       ).length > 0
     );
   }
@@ -161,15 +161,18 @@ export class FunctionType extends Type {
   }
 
   children(): ASTNode[] {
-    return new Array<ASTNode>();
+    const children = new Array<ASTNode>();
+    children.push(this.returnType);
+    children.push(...this.paramTypes);
+    return children;
   }
 
   equals(_type: Type): boolean {
     return (
       (_type instanceof FunctionType &&
         this.returnType.equals(_type.returnType) &&
-        this.paramTypes.filter((paramType, pos) =>
-          paramType.equals(_type.paramTypes[pos]),
+        this.paramTypes.filter(
+          (paramType, pos) => !paramType.equals(_type.paramTypes[pos]),
         ).length === 0) ||
       (_type instanceof UnionType && _type.equals(this))
     );
@@ -210,7 +213,7 @@ export class ArrayType extends Type {
   }
 
   children(): ASTNode[] {
-    return new Array<ASTNode>();
+    return [this._type];
   }
 
   equals(_type: Type): boolean {
