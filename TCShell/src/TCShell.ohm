@@ -14,8 +14,7 @@ TCShell {
 
     SimpleStmts = NonemptyListWithOptionalEndSep<SimpleStmt, ";">
 
-    SimpleStmt = TypeDeclaration
-                | VarDeclaration
+    SimpleStmt =  VarDeclaration
                 | FunDeclaration
     					  | return (Exp)?		--return
                 | Exp
@@ -59,40 +58,30 @@ TCShell {
 
     VarDeclaration = Parameter "=" Exp
     FunDeclaration = Parameter "(" ListOf<Parameter, ","> ")" Stmt
-    TypeDeclaration = TypeType "=" Exp
 
     Parameter = Type identifier
 
     TypeSpecifier = "[]"   --array
                   |"(" ListOf<Type, ","> ")"    --function
 
-    ResultType = result "<" Type "," Type ">" TypeSpecifier*
-
-    Type = (baseTypeKeyword | TypeType) TypeSpecifier*
+    Type = baseTypeKeyword TypeSpecifier*
 
     baseTypeKeyword = "number" ~identPart
     						    | "string" ~identPart
                     | "bool" ~identPart
                     | "void" ~identPart
 
-    typeKeyword = "type" ~identPart
-
-    TypeType = typeKeyword identifier
-
     keyword = baseTypeKeyword
-            | typeKeyword
     				| booleanLiteral
             | while
             | if
             | else
             | return
-            | result
 
     while = "while" ~identPart
     if = "if" ~identPart
     else = "else" ~identPart
     return = "return" ~identPart
-    result = "result" ~identPart
 
     identStart      = letter | "_"
     identPart       = identStart | decimalDigit

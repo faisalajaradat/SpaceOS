@@ -1,5 +1,5 @@
 import * as core from "./core.js";
-import { VarSymbol, FunSymbol, TypeSymbol } from "./semantics.js";
+import { VarSymbol, FunSymbol } from "./semantics.js";
 
 export function popOutOfScopeVars(
   node:
@@ -10,7 +10,7 @@ export function popOutOfScopeVars(
   varStacks: Map<core.VarDeclaration | core.Parameter, unknown[]>,
 ) {
   node.scope.symbolTable.forEach((symbol) => {
-    if (symbol instanceof FunSymbol || symbol instanceof TypeSymbol) return;
+    if (symbol instanceof FunSymbol) return;
     varStacks.get((<VarSymbol>symbol).varDeclaration).pop();
   });
 }

@@ -354,41 +354,6 @@ export class VarDeclaration extends Stmt {
     return undefined;
   }
 }
-export class TypeDeclaration extends Type {
-  identifier: Identifier;
-  types: Type[];
-
-  constructor(identifier: Identifier, types: Type[]) {
-    super();
-    this.identifier = identifier;
-    this.types = types;
-  }
-  children(): ASTNode[] {
-    return new Array<ASTNode>();
-  }
-
-  print(): string {
-    const typeTypeNodeId = "Node" + nodeCount++;
-    dotString = dotString.concat(typeTypeNodeId + '[label=" Type "];\n');
-    const identifierNodeId = this.identifier.print();
-    dotString = dotString.concat(
-      typeTypeNodeId + "->" + identifierNodeId + ";\n",
-    );
-    this.types
-      .map((_type) => _type.print())
-      .forEach(
-        (nodeId) =>
-          (dotString = dotString.concat(
-            typeTypeNodeId + "->" + nodeId + ";\n",
-          )),
-      );
-    return typeTypeNodeId;
-  }
-
-  evaluate(): unknown {
-    return undefined;
-  }
-}
 export class Return extends Stmt {
   possibleValue: Expr;
 
@@ -949,7 +914,7 @@ export class ArrayLiteral extends Expr {
 }
 export class Identifier extends Expr {
   value: string;
-  declaration: VarDeclaration | Parameter | FunDeclaration | TypeDeclaration;
+  declaration: VarDeclaration | Parameter | FunDeclaration;
 
   constructor(value: string) {
     super(new BaseType(BaseTypeKind.NONE));

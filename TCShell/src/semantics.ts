@@ -32,15 +32,6 @@ export class FunSymbol extends ProgramSymbol {
   }
 }
 
-export class TypeSymbol extends ProgramSymbol {
-  typeDeclaration: core.TypeDeclaration;
-
-  constructor(typeDeclaration: core.TypeDeclaration) {
-    super(typeDeclaration.identifier.value);
-    this.typeDeclaration = typeDeclaration;
-  }
-}
-
 export class Scope {
   outer: Scope;
   symbolTable: Map<string, ProgramSymbol>;
@@ -118,17 +109,6 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
           " already defined within scope!",
       );
     } else scope.put(new VarSymbol(node));
-  } else if (node instanceof core.TypeDeclaration) {
-    node.types.forEach((type) => visitNameAnalyzer(type, scope));
-    const typeSymbol = scope.lookupCurrent(node.identifier.value);
-    if (typeSymbol !== null) {
-      errors++;
-      console.log(
-        "Type name: " +
-          node.identifier.value +
-          " already defined within scope!",
-      );
-    } else scope.put(new TypeSymbol(node));
   } else if (node instanceof core.Block) {
     const curScope = new Scope(scope);
     node.children().forEach((child) => visitNameAnalyzer(child, curScope));
@@ -143,22 +123,12 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
       node.declaration = programSymbol.funDeclaration;
     else if (programSymbol instanceof VarSymbol)
       node.declaration = programSymbol.varDeclaration;
-    else if (programSymbol instanceof TypeSymbol)
-      node.declaration = programSymbol.typeDeclaration;
   } else node.children().forEach((child) => visitNameAnalyzer(child, scope));
 }
 
 let returnFunction: core.FunDeclaration | core.AnonymousFunDeclaration = null;
 
 function typesAreEqual(type1: core.Type, type2: core.Type): boolean {
-  if (type1 instanceof core.TypeDeclaration)
-    return (
-      type1.types.filter((_type) => typesAreEqual(_type, type2)).length > 0
-    );
-  if (type2 instanceof core.TypeDeclaration)
-    return (
-      type2.types.filter((_type) => typesAreEqual(type1, _type)).length > 0
-    );
   if (type1 instanceof core.BaseType && type1.kind === core.BaseTypeKind.ANY)
     return true;
   if (type2 instanceof core.BaseType && type2.kind === core.BaseTypeKind.ANY)
@@ -246,7 +216,6 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
     node instanceof core.VarDeclaration ||
     node instanceof core.Parameter
   ) {
-    node.stmtType = visitTypeAnalyzer(node.stmtType);
     if (typesAreEqual(node.stmtType, voidType)) {
       errors++;
       console.log("Var: " + node.identifier.value + " cannot be type void!");
@@ -464,10 +433,7 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
     node instanceof core.NumberLiteral
   )
     return node.stmtType;
-  else if (node instanceof core.Parameter) {
-    node.stmtType = visitTypeAnalyzer(node.stmtType);
-    return node.stmtType;
-  } else if (node instanceof core.ArrayLiteral) {
+  else if (node instanceof core.ArrayLiteral) {
     if ((<core.ArrayType>node.stmtType)._size === 0) return node.stmtType;
     node.stmtType = new core.ArrayType(
       visitTypeAnalyzer(node.value[0]),
@@ -486,11 +452,7 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
       console.log("Array literal has item of invalid type!");
     });
   } else if (node instanceof core.Identifier) {
-    node.stmtType = visitTypeAnalyzer(
-      node.declaration instanceof core.TypeDeclaration
-        ? node.declaration
-        : node.declaration.stmtType,
-    );
+    node.stmtType = node.declaration.stmtType;
     return node.stmtType;
   } else if (node instanceof core.Type) return node;
   else node.children().forEach((child) => visitTypeAnalyzer(child));
