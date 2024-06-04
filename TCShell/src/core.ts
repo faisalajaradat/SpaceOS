@@ -55,6 +55,7 @@ export abstract class Type implements ASTNode {
   abstract children(): ASTNode[];
   abstract print(): string;
   abstract evaluate(): unknown;
+  abstract equals(_type: Type): boolean;
 }
 export class BaseType extends Type {
   kind: BaseTypeKind;
@@ -66,6 +67,15 @@ export class BaseType extends Type {
 
   children(): ASTNode[] {
     return new Array<ASTNode>();
+  }
+
+  equals(_type: Type): boolean {
+    return (
+      this.kind === BaseTypeKind.ANY ||
+      (_type instanceof BaseType &&
+        (this.kind === _type.kind || _type.kind === BaseTypeKind.ANY)) ||
+      (_type instanceof UnionType && _type.equals(this))
+    );
   }
 
   print(): string {
@@ -105,14 +115,6 @@ export abstract class ContainerType extends Type {
     super();
     this._attributes = attributes;
   }
-
-  print(): string {
-    return "";
-  }
-
-  evaluate(): unknown {
-    return undefined;
-  }
 }
 
 export class UnionType extends Type {
@@ -125,6 +127,14 @@ export class UnionType extends Type {
 
   children(): ASTNode[] {
     return [this.identifier];
+  }
+
+  equals(_type: Type): boolean {
+    return (
+      (<UnionDeclaration>this.identifier.declaration).options.filter(
+        (option) => !option.equals(_type),
+      ).length > 0
+    );
   }
 
   print(): string {
@@ -152,6 +162,17 @@ export class FunctionType extends Type {
 
   children(): ASTNode[] {
     return new Array<ASTNode>();
+  }
+
+  equals(_type: Type): boolean {
+    return (
+      (_type instanceof FunctionType &&
+        this.returnType.equals(_type.returnType) &&
+        this.paramTypes.filter((paramType, pos) =>
+          paramType.equals(_type.paramTypes[pos]),
+        ).length === 0) ||
+      (_type instanceof UnionType && _type.equals(this))
+    );
   }
 
   print(): string {
@@ -190,6 +211,13 @@ export class ArrayType extends Type {
 
   children(): ASTNode[] {
     return new Array<ASTNode>();
+  }
+
+  equals(_type: Type): boolean {
+    return (
+      (_type instanceof ArrayType && this._type.equals(_type._type)) ||
+      (_type instanceof UnionType && _type.equals(this))
+    );
   }
 
   print(): string {
@@ -995,7 +1023,7 @@ export class ArrayLiteral extends Expr {
 }
 export class Identifier extends Expr {
   value: string;
-  declaration: VarDeclaration | Parameter | FunDeclaration;
+  declaration: VarDeclaration | Parameter | FunDeclaration | UnionDeclaration;
 
   constructor(value: string) {
     super(new BaseType(BaseTypeKind.NONE));
