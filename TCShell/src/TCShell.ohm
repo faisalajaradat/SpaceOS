@@ -73,7 +73,6 @@ TCShell {
     						    | "string" ~identPart
                     | "bool" ~identPart
                     | "void" ~identPart
-                    | "None" ~identPart
 
     UnionType = union identifier
 

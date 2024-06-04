@@ -19,7 +19,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     return nonemptyListWithOptionalEndSep.ast();
   },
   SimpleStmt_return(returnKeyword, possibleExpression) {
-    return new core.Return(possibleExpression.ast()[0] ?? null);
+    return new core.Return(possibleExpression.ast()[0]);
   },
   SimpleStmt(simpleStmt) {
     return simpleStmt.ast();
@@ -246,9 +246,6 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
         break;
       case "void":
         baseTypeKind = core.BaseTypeKind.VOID;
-        break;
-      case "None":
-        baseTypeKind = core.BaseTypeKind.NONE;
         break;
     }
     return new core.BaseType(baseTypeKind);

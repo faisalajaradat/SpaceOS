@@ -454,7 +454,7 @@ export class Return extends Stmt {
 
   children(): ASTNode[] {
     const children = new Array<ASTNode>();
-    if (this.possibleValue !== null) children.push(this.possibleValue);
+    if (this.possibleValue !== undefined) children.push(this.possibleValue);
     return children;
   }
 
@@ -974,7 +974,7 @@ export class NoneLiteral extends Expr {
   value: undefined;
 
   constructor() {
-    super(new BaseType(BaseTypeKind.NONE));
+    super(new BaseType(BaseTypeKind.VOID));
     this.value = undefined;
   }
 
