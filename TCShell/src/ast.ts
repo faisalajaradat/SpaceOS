@@ -43,6 +43,18 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   CompoundStmt_while(whileKeyword, expression, statement) {
     return new core.While(expression.ast(), statement.ast());
   },
+  CompoundStmt_match(
+    _match,
+    expression,
+    _leftBracket,
+    caseStmts,
+    _rightBracket,
+  ) {
+    return new core.Match(expression.ast(), caseStmts.ast());
+  },
+  CaseStmt(condition, _arrow, stmt) {
+    return new core.CaseStmt(condition.ast(), stmt.ast());
+  },
   Exp(assignExpression) {
     return assignExpression.ast();
   },

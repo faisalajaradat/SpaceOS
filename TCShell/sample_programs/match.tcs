@@ -1,0 +1,8 @@
+union NumOrString = number | string
+
+union NumOrString x = 5
+
+match x {
+	number => print("Right!")
+  string => print("Wrong!")
+}

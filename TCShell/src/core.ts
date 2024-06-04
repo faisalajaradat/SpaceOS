@@ -1,3 +1,4 @@
+import { match } from "assert";
 import { Scope } from "./semantics.js";
 import { popOutOfScopeVars, getValueOfExpression } from "./utils.js";
 
@@ -593,6 +594,74 @@ export class Block extends Stmt {
       );
     popOutOfScopeVars(this, varStacks);
     return returnNode;
+  }
+}
+export class CaseStmt extends Stmt {
+  matchCondition: Type | Expr;
+  stmt: Stmt;
+
+  constructor(matchCondition: Type | Expr, stmt: Stmt) {
+    super(new BaseType(BaseTypeKind.NONE));
+    this.matchCondition = matchCondition;
+    this.stmt = stmt;
+  }
+
+  children(): ASTNode[] {
+    const children = new Array<ASTNode>();
+    children.push(this.matchCondition);
+    children.push(this.stmt);
+    return children;
+  }
+
+  print(): string {
+    const caseStmtNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(caseStmtNodeId + '[label=" Case "];\n');
+    const matchConditionNodeId = this.matchCondition.print();
+    const stmtNodeId = this.stmt.print();
+    dotString = dotString.concat(
+      caseStmtNodeId + "->" + matchConditionNodeId + ";\n",
+    );
+    dotString = dotString.concat(caseStmtNodeId + "->" + stmtNodeId + ";\n");
+    return caseStmtNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+}
+export class Match extends Stmt {
+  subject: Expr;
+  caseStmts: CaseStmt[];
+
+  constructor(subject: Expr, caseStmts: CaseStmt[]) {
+    super(new BaseType(BaseTypeKind.NONE));
+    this.subject = subject;
+    this.caseStmts = caseStmts;
+  }
+
+  children(): ASTNode[] {
+    const children = new Array<ASTNode>();
+    children.push(this.subject);
+    children.push(...this.caseStmts);
+    return children;
+  }
+
+  print(): string {
+    const matchNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(matchNodeId + '[label=" Match "];\n');
+    const subjectNodeId = this.subject.print();
+    dotString = dotString.concat(matchNodeId + "->" + subjectNodeId + ";\n");
+    this.caseStmts
+      .map((caseStmt) => caseStmt.print())
+      .forEach(
+        (nodeId) =>
+          (dotString = dotString.concat(matchNodeId + "->" + nodeId + ";\n")),
+      );
+    return matchNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
   }
 }
 export class BinaryExpr extends Expr {

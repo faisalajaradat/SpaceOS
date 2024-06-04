@@ -195,7 +195,7 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
     node instanceof core.VarDeclaration ||
     node instanceof core.Parameter
   ) {
-    if (node.stmtType.equals(voidType)) {
+    if (!(node instanceof core.UnionType) && node.stmtType.equals(voidType)) {
       errors++;
       console.log("Var: " + node.identifier.value + " cannot be type void!");
     } else if (node instanceof core.VarDeclaration) {

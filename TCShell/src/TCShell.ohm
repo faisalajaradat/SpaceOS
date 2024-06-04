@@ -22,7 +22,10 @@ TCShell {
 
     CompoundStmt = Block    --block
     		  				| if Exp Stmt (else Stmt)?	--if
+                  | match Exp "{" CaseStmt+ "}"    --match
           				| while Exp Stmt	--while
+
+     CaseStmt = (Type | Exp) "=>" Stmt
 
      Exp = AssignExp
      AssignExp = UnaryExp "=" AssignExp		--assign
@@ -84,12 +87,14 @@ TCShell {
             | if
             | else
             | return
+            | match
 
     union = "union" ~identPart
     while = "while" ~identPart
     if = "if" ~identPart
     else = "else" ~identPart
     return = "return" ~identPart
+    match = "match" ~identPart
 
     identStart      = letter | "_"
     identPart       = identStart | decimalDigit
