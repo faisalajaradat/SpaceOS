@@ -1,0 +1,27 @@
+union MaybeNum = void | number
+
+union Error = string
+
+union Either = number | union Error
+
+string voidError() {
+  return "Error: expected value is void!"
+}
+
+union MaybeNum(number) returnsOddNumbers = union MaybeNum(number x) {
+  match x % 2 {
+    1 => return x
+    0 => return none
+  }
+}
+
+union Either(union MaybeNum) parseMaybeNum = union Either(union MaybeNum maybe) {
+  match maybe {
+    number => return maybe
+    void => return voidError()
+  }
+}
+
+print(parseMaybeNum(returnsOddNumbers(3)))
+
+print(parseMaybeNum(returnsOddNumbers(2)))
