@@ -1,4 +1,3 @@
-import { match } from "assert";
 import { Scope } from "./semantics.js";
 import { popOutOfScopeVars, getValueOfExpression } from "./utils.js";
 
