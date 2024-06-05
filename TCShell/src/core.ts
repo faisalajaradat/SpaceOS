@@ -52,6 +52,12 @@ export enum BaseTypeKind {
   NONE,
 }
 
+const astBaseTypeMap = new Map<BaseTypeKind, string>();
+astBaseTypeMap.set(BaseTypeKind.NUMBER, "number");
+astBaseTypeMap.set(BaseTypeKind.STRING, "string");
+astBaseTypeMap.set(BaseTypeKind.BOOL, "boolean");
+astBaseTypeMap.set(BaseTypeKind.VOID, "undefined");
+
 export abstract class Type implements ASTNode {
   abstract children(): ASTNode[];
   abstract print(): string;
@@ -103,7 +109,7 @@ export class BaseType extends Type {
   }
 
   evaluate(): unknown {
-    return undefined;
+    return astBaseTypeMap.get(this.kind);
   }
 }
 export abstract class ContainerType extends Type {
@@ -626,17 +632,25 @@ export class CaseStmt extends Stmt {
   }
 
   evaluate(): unknown {
-    return undefined;
+    return this.stmt.evaluate();
   }
 }
 export class Match extends Stmt {
   subject: Expr;
   caseStmts: CaseStmt[];
+  scope: Scope;
 
   constructor(subject: Expr, caseStmts: CaseStmt[]) {
     super(new BaseType(BaseTypeKind.NONE));
     this.subject = subject;
     this.caseStmts = caseStmts;
+  }
+
+  match(condition: Type | Expr, subject: unknown) {
+    if (condition instanceof BaseType)
+      return typeof subject === condition.evaluate();
+
+    return subject === condition.evaluate();
   }
 
   children(): ASTNode[] {
@@ -661,7 +675,14 @@ export class Match extends Stmt {
   }
 
   evaluate(): unknown {
-    return undefined;
+    const subjectValue = getValueOfExpression(
+      this.subject.evaluate(),
+      varStacks,
+    );
+    const matchedCases = this.caseStmts.filter((caseStmt) =>
+      this.match(caseStmt.matchCondition, subjectValue),
+    );
+    return matchedCases[0].evaluate();
   }
 }
 export class BinaryExpr extends Expr {

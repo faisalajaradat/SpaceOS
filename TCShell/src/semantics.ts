@@ -135,6 +135,10 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
     const curScope = new Scope(scope);
     node.children().forEach((child) => visitNameAnalyzer(child, curScope));
     node.scope = curScope;
+  } else if (node instanceof core.Match) {
+    const curScope = new Scope(scope);
+    node.children().forEach((child) => visitNameAnalyzer(child, curScope));
+    node.scope = curScope;
   } else if (node instanceof core.Identifier) {
     const programSymbol = scope.lookup(node.value);
     if (programSymbol === null) {
@@ -195,7 +199,10 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
     node instanceof core.VarDeclaration ||
     node instanceof core.Parameter
   ) {
-    if (!(node instanceof core.UnionType) && node.stmtType.equals(voidType)) {
+    if (
+      !(node.stmtType instanceof core.UnionType) &&
+      node.stmtType.equals(voidType)
+    ) {
       errors++;
       console.log("Var: " + node.identifier.value + " cannot be type void!");
     } else if (node instanceof core.VarDeclaration) {
@@ -244,6 +251,34 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
     }
   } else if (node instanceof core.While) {
     if (conditionIsValidType(node)) visitTypeAnalyzer(node.whileStmt);
+  } else if (node instanceof core.Match) {
+    const subjectType = visitTypeAnalyzer(node.subject);
+    const caseTypes = node.caseStmts.map((caseStmt) =>
+      visitTypeAnalyzer(caseStmt),
+    );
+    if (
+      caseTypes.filter((caseType) => !caseType.equals(subjectType)).length > 0
+    ) {
+      errors++;
+      console.log("One or more case type(s) do not match the subject!");
+    } else if (
+      subjectType instanceof core.UnionType &&
+      caseTypes.filter(
+        (caseType) =>
+          (<core.UnionDeclaration>(
+            subjectType.identifier.declaration
+          )).options.filter((option) => option.equals(caseType)).length > 0,
+      ).length <
+        (<core.UnionDeclaration>subjectType.identifier.declaration).options
+          .length
+    ) {
+      errors++;
+      console.log("Need to cover each possible type the subject could be!");
+    }
+  } else if (node instanceof core.CaseStmt) {
+    visitTypeAnalyzer(node.stmt);
+    node.stmtType = visitTypeAnalyzer(node.matchCondition);
+    return node.stmtType;
   } else if (node instanceof core.BinaryExpr) {
     const leftHandType = visitTypeAnalyzer(node.leftExpr);
     const rightHandType = visitTypeAnalyzer(node.rightExpr);
@@ -403,7 +438,8 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
   } else if (
     node instanceof core.StringLiteral ||
     node instanceof core.BoolLiteral ||
-    node instanceof core.NumberLiteral
+    node instanceof core.NumberLiteral ||
+    node instanceof core.NoneLiteral
   )
     return node.stmtType;
   else if (node instanceof core.ArrayLiteral) {
