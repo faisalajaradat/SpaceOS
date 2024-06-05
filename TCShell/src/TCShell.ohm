@@ -25,7 +25,7 @@ TCShell {
                   | match Exp "{" CaseStmt+ "}"    --match
           				| while Exp Stmt	--while
 
-     CaseStmt = (Type | Exp) "=>" Stmt
+     CaseStmt = (Parameter | Exp) "=>" Stmt
 
      Exp = AssignExp
      AssignExp = UnaryExp "=" AssignExp		--assign
@@ -55,7 +55,6 @@ TCShell {
               | booleanLiteral
               | noneLiteral
               | Type "(" ListOf<Parameter, ","> ")" Stmt  --function
-              | NonemptyListOf<Type, "|">   --type
               | "(" Exp ")"		--group
               | "{" ListOf<Exp, ","> "}"		--array
 
@@ -63,7 +62,7 @@ TCShell {
 
     VarDeclaration = Parameter "=" Exp
     FunDeclaration = Parameter "(" ListOf<Parameter, ","> ")" Stmt
-    UnionDeclaration = UnionType "=" Exp
+    UnionDeclaration = UnionType "=" NonemptyListOf<Type, "|">
 
     Parameter = Type identifier
 

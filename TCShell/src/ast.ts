@@ -190,9 +190,6 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       stmt.ast(),
     );
   },
-  PrimaryExp_type(listOfTypes) {
-    return listOfTypes.asIteration().ast();
-  },
   PrimaryExp(expression) {
     return expression.ast();
   },
@@ -222,8 +219,11 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       stmt.ast(),
     );
   },
-  UnionDeclaration(unionType, _equal, exp) {
-    return new core.UnionDeclaration(unionType.ast(), exp.ast());
+  UnionDeclaration(unionType, _equal, listOfTypes) {
+    return new core.UnionDeclaration(
+      unionType.ast(),
+      listOfTypes.asIteration().ast(),
+    );
   },
   Parameter(type, identifier) {
     return new core.Parameter(type.ast(), identifier.ast());

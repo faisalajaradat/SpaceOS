@@ -602,10 +602,11 @@ export class Block extends Stmt {
   }
 }
 export class CaseStmt extends Stmt {
-  matchCondition: Type | Expr;
+  matchCondition: Parameter | Expr;
   stmt: Stmt;
+  scope: Scope;
 
-  constructor(matchCondition: Type | Expr, stmt: Stmt) {
+  constructor(matchCondition: Parameter | Expr, stmt: Stmt) {
     super(new BaseType(BaseTypeKind.NONE));
     this.matchCondition = matchCondition;
     this.stmt = stmt;
@@ -631,13 +632,19 @@ export class CaseStmt extends Stmt {
   }
 
   evaluate(): unknown {
-    return this.stmt.evaluate();
+    let returnValue = this.stmt.evaluate();
+    if (returnValue instanceof Return && returnValue.possibleValue !== null)
+      returnValue = getValueOfExpression(
+        returnValue.possibleValue.evaluate(),
+        varStacks,
+      );
+    popOutOfScopeVars(this, varStacks);
+    return returnValue;
   }
 }
 export class Match extends Stmt {
   subject: Expr;
   caseStmts: CaseStmt[];
-  scope: Scope;
 
   constructor(subject: Expr, caseStmts: CaseStmt[]) {
     super(new BaseType(BaseTypeKind.NONE));
@@ -645,10 +652,11 @@ export class Match extends Stmt {
     this.caseStmts = caseStmts;
   }
 
-  match(condition: Type | Expr, subject: unknown) {
-    if (condition instanceof BaseType)
-      return typeof subject === condition.evaluate();
-
+  match(condition: Parameter | Expr, subject: unknown) {
+    if (condition instanceof Parameter) {
+      if (condition.stmtType instanceof BaseType)
+        return typeof subject === condition.stmtType.evaluate();
+    }
     return subject === condition.evaluate();
   }
 
@@ -682,18 +690,25 @@ export class Match extends Stmt {
       .sort((a, b) => {
         if (
           a.matchCondition instanceof Expr &&
-          b.matchCondition instanceof Type
+          b.matchCondition instanceof Parameter
         )
           return -1;
         if (
           a.matchCondition instanceof Type &&
-          b.matchCondition instanceof Expr
+          b.matchCondition instanceof Parameter
         )
           return 1;
         return 0;
       })
       .filter((caseStmt) => this.match(caseStmt.matchCondition, subjectValue));
-    return matchedCases[0].evaluate();
+    const matchedCase = matchedCases[0];
+    if (matchedCase.matchCondition instanceof Parameter) {
+      const paramStack = varStacks.get(matchedCase.matchCondition);
+      if (paramStack === undefined)
+        varStacks.set(matchedCase.matchCondition, [subjectValue]);
+      else paramStack.push(subjectValue);
+    }
+    return matchedCase.evaluate();
   }
 }
 export class BinaryExpr extends Expr {

@@ -6,7 +6,8 @@ export function popOutOfScopeVars(
     | core.Program
     | core.FunDeclaration
     | core.Block
-    | core.AnonymousFunDeclaration,
+    | core.AnonymousFunDeclaration
+    | core.CaseStmt,
   varStacks: Map<core.VarDeclaration | core.Parameter, unknown[]>,
 ) {
   node.scope.symbolTable.forEach((symbol) => {

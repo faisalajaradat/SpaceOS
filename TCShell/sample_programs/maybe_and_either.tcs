@@ -17,8 +17,8 @@ union MaybeNum(number) returnsOddNumbers = union MaybeNum(number x) {
 
 union Either(union MaybeNum) parseMaybeNum = union Either(union MaybeNum maybe) {
   match maybe {
-    number => return maybe
-    void => return voidError()
+    number num => return num
+    void e => return voidError()
   }
 }
 

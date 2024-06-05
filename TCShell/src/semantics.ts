@@ -135,7 +135,7 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
     const curScope = new Scope(scope);
     node.children().forEach((child) => visitNameAnalyzer(child, curScope));
     node.scope = curScope;
-  } else if (node instanceof core.Match) {
+  } else if (node instanceof core.CaseStmt) {
     const curScope = new Scope(scope);
     node.children().forEach((child) => visitNameAnalyzer(child, curScope));
     node.scope = curScope;
@@ -277,7 +277,11 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
     }
   } else if (node instanceof core.CaseStmt) {
     visitTypeAnalyzer(node.stmt);
-    node.stmtType = visitTypeAnalyzer(node.matchCondition);
+    node.matchCondition.stmtType =
+      node.matchCondition instanceof core.Expr
+        ? visitTypeAnalyzer(node.matchCondition)
+        : node.matchCondition.stmtType;
+    node.stmtType = node.matchCondition.stmtType;
     return node.stmtType;
   } else if (node instanceof core.BinaryExpr) {
     const leftHandType = visitTypeAnalyzer(node.leftExpr);
