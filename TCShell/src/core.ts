@@ -679,9 +679,21 @@ export class Match extends Stmt {
       this.subject.evaluate(),
       varStacks,
     );
-    const matchedCases = this.caseStmts.filter((caseStmt) =>
-      this.match(caseStmt.matchCondition, subjectValue),
-    );
+    const matchedCases = this.caseStmts
+      .sort((a, b) => {
+        if (
+          a.matchCondition instanceof Expr &&
+          b.matchCondition instanceof Type
+        )
+          return -1;
+        if (
+          a.matchCondition instanceof Type &&
+          b.matchCondition instanceof Expr
+        )
+          return 1;
+        return 0;
+      })
+      .filter((caseStmt) => this.match(caseStmt.matchCondition, subjectValue));
     return matchedCases[0].evaluate();
   }
 }
