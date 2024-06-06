@@ -1,11 +1,26 @@
-union MaybeNum = void | number
+union MaybeNum = number | void
 
-union Error = string
-
-union Either = number | union Error
+union EitherNumOrString = number | string
 
 string voidError() {
   return "Error: expected value is void!"
+}
+
+union MaybeNum maybeApplyOperation(union MaybeNum maybe, union MaybeNum(number) operation) {
+  match maybe {
+    number num => return operation(num)
+    void e => return none
+  }
+}
+
+union EitherNumOrString eitherApplyOperationOrReturnAndLogError(union EitherNumOrString either, union EitherNumOrString(number) operation) {
+  match either {
+    number num => return operation(num)
+    string str => {
+      print(str)
+      return str
+    }
+  }
 }
 
 union MaybeNum(number) returnsOddNumbers = union MaybeNum(number x) {
@@ -15,13 +30,37 @@ union MaybeNum(number) returnsOddNumbers = union MaybeNum(number x) {
   }
 }
 
-union Either(union MaybeNum) parseMaybeNum = union Either(union MaybeNum maybe) {
+union EitherNumOrString(union MaybeNum) parseMaybeNumOrReturnError = union EitherNumOrString(union MaybeNum maybe) {
   match maybe {
     number num => return num
     void e => return voidError()
   }
 }
 
-print(parseMaybeNum(returnsOddNumbers(3)))
+union EitherNumOrString printAndReturnOddNumber(number oddNumber) {
+  print("The following is Odd:")
+  print(oddNumber)
+  return oddNumber
+}
 
-print(parseMaybeNum(returnsOddNumbers(2)))
+number sum = 0
+
+void Main() {
+  union EitherNumOrString(number) addToSum = union EitherNumOrString(number x) {
+    sum = sum + x
+    return sum
+  }
+  number iter = 0
+  while iter < 16 {
+    union MaybeNum maybeOdd = iter
+    maybeOdd = maybeApplyOperation(maybeOdd, returnsOddNumbers)
+    union EitherNumOrString numOrError = parseMaybeNumOrReturnError(maybeOdd)
+    numOrError = eitherApplyOperationOrReturnAndLogError(numOrError, printAndReturnOddNumber)
+    eitherApplyOperationOrReturnAndLogError(numOrError, addToSum)
+    iter = iter + 1
+  }
+  print("The sum of all odd numbers from 0-15:")
+  print(sum)
+}
+
+Main()
