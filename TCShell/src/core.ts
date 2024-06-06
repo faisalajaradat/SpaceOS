@@ -682,6 +682,22 @@ export class Match extends Stmt {
     if (condition instanceof Parameter) {
       if (condition.stmtType instanceof BaseType)
         return typeof subject === condition.stmtType.evaluate();
+      if (
+        condition.stmtType instanceof ArrayType &&
+        subject instanceof ArrayRepresentation
+      ) {
+        let subjectBase = subject.array;
+        let conditionTypeBase = condition.stmtType;
+        while (
+          conditionTypeBase._type instanceof ArrayType &&
+          Array.isArray(subjectBase[0])
+        ) {
+          conditionTypeBase = conditionTypeBase._type;
+          subjectBase = subjectBase[0];
+        }
+        return typeof subjectBase[0] === conditionTypeBase._type.evaluate();
+      }
+      return false;
     }
     return subject === condition.evaluate();
   }
