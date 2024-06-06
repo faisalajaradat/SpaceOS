@@ -79,8 +79,7 @@ export class BaseType extends Type {
     return (
       this.kind === BaseTypeKind.ANY ||
       (_type instanceof BaseType &&
-        (this.kind === _type.kind || _type.kind === BaseTypeKind.ANY)) ||
-      (_type instanceof UnionType && _type.equals(this))
+        (this.kind === _type.kind || _type.kind === BaseTypeKind.ANY))
     );
   }
 
@@ -131,16 +130,43 @@ export class UnionType extends Type {
     this.identifier = identifier;
   }
 
+  contains(_type: Type): boolean {
+    let containsType = false;
+    (<UnionDeclaration>this.identifier.declaration).options.forEach(
+      (option) => {
+        if (containsType) return;
+        containsType = option.equals(_type);
+      },
+    );
+    return containsType;
+  }
+
   children(): ASTNode[] {
     return [this.identifier];
   }
 
   equals(_type: Type): boolean {
-    return (
-      (<UnionDeclaration>this.identifier.declaration).options.filter((option) =>
-        option.equals(_type),
-      ).length > 0
-    );
+    if (_type instanceof BaseType && _type.kind === BaseTypeKind.ANY)
+      return true;
+    if (
+      _type instanceof UnionType &&
+      (<UnionDeclaration>this.identifier.declaration).options.length ===
+        (<UnionDeclaration>_type.identifier.declaration).options.length
+    ) {
+      let numOfMatchingOptions = 0;
+      (<UnionDeclaration>this.identifier.declaration).options.forEach(
+        (option0) => {
+          numOfMatchingOptions += (<UnionDeclaration>(
+            _type.identifier.declaration
+          )).options.filter((option1) => option0.equals(option1)).length;
+        },
+      );
+      return (
+        numOfMatchingOptions ===
+        (<UnionDeclaration>this.identifier.declaration).options.length
+      );
+    }
+    return false;
   }
 
   print(): string {
@@ -175,12 +201,12 @@ export class FunctionType extends Type {
 
   equals(_type: Type): boolean {
     return (
+      (_type instanceof BaseType && _type.kind === BaseTypeKind.ANY) ||
       (_type instanceof FunctionType &&
         this.returnType.equals(_type.returnType) &&
         this.paramTypes.filter(
           (paramType, pos) => !paramType.equals(_type.paramTypes[pos]),
-        ).length === 0) ||
-      (_type instanceof UnionType && _type.equals(this))
+        ).length === 0)
     );
   }
 
@@ -224,8 +250,8 @@ export class ArrayType extends Type {
 
   equals(_type: Type): boolean {
     return (
-      (_type instanceof ArrayType && this._type.equals(_type._type)) ||
-      (_type instanceof UnionType && _type.equals(this))
+      (_type instanceof BaseType && _type.kind === BaseTypeKind.ANY) ||
+      (_type instanceof ArrayType && this._type.equals(_type._type))
     );
   }
 
@@ -885,6 +911,39 @@ export class ArrayAccess extends Expr {
       returnArray = <unknown[]>returnArray[indices.pop()];
     }
     return new ArrayRepresentation(returnArray, indices.pop());
+  }
+}
+export class TypeCast extends Expr {
+  castedExpr: Expr;
+
+  constructor(desiredType: Type, castedExpr: Expr) {
+    super(desiredType);
+    this.castedExpr = castedExpr;
+  }
+
+  children(): ASTNode[] {
+    const children = new Array<ASTNode>();
+    children.push(this.stmtType);
+    children.push(this.castedExpr);
+    return children;
+  }
+
+  print(): string {
+    const typeCastNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(typeCastNodeId + '[label=" TypeCast "];\n');
+    const desiredTypeNodeId = this.stmtType.print();
+    const castedExprNodeId = this.castedExpr.print();
+    dotString = dotString.concat(
+      typeCastNodeId + "->" + desiredTypeNodeId + ";\n",
+    );
+    dotString = dotString.concat(
+      typeCastNodeId + "->" + castedExprNodeId + ";\n",
+    );
+    return typeCastNodeId;
+  }
+
+  evaluate(): unknown {
+    return this.castedExpr.evaluate();
   }
 }
 export class AttributeAccess extends Expr {

@@ -9,7 +9,7 @@ string voidError() {
 union MaybeNum maybeApplyOperation(union MaybeNum maybe, union MaybeNum(number) operation) {
   match maybe {
     number num => return operation(num)
-    void e => return none
+    void e => return (union MaybeNum) none
   }
 }
 
@@ -18,29 +18,29 @@ union EitherNumOrString eitherApplyOperationOrReturnAndLogError(union EitherNumO
     number num => return operation(num)
     string str => {
       print(str)
-      return str
+      return (union EitherNumOrString) str
     }
   }
 }
 
 union MaybeNum(number) returnsOddNumbers = union MaybeNum(number x) {
   match x % 2 {
-    1 => return x
-    0 => return none
+    1 => return (union MaybeNum) x
+    0 => return (union MaybeNum) none
   }
 }
 
 union EitherNumOrString(union MaybeNum) parseMaybeNumOrReturnError = union EitherNumOrString(union MaybeNum maybe) {
   match maybe {
-    number num => return num
-    void e => return voidError()
+    number num => return (union EitherNumOrString) num
+    void e => return (union EitherNumOrString) voidError()
   }
 }
 
 union EitherNumOrString printAndReturnOddNumber(number oddNumber) {
   print("The following is Odd:")
   print(oddNumber)
-  return oddNumber
+  return (union EitherNumOrString) oddNumber
 }
 
 number sum = 0
@@ -48,11 +48,11 @@ number sum = 0
 void Main() {
   union EitherNumOrString(number) addToSum = union EitherNumOrString(number x) {
     sum = sum + x
-    return sum
+    return (union EitherNumOrString) sum
   }
   number iter = 0
   while iter < 16 {
-    union MaybeNum maybeOdd = iter
+    union MaybeNum maybeOdd = (union MaybeNum) iter
     maybeOdd = maybeApplyOperation(maybeOdd, returnsOddNumbers)
     union EitherNumOrString numOrError = parseMaybeNumOrReturnError(maybeOdd)
     numOrError = eitherApplyOperationOrReturnAndLogError(numOrError, printAndReturnOddNumber)

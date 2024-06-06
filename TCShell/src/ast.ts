@@ -142,6 +142,14 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       unaryExpression.ast(),
     );
   },
+  UnaryExp_typecast(
+    _leftParenthesis,
+    _type,
+    _rightParenthesis,
+    unaryExpression,
+  ) {
+    return new core.TypeCast(_type.ast(), unaryExpression.ast());
+  },
   UnaryExp(leftExpression) {
     return leftExpression.ast();
   },
