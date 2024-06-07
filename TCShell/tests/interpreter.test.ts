@@ -4,8 +4,6 @@ import { grammar } from "../src/grammar.js";
 import { ast } from "../src/ast.js";
 import analyze from "../src/semantics.js";
 import * as test_cases from "./test_cases.js";
-import { exec } from "child_process";
-import exp from "constants";
 
 function executeTestCase(testCase: string) {
   const program: core.Program = ast(grammar.match(testCase));
