@@ -1,3 +1,5 @@
+import * as fs from "fs";
+
 export const identifier_declaration_test = "number one = 1";
 export const keyword_identifier_test = 'string number = "number"';
 export const newline_seperated_statements_test =
@@ -33,3 +35,15 @@ export const function_declaration_test =
   '\nprint(concatStringArray({"R", "i", "g", "h", "t", "!"}, 6))';
 export const array_access_test =
   'string[] array = {"Wrong!", "Right!", "Wrong!"}\nprint(array[1])';
+export const recursion_test = fs.readFileSync(
+  "./sample_programs/fib.tcs",
+  "utf-8",
+);
+export const first_class_functions_test = fs.readFileSync(
+  "./sample_programs/first_class.tcs",
+  "utf-8",
+);
+export const pattern_matching_test = fs.readFileSync(
+  "./sample_programs/maybe_and_either.tcs",
+  "utf-8",
+);

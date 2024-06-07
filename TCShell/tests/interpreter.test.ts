@@ -4,6 +4,8 @@ import { grammar } from "../src/grammar.js";
 import { ast } from "../src/ast.js";
 import analyze from "../src/semantics.js";
 import * as test_cases from "./test_cases.js";
+import { exec } from "child_process";
+import exp from "constants";
 
 function executeTestCase(testCase: string) {
   const program: core.Program = ast(grammar.match(testCase));
@@ -119,5 +121,28 @@ test("array access", () => {
   const logSpy = jest.spyOn(global.console, "log");
   executeTestCase(test_cases.array_access_test);
   expect(logSpy).toHaveBeenLastCalledWith("Right!");
+  logSpy.mockRestore();
+});
+
+test("recursion", () => {
+  const logSpy = jest.spyOn(global.console, "log");
+  executeTestCase(test_cases.recursion_test);
+  expect(logSpy).toHaveBeenLastCalledWith(610);
+  logSpy.mockRestore();
+});
+
+test("first class functions", () => {
+  const logSpy = jest.spyOn(global.console, "log");
+  executeTestCase(test_cases.first_class_functions_test);
+  expect(logSpy).toHaveBeenCalledTimes(4);
+  expect(logSpy).toHaveBeenLastCalledWith(4);
+  logSpy.mockRestore();
+});
+
+test("pattern match", () => {
+  const logSpy = jest.spyOn(global.console, "log");
+  executeTestCase(test_cases.pattern_matching_test);
+  expect(logSpy).toHaveBeenCalledTimes(34);
+  expect(logSpy).toHaveBeenLastCalledWith(64);
   logSpy.mockRestore();
 });
