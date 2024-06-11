@@ -8,7 +8,9 @@ import { ChatModelType, initializedChatModel } from './Types/chatModelTypes';
 //prompt management 
 import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts';
 
-import { ChatMessageHistory } from '@langchain/community/stores/message/in_memory';
+
+import { InMemoryChatMessageHistory } from "@langchain/core/chat_history";
+
 //Env Variables
 import * as dotenv from 'dotenv';
 import getUserInput from './getUserInput.js';
@@ -16,7 +18,7 @@ import getUserInput from './getUserInput.js';
 
 dotenv.config();
 
-const spaceOSInformation = ` respond to the user as you would in a conversation, keep it short sweet and concise. Use the following for context if relevant to the users questions, you can ask the user specifying questions, infact it is encouraged: 
+const spaceOSInformation = `respond to the user as you would in a conversation, keep it short sweet and concise. Use the following for context if relevant to the users questions, you can ask the user specifying questions, infact it is encouraged: 
 SpaceBase functions similarly to a file system in traditional operating systems but is specifically designed for spatial management. It operates across all nodes of Space OS and is responsible for creating a detailed mathematical representation of physical spaces. This allows computational objects and data to be linked directly to these spatial representations.
 
 Key functionalities of SpaceBase include:
@@ -35,7 +37,7 @@ SpaceBase is built to ensure high reliability and continuous operation, with rob
 
 
 
-const messageHistory =  new ChatMessageHistory();
+const messageHistories: Record<string, InMemoryChatMessageHistory> = {};
 
 
 export function initializeChatModel(type:ChatModelType):initializedChatModel { //depending on enum, inits each type.
@@ -83,13 +85,15 @@ async function createMessageArray(userInput?: string ){ //creates the ChatPrompt
     if (userInput!.toLowerCase().includes("spacebase") || userInput!.toLowerCase().includes("space base") || userInput!.toLowerCase().includes("space os") || userInput!.toLowerCase().includes("spaceos")) {
       messages = ChatPromptTemplate.fromMessages([
           ["system", spaceOSInformation],  // Include detailed system info only if relevant
-          ["human", userInput!],
-          new MessagesPlaceholder("history"),
+          ["user", userInput!],
+          //new MessagesPlaceholder("history"),
       ]);
     } else {
       messages = ChatPromptTemplate.fromMessages([
-          ["human", userInput!],            // Standard user input handling
-          new MessagesPlaceholder("history"),
+          ["system", "You are a concise, helpful chatbot"], 
+          ["human", "{input}"],            // Standard user input handling
+          ["placeholder", "{history}"]
+          //new MessagesPlaceholder("history"),
       ]);
     }
     return { messages, userInput }
@@ -106,7 +110,7 @@ export async function* makeCall(chatmodel: initializedChatModel, passedInput:str
     }else{
       ({ messages, userInput } = await createMessageArray(passedInput));
     }
-
+    
    
     if (messages !== null){
       const response = messages!.pipe(chatModel);
@@ -114,22 +118,26 @@ export async function* makeCall(chatmodel: initializedChatModel, passedInput:str
       
       const withHistory = new RunnableWithMessageHistory({
         runnable: response,
-        getMessageHistory: (_sessionId: string) => messageHistory,
+        getMessageHistory: async (sessionId) => {
+          if (messageHistories[sessionId] === undefined) {
+            messageHistories[sessionId] = new InMemoryChatMessageHistory();
+          }
+          return messageHistories[sessionId];
+        },
         inputMessagesKey: "input",
         // This shows the runnable where to insert the history.
         // We set to "history" here because of our MessagesPlaceholder above.
         historyMessagesKey: "history",
       });
       const config: RunnableConfig = { configurable: { sessionId: "1" } };
-  
-      const output = await withHistory.stream(
+      const output = await withHistory.stream( 
         {input: userInput},
         config
       );
       
       
       for await (const chunk of output) {
-        yield chunk.lc_kwargs.content;
+        yield chunk;
       }
       //return output.lc_kwargs.content;
   

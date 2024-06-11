@@ -81,6 +81,7 @@
             margin: 0,auto;
         }
     </style>
+    
 </head>
 <body>
     
@@ -88,198 +89,38 @@
     <div class="button-container">
         <button id="speakBtn">Speak</button>
         <button id="stopBtn">Stop speaking</button>
+        <button id="TestBtn">Run Tests</button>
     </div>
     <div class="transcript" id="transcript">Transcript will appear here...</div>
     <div class="button-container" style="width:100%">
         <input type="text" id="inputField" placeholder="Type here...">
         <button id="LLM" style="padding: 0; width: 10%;">Call LLM</button>
     </div>
-    <script type="module">
-        let messageTimer = null;
-        let llmCallStartTime;
-        let firstllmResponse = false;
-        const ws = new WebSocket('ws://localhost:7000/ws/echo');
-
-        ws.onopen = function() {
-            console.log('WebSocket connection established');
-        };
-
-        ws.onerror = function(error) {
-            console.error('WebSocket Error:', error);
-            const transcript = document.getElementById('transcript');
-            transcript.innerHTML += `<div class="error">WebSocket Connection Error: ${error.message}</div>`;
-        };
-
-
-        ws.onmessage = function(event) {
-            if(firstllmResponse){
-                let llmCallEndTime = new Date();
-                let llmCallResponseTime = llmCallEndTime - llmCallStartTime ;
-                console.log('Response Time: '+llmCallResponseTime + 'ms');
-                firstllmResponse = false;
-            }
-            updateBotResponse(event.data);
-        };
-
-        function sendMessageToWebSocket(message) {
-            if (!message.trim()) return; // return if input is empty
-            firstllmResponse = true;
-            if (ws.readyState === WebSocket.OPEN) {
-                llmCallStartTime = new Date();
-                ws.send(JSON.stringify(message));
-                updateUserTranscript(message);
-            } else {
-                console.log('WebSocket is not open. Current State:', ws.readyState);
-                const transcript = document.getElementById('transcript');
-                transcript.innerHTML += `<div class="error">Cannot send message, WebSocket is not open.</div>`;
-            }
-        }
-
-        function updateUserTranscript(userInput) {
-            const transcript = document.getElementById('transcript');
-            if(transcript.innerHTML === 'Transcript will appear here...') {
-                transcript.innerHTML = `<div class="user">User: ${userInput}</div>`;
-            } else {
-                transcript.innerHTML += `<div class="user">User: ${userInput}</div>`;
-            }
-            document.getElementById('inputField').value = ''; // Clear input after sending
-        }
-
-        function updateBotResponse(data) {
-            const transcript = document.getElementById('transcript');
-            let botMessageDiv;
-            const lastElement = transcript.lastElementChild;
-            if (lastElement && lastElement.className === 'bot') {
-                botMessageDiv = lastElement;
-            } else {
-                botMessageDiv = document.createElement('div');
-                botMessageDiv.className = 'bot';
-                transcript.appendChild(botMessageDiv);
-            }
-            botMessageDiv.textContent += data; // Append new data
-
-            clearTimeout(messageTimer);
-            messageTimer = setTimeout(() => {
-                speakResponse(botMessageDiv.textContent);
-            }, 1000);
-        }
-
-
-        document.getElementById('LLM').addEventListener('click', () => {
-            const userInput = document.getElementById('inputField').value;
-            sendMessageToWebSocket(userInput);
-        });
-        
-
-            
-
-            // try {
-            //     const response = await fetch('/chat', { //express chat endpoint
-            //         method: 'POST',
-            //         headers: {
-            //             'Content-Type': 'application/json',
-            //         },
-            //         body: JSON.stringify({ userInput })
-            //     });
-
-            //     if (!response.ok) {
-            //         throw new Error(`HTTP error! Status: ${response.status}`);
-            //     }
-                
-            //     const data = await response.json();
-            //     transcript.textContent = data.response; // Display the server's response all in one go
-            //     speakResponse(data.response); //speak the response
-            // } catch (e) { //error handling
-            //     console.error('Error fetching data:', e);
-            //     transcript.textContent = "Failed to process input.";
-            // }
-
-
-
-
-        // Web Speech API 
-        const speakBtn = document.getElementById('speakBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        let recognition = new webkitSpeechRecognition();
-        recognition.continuous = false;
-        recognition.lang = 'en-US';
-        recognition.interimResults = false;
-
-
-        let startTime ; //when the button is gonna be clicked
-        let lastSoundTime; //the last time a sound is detected
-        let speechEnded = false; //Needed this because when speech was short the result would be ready before speech end
-        let resultsBuffer = null;
-
-
-        recognition.onspeechstart = function() {
-            console.log('Speech recognition started');
-            //transcript.textContent = ''; // Clear when re-recognizing voice
-            startTime = new Date(); //to time how long it takes
-            speechEnded = false;
-        };
-
-        recognition.onerror = function(event) {
-            console.error('Speech recognition error:', event.error);
-        };
-        recognition.onspeechend = () => {
-                lastSoundTime = new Date(); // Capture the time when the last sound ends
-                speechEnded = true;
-                //console.log('Last speech ended at:', lastSoundTime);
-                calculateProcessingTime();
-        };
-
-        recognition.onresult = function(event) {
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    if (event.results[i].isFinal) {
-                        inputField.value = event.results[i][0].transcript;  // Display recognized text at the end to prevent duplicates
-                        resultsBuffer = {
-                            transcript: event.results[i][0].transcript,
-                            endTime: new Date()
-
-                        }
-                        sendMessageToWebSocket(resultsBuffer.transcript);
-                        //logging for how long recognition takes
-                        let endTime = new Date(); 
-                        let duration = endTime - startTime; //button click to speech end
-                        let lastSoundDuration = endTime - lastSoundTime; //from speech end to transcript
-                        
-
-
-                        calculateProcessingTime();
-                        // if (speechEnded) {
-                        //     let lastSoundDuration = new Date() - lastSoundTime; // Calculate duration from last speech end to now
-                        //     console.log('The time from the last recorded sound to output is: ' + lastSoundDuration + 'ms');
-                        //     speechEnded = false; // Reset flag for next session
-                        // }else{
-                        //     console.log('Speech recognition finished before speech was processed as finished')
-                        // }
-                    }
-                }
-        };
-
-
-        function calculateProcessingTime(){
-            if(speechEnded && resultsBuffer ){
-                let processTimeDuration = resultsBuffer.endTime - startTime;
-                let lastSoundDuration = resultsBuffer.endTime - lastSoundTime;
-                //console.log('Total duration from button click to result: ' + processTimeDuration + 'ms');
-                console.log('The time from the last recorded sound to output is: ' + lastSoundDuration + 'ms');
-                resultsBuffer = null;
-            }
-
-
-        }
-
-        speakBtn.onclick = () => recognition.start();
-        stopBtn.onclick = () => recognition.stop();
-
-        function speakResponse(text) { //function for speaking
-        const synth = window.speechSynthesis;
-        const utterance = new SpeechSynthesisUtterance(text);
-        synth.speak(utterance);
-    }
-    </script>
+    <script src="js/testsuite.js" type="module" ></script>
+    <script src="js/utilityFunctions.js" type="module"></script>
+    <script src="js/main.js" type="module"></script>
     
 </body>
 </html>
+
+
+<!-- try {
+    const response = await fetch('/chat', { //express chat endpoint
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userInput })
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    transcript.textContent = data.response; // Display the server's response all in one go
+    speakResponse(data.response); //speak the response
+} catch (e) { //error handling
+    console.error('Error fetching data:', e);
+    transcript.textContent = "Failed to process input.";
+} -->

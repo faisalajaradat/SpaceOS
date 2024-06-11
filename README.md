@@ -59,7 +59,7 @@ To start the development server, run:
 npm run dev
 ```
 If everything is working as expected you should see: 
-Server running on http://localhost:7000
+Server running on http://localhost:7777
 
 and you should be able to type/speak to the bot
 

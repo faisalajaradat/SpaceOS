@@ -14,10 +14,10 @@ const MODELCLASSTYPES = [ChatModelType.ChatGPT, ChatModelType.Groq, ChatModelTyp
 const chatModels: initializedChatModel[] = [];
 const modelFailures: {[model: string]: number} = {};
 
-
+//string, void, unknown
 
 //,main logic for handling which chat Model to use next
-export async function* handleChatModel(userInput:string = "", attempts = 0, maxRetries = 3): AsyncGenerator<string, void, unknown> {
+export async function* handleChatModel(userInput:string = "", attempts = 0, maxRetries = 3):AsyncGenerator<{chunk:any, chatmodel:any}>  {
 
     let chatResponse = undefined;
     let chatModel: initializedChatModel | undefined = undefined;
@@ -34,8 +34,8 @@ export async function* handleChatModel(userInput:string = "", attempts = 0, maxR
                 chatModels.push(chatModel);
             }
             for await (const chunk of chatModelInitializer.makeCall(chatModel, userInput)) {
-                yield chunk;
-                process.stdout.write(chunk);
+                yield {chunk, "chatmodel":{name: chatModel.constructor.name, failures:modelFailures}};
+                process.stdout.write(chunk.lc_kwargs.content);
             }
             //chatResponse = chatModelInitializer.makeCall(chatModel, userInput);
             modelFailures[chatModel.constructor.name] = 0;
