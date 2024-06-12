@@ -2,12 +2,7 @@ import * as core from "./core.js";
 import { VarSymbol } from "./semantics.js";
 
 export function popOutOfScopeVars(
-  node:
-    | core.Program
-    | core.FunDeclaration
-    | core.Block
-    | core.AnonymousFunDeclaration
-    | core.CaseStmt,
+  node: core.Program | core.FunDeclaration | core.Block | core.CaseStmt,
   varStacks: Map<core.VarDeclaration | core.Parameter, unknown[]>,
 ) {
   node.scope.symbolTable.forEach((symbol) => {
@@ -20,8 +15,6 @@ export function getValueOfExpression(
   varStacks: Map<core.VarDeclaration | core.Parameter, unknown[]>,
 ): unknown {
   if (value instanceof core.Identifier) {
-    if (value.declaration instanceof core.FunDeclaration)
-      return value.declaration;
     value = varStacks
       .get(<core.VarDeclaration | core.Parameter>value.declaration)
       .at(-1);

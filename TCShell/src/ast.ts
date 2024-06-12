@@ -7,7 +7,9 @@ export function ast(match) {
 //Describe how to build AST for each Ohm rule
 const astBuilder = grammar.createSemantics().addOperation("ast", {
   Program(stmts) {
-    return new core.Program(stmts.ast());
+    const _program = new core.Program(stmts.ast());
+    core.libFunctions.forEach((value, key) => _program.stmts.unshift(key));
+    return _program;
   },
   Stmt_simple(simpleStatements, _newline) {
     return simpleStatements.ast()[0];
@@ -192,11 +194,11 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     _rightParenthesis,
     stmt,
   ) {
-    return new core.AnonymousFunDeclaration(
-      type.ast(),
-      listOfParameters.asIteration().ast(),
-      stmt.ast(),
-    );
+    const params =
+      listOfParameters.sourceString === "none"
+        ? []
+        : listOfParameters.asIteration().ast();
+    return new core.FunDeclaration(type.ast(), params, stmt.ast());
   },
   PrimaryExp(expression) {
     return expression.ast();
@@ -210,21 +212,6 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       typeAndIdentifier.stmtType,
       typeAndIdentifier.identifier,
       expression.ast(),
-    );
-  },
-  FunDeclaration(
-    parameter,
-    _leftParenthesis,
-    possibleParameters,
-    _rightParenthesis,
-    stmt,
-  ) {
-    const typeAndIdentifier = parameter.ast();
-    return new core.FunDeclaration(
-      typeAndIdentifier.stmtType,
-      typeAndIdentifier.identifier,
-      possibleParameters.asIteration().ast(),
-      stmt.ast(),
     );
   },
   UnionDeclaration(unionType, _equal, listOfTypes) {

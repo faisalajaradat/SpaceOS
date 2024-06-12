@@ -23,15 +23,6 @@ export class VarSymbol extends ProgramSymbol {
   }
 }
 
-export class FunSymbol extends ProgramSymbol {
-  funDeclaration: core.FunDeclaration;
-
-  constructor(funDeclaration: core.FunDeclaration) {
-    super(funDeclaration.identifier.value);
-    this.funDeclaration = funDeclaration;
-  }
-}
-
 export class UnionSymbol extends ProgramSymbol {
   unionDeclaration: core.UnionDeclaration;
 
@@ -74,28 +65,10 @@ let errors = 0;
 function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
   if (node instanceof core.Program) {
     const curScope = new Scope(scope);
-    core.libFunctions.forEach((value, fun) => {
-      fun.identifier.declaration = fun;
-      curScope.put(new FunSymbol(fun));
-    });
     node.children().forEach((child) => visitNameAnalyzer(child, curScope));
     node.scope = curScope;
-  } else if (
-    node instanceof core.FunDeclaration ||
-    node instanceof core.AnonymousFunDeclaration
-  ) {
+  } else if (node instanceof core.FunDeclaration) {
     visitNameAnalyzer(node.stmtType, scope);
-    if (node instanceof core.FunDeclaration) {
-      const funSymbol = scope.lookupCurrent(node.identifier.value);
-      if (funSymbol !== null) {
-        errors++;
-        console.log(
-          "Function name: " +
-            node.identifier.value +
-            "already defined within scope!",
-        );
-      } else scope.put(new FunSymbol(node));
-    }
     let curScope = scope;
     while (curScope.outer !== null) curScope = curScope.outer;
     curScope = new Scope(curScope);
@@ -145,16 +118,14 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
       errors++;
       console.log("Symbol: " + node.value + " has not been declared!");
       return;
-    } else if (programSymbol instanceof FunSymbol)
-      node.declaration = programSymbol.funDeclaration;
-    else if (programSymbol instanceof VarSymbol)
+    } else if (programSymbol instanceof VarSymbol)
       node.declaration = programSymbol.varDeclaration;
     else if (programSymbol instanceof UnionSymbol)
       node.declaration = programSymbol.unionDeclaration;
   } else node.children().forEach((child) => visitNameAnalyzer(child, scope));
 }
 
-let returnFunction: core.FunDeclaration | core.AnonymousFunDeclaration = null;
+let returnFunction: core.FunDeclaration = null;
 
 function assignArraySize(type1: core.ArrayType, type2: core.ArrayType) {
   while (
@@ -185,10 +156,7 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
   const numberType = new core.BaseType(core.BaseTypeKind.NUMBER);
   const boolType = new core.BaseType(core.BaseTypeKind.BOOL);
   const stringType = new core.BaseType(core.BaseTypeKind.STRING);
-  if (
-    node instanceof core.FunDeclaration ||
-    node instanceof core.AnonymousFunDeclaration
-  ) {
+  if (node instanceof core.FunDeclaration) {
     const oldFunDeclaration = returnFunction;
     returnFunction = node;
     visitTypeAnalyzer(node._body);
@@ -201,6 +169,10 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
   ) {
     if (
       !(node.stmtType instanceof core.UnionType) &&
+      !(
+        node.stmtType instanceof core.BaseType &&
+        node.stmtType.kind === core.BaseTypeKind.ANY
+      ) &&
       node.stmtType.equals(voidType)
     ) {
       errors++;

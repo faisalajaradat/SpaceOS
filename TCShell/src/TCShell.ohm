@@ -16,7 +16,6 @@ TCShell {
 
     SimpleStmt = UnionDeclaration
                 | VarDeclaration
-                | FunDeclaration
     					  | return (Exp)?		--return
                 | Exp
 
@@ -55,14 +54,13 @@ TCShell {
               | numberLiteral
               | booleanLiteral
               | noneLiteral
-              | Type "(" ListOf<Parameter, ","> ")" Stmt  --function
+              | Type "(" (noneLiteral | NonemptyListOf<Parameter, ",">) ")" Stmt  --function
               | "(" Exp ")"		--group
               | "{" ListOf<Exp, ","> "}"		--array
 
     Block = "{" Stmt* "}"
 
     VarDeclaration = Parameter "=" Exp
-    FunDeclaration = Parameter "(" ListOf<Parameter, ","> ")" Stmt
     UnionDeclaration = UnionType "=" NonemptyListOf<Type, "|">
 
     Parameter = Type identifier

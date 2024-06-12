@@ -1,4 +1,4 @@
-void Main() {
+void() Main = void(none) {
   number[] nums = {7, 5, 3}
   string[][] arraysOfStringArrays = {{"hello!"}, {"Hello"}, {" "}, {"World!"}}
   print(nums)

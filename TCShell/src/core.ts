@@ -18,7 +18,7 @@ let dotString = "";
 let nodeCount = 0;
 
 function writeFunDeclarationDot(
-  node: FunDeclaration | AnonymousFunDeclaration,
+  node: FunDeclaration,
   funDeclNodeId: string,
 ): void {
   const typeNodeId = node.stmtType.print();
@@ -295,9 +295,7 @@ export class Program implements ASTNode {
   }
 
   evaluate(): unknown {
-    this.children()
-      .filter((child) => !(child instanceof FunDeclaration))
-      .forEach((stmt) => stmt.evaluate());
+    this.children().forEach((stmt) => stmt.evaluate());
     popOutOfScopeVars(this, varStacks);
     return undefined;
   }
@@ -346,60 +344,7 @@ export class Parameter extends Stmt {
     return undefined;
   }
 }
-export class FunDeclaration extends Stmt {
-  identifier: Identifier;
-  params: Parameter[];
-  _body: Stmt;
-  scope: Scope;
 
-  constructor(
-    type: Type,
-    identifier: Identifier,
-    params: Parameter[],
-    body: Stmt,
-  ) {
-    const paramTypes: Type[] = params.map((param) => param.stmtType);
-    super(new FunctionType(type, paramTypes));
-    this.identifier = identifier;
-    this.params = params;
-    this._body = body;
-  }
-
-  children(): ASTNode[] {
-    const children = new Array<ASTNode>();
-    children.push(this.stmtType);
-    children.push(this.identifier);
-    children.push(...this.params);
-    children.push(this._body);
-    return children;
-  }
-
-  print(): string {
-    const funDeclNodeId = "Node" + nodeCount++;
-    dotString = dotString.concat(funDeclNodeId + '[label=" FunDecl "];\n');
-    const identifierNodeId = this.identifier.print();
-    dotString = dotString.concat(
-      funDeclNodeId + "->" + identifierNodeId + ";\n",
-    );
-    writeFunDeclarationDot(this, funDeclNodeId);
-    return funDeclNodeId;
-  }
-
-  evaluate(): unknown {
-    if (libFunctions.has(this)) {
-      const args = this.params.map((param) => varStacks.get(param).pop());
-      return libFunctions.get(this)(...args);
-    }
-    let returnValue = this._body.evaluate();
-    if (returnValue instanceof Return && returnValue.possibleValue !== null)
-      returnValue = getValueOfExpression(
-        returnValue.possibleValue.evaluate(),
-        varStacks,
-      );
-    popOutOfScopeVars(this, varStacks);
-    return returnValue;
-  }
-}
 export class VarDeclaration extends Stmt {
   identifier: Identifier;
   value: Expr;
@@ -433,7 +378,7 @@ export class VarDeclaration extends Stmt {
 
   evaluate(): unknown {
     const value =
-      this.value instanceof AnonymousFunDeclaration
+      this.value instanceof FunDeclaration
         ? this.value
         : getValueOfExpression(this.value.evaluate(), varStacks);
     const varStack = varStacks.get(this);
@@ -787,7 +732,7 @@ export class BinaryExpr extends Expr {
   evaluate(): unknown {
     let leftHandExp = this.leftExpr.evaluate();
     const rightHandExp =
-      this.rightExpr instanceof AnonymousFunDeclaration
+      this.rightExpr instanceof FunDeclaration
         ? this.rightExpr
         : getValueOfExpression(this.rightExpr.evaluate(), varStacks);
     if (this.operator === "=") {
@@ -869,6 +814,46 @@ export class UnaryExpr extends Expr {
       case "!":
         return !(<boolean>expression);
     }
+  }
+}
+export class FunDeclaration extends Expr {
+  params: Parameter[];
+  _body: Stmt;
+  scope: Scope;
+
+  constructor(type: Type, params: Parameter[], body: Stmt) {
+    const paramTypes: Type[] = params.map((param) => param.stmtType);
+    super(new FunctionType(type, paramTypes));
+    this.params = params;
+    this._body = body;
+  }
+
+  children(): ASTNode[] {
+    const children = new Array<ASTNode>();
+    children.push(this.stmtType);
+    children.push(...this.params);
+    children.push(this._body);
+    return children;
+  }
+
+  print(): string {
+    const anonymousFunDeclNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      anonymousFunDeclNodeId + '[label=" AnonFunDecl "];\n',
+    );
+    writeFunDeclarationDot(this, anonymousFunDeclNodeId);
+    return anonymousFunDeclNodeId;
+  }
+
+  evaluate(): unknown {
+    let returnValue = this._body.evaluate();
+    if (returnValue instanceof Return && returnValue.possibleValue !== null)
+      returnValue = getValueOfExpression(
+        returnValue.possibleValue.evaluate(),
+        varStacks,
+      );
+    popOutOfScopeVars(this, varStacks);
+    return returnValue;
   }
 }
 export class ArrayAccess extends Expr {
@@ -1031,64 +1016,31 @@ export class FunCall extends Expr {
   }
 
   evaluate(): unknown {
-    const funDecl = <FunDeclaration | AnonymousFunDeclaration>(
+    const identifier = this.identifier.evaluate();
+    if (
+      identifier instanceof Identifier &&
+      libFunctions.has(<VarDeclaration>identifier.declaration)
+    ) {
+      return libFunctions.get(<VarDeclaration>identifier.declaration)(
+        ...this.args.map((arg) =>
+          getValueOfExpression(arg.evaluate(), varStacks),
+        ),
+      );
+    }
+    const funDecl = <FunDeclaration>(
       getValueOfExpression(this.identifier.evaluate(), varStacks)
     );
     this.args.forEach((arg, pos) => {
       const value = getValueOfExpression(arg.evaluate(), varStacks);
-      const paramStack = varStacks.get(
-        (<FunDeclaration | AnonymousFunDeclaration>funDecl).params[pos],
-      );
+      const paramStack = varStacks.get((<FunDeclaration>funDecl).params[pos]);
       if (paramStack === undefined)
-        varStacks.set(
-          (<FunDeclaration | AnonymousFunDeclaration>funDecl).params[pos],
-          [value],
-        );
+        varStacks.set((<FunDeclaration>funDecl).params[pos], [value]);
       else paramStack.push(value);
     });
     return funDecl.evaluate();
   }
 }
-export class AnonymousFunDeclaration extends Expr {
-  params: Parameter[];
-  _body: Stmt;
-  scope: Scope;
 
-  constructor(type: Type, params: Parameter[], body: Stmt) {
-    const paramTypes: Type[] = params.map((param) => param.stmtType);
-    super(new FunctionType(type, paramTypes));
-    this.params = params;
-    this._body = body;
-  }
-
-  children(): ASTNode[] {
-    const children = new Array<ASTNode>();
-    children.push(this.stmtType);
-    children.push(...this.params);
-    children.push(this._body);
-    return children;
-  }
-
-  print(): string {
-    const anonymousFunDeclNodeId = "Node" + nodeCount++;
-    dotString = dotString.concat(
-      anonymousFunDeclNodeId + '[label=" AnonFunDecl "];\n',
-    );
-    writeFunDeclarationDot(this, anonymousFunDeclNodeId);
-    return anonymousFunDeclNodeId;
-  }
-
-  evaluate(): unknown {
-    let returnValue = this._body.evaluate();
-    if (returnValue instanceof Return && returnValue.possibleValue !== null)
-      returnValue = getValueOfExpression(
-        returnValue.possibleValue.evaluate(),
-        varStacks,
-      );
-    popOutOfScopeVars(this, varStacks);
-    return returnValue;
-  }
-}
 export class StringLiteral extends Expr {
   value: string;
 
@@ -1217,7 +1169,7 @@ export class ArrayLiteral extends Expr {
 }
 export class Identifier extends Expr {
   value: string;
-  declaration: VarDeclaration | Parameter | FunDeclaration | UnionDeclaration;
+  declaration: VarDeclaration | Parameter | UnionDeclaration;
 
   constructor(value: string) {
     super(new BaseType(BaseTypeKind.NONE));
@@ -1242,30 +1194,45 @@ export class Identifier extends Expr {
 
 //Dictionary of predefined functions implemented in TS to be called in TCShell
 export const libFunctions = new Map<
-  FunDeclaration,
+  VarDeclaration,
   (...args: unknown[]) => unknown
 >();
 
 libFunctions.set(
-  new FunDeclaration(
-    new BaseType(BaseTypeKind.VOID),
+  new VarDeclaration(
+    new FunctionType(new BaseType(BaseTypeKind.VOID), [
+      new BaseType(BaseTypeKind.ANY),
+    ]),
     new Identifier("print"),
-    [new Parameter(new BaseType(BaseTypeKind.ANY), new Identifier("message"))],
-    new Block(new Array<Stmt>()),
+    new FunDeclaration(
+      new BaseType(BaseTypeKind.VOID),
+      [
+        new Parameter(
+          new BaseType(BaseTypeKind.ANY),
+          new Identifier("message"),
+        ),
+      ],
+      new Block([]),
+    ),
   ),
   (...args) => console.log(args[0]),
 );
 libFunctions.set(
-  new FunDeclaration(
-    new BaseType(BaseTypeKind.NUMBER),
+  new VarDeclaration(
+    new FunctionType(new BaseType(BaseTypeKind.NUMBER), [
+      new ArrayType(new BaseType(BaseTypeKind.ANY), -1),
+    ]),
     new Identifier("len"),
-    [
-      new Parameter(
-        new ArrayType(new BaseType(BaseTypeKind.ANY), -1),
-        new Identifier("array"),
-      ),
-    ],
-    new Block(new Array<Stmt>()),
+    new FunDeclaration(
+      new BaseType(BaseTypeKind.NUMBER),
+      [
+        new Parameter(
+          new ArrayType(new BaseType(BaseTypeKind.ANY), -1),
+          new Identifier("array"),
+        ),
+      ],
+      new Block(new Array<Stmt>()),
+    ),
   ),
   (...args) => (<unknown[]>args[0]).length,
 );
