@@ -10,7 +10,6 @@ void Main() {
   print(len(nums))
   print(len(arraysOfStringArrays))
   print(len(arraysOfStringArrays[0]))
-  print(len(arraysOfStringArrays[0]))
 }
 
 Main()
