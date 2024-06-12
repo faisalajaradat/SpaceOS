@@ -11,7 +11,7 @@ export class CSVHandler {
 
     constructor(data: string[][] = [], headers: string[] = []) {
         this.data = data;
-        this.headers = ["Date","Model_Name","Input","Output","Latency"];
+        this.headers = ["Date","Model_Name","Input","Output","Latency","temperature", "topP","context"];
     }
 
     // Generate CSV content from existing data
@@ -73,6 +73,7 @@ export class CSVHandler {
             const csvContent = this.generateCSV();
             const filename  = new Date()+ 'LLM TEST';
             fs.writeFileSync(path.resolve(AUDIOFILEPATH, filename), csvContent, 'utf8');
+            this.data= [];
             console.log('File saved to:', path.resolve(AUDIOFILEPATH, filename));
         }else{
             console.log("tried to save file with no data");

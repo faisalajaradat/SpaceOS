@@ -34,7 +34,8 @@ export async function* handleChatModel(userInput:string = "", attempts = 0, maxR
                 chatModels.push(chatModel);
             }
             for await (const chunk of chatModelInitializer.makeCall(chatModel, userInput)) {
-                yield {chunk, "chatmodel":{name: chatModel.constructor.name, failures:modelFailures}};
+                console.log(chatModel);
+                yield {chunk, "chatmodel":{name: chatModel.constructor.name, failures:modelFailures, temperature: chatModel.temperature, topP: (chatModel as any).topP, "context":"testing" }}; //not sure why chatModel.topP was giving an error for some reason //todo -add context
                 process.stdout.write(chunk.lc_kwargs.content);
             }
             //chatResponse = chatModelInitializer.makeCall(chatModel, userInput);

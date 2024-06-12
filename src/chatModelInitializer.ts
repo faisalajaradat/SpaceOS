@@ -18,6 +18,8 @@ import getUserInput from './getUserInput.js';
 
 dotenv.config();
 
+export let systemPrompt:string;
+
 const spaceOSInformation = `respond to the user as you would in a conversation, keep it short sweet and concise. Use the following for context if relevant to the users questions, you can ask the user specifying questions, infact it is encouraged: 
 SpaceBase functions similarly to a file system in traditional operating systems but is specifically designed for spatial management. It operates across all nodes of Space OS and is responsible for creating a detailed mathematical representation of physical spaces. This allows computational objects and data to be linked directly to these spatial representations.
 
@@ -70,7 +72,14 @@ export function initializeChatModel(type:ChatModelType):initializedChatModel { /
     return chatModel;
   }
 
+function getUserPrompt(userInput:string): string{
+  if (userInput!.toLowerCase().includes("spacebase") || userInput!.toLowerCase().includes("space base") || userInput!.toLowerCase().includes("space os") || userInput!.toLowerCase().includes("spaceos")) {
+    return spaceOSInformation;
 
+  } else return "You are a concise, helpful chatbot";
+
+
+}
 
 
 async function createMessageArray(userInput?: string ){ //creates the ChatPromptTemplate
@@ -82,20 +91,13 @@ async function createMessageArray(userInput?: string ){ //creates the ChatPrompt
       return  { messages: null, userInput: null };
     }
     let messages;
-    if (userInput!.toLowerCase().includes("spacebase") || userInput!.toLowerCase().includes("space base") || userInput!.toLowerCase().includes("space os") || userInput!.toLowerCase().includes("spaceos")) {
-      messages = ChatPromptTemplate.fromMessages([
-          ["system", spaceOSInformation],  // Include detailed system info only if relevant
-          ["user", userInput!],
-          //new MessagesPlaceholder("history"),
-      ]);
-    } else {
-      messages = ChatPromptTemplate.fromMessages([
-          ["system", "You are a concise, helpful chatbot"], 
-          ["human", "{input}"],            // Standard user input handling
-          ["placeholder", "{history}"]
-          //new MessagesPlaceholder("history"),
-      ]);
-    }
+    systemPrompt = getUserPrompt(userInput);
+
+    messages = ChatPromptTemplate.fromMessages([
+      ["system", systemPrompt],  // Include detailed system info only if relevant
+      ["user", userInput!],
+      //new MessagesPlaceholder("history"),
+    ]);
     return { messages, userInput }
   
   }
@@ -139,11 +141,6 @@ export async function* makeCall(chatmodel: initializedChatModel, passedInput:str
       for await (const chunk of output) {
         yield chunk;
       }
-      //return output.lc_kwargs.content;
-  
-  
-      //console.log("output:", output);
-      //console.log("chat message history:", messageHistory.getMessages() );
     }
     else return null;
   }

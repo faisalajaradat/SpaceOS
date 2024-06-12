@@ -6,7 +6,7 @@ document.getElementById('TestBtn').addEventListener('click', fetchAudioFiles);
 
 const recognition = new webkitSpeechRecognition();
 const audio = new Audio();
-let randomTesting= false;
+let randomTesting= true;
 export let resolveWebSocketResponse;
 
 
@@ -51,16 +51,20 @@ async function fetchAudioFiles() {
     try {
         const response = await fetch('http://localhost:7777/audio-files/');
         audioFiles = await response.json();
-        console.log(audioFiles);
-        if(randomTesting == true) audiofiles = randomizeOrder();
+        if(randomTesting == true) audioFiles = randomizeOrder(audioFiles);
         playNextAudio();
     } catch (error) {
         console.error('Failed to fetch audio files:', error);
     }
 }
 
-function randomizeOrder(){
-    
+function randomizeOrder(array){
+    for (let i = array.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    console.log(array);
+    return array;
 }
 
 function playNextAudio() {

@@ -26,6 +26,7 @@ ws.onerror = function(error) {
 
 ws.onmessage = function(event) {
     let response = JSON.parse(event.data);
+    console.log(response);
     if(firstllmResponse && response.chunk.kwargs.content){
         
         let llmCallEndTime = new Date();

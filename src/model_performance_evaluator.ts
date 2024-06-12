@@ -1,5 +1,4 @@
 import { initializedChatModel } from './Types/chatModelTypes.js';
-import { initializeChatModel } from './chatModelInitializer';
 
 
 
