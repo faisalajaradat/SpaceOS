@@ -1,4 +1,4 @@
-number fib(number num) {
+number(number) fib = number(number num) {
   if num <= 1
     return num
   return fib(num - 1) + fib(num - 2)

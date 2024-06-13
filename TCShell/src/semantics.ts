@@ -80,8 +80,6 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
     node instanceof core.Parameter
   ) {
     visitNameAnalyzer(node.stmtType, scope);
-    if (node instanceof core.VarDeclaration)
-      visitNameAnalyzer(node.value, scope);
     const paramSymbol = scope.lookupCurrent(node.identifier.value);
     if (paramSymbol !== null) {
       errors++;
@@ -91,6 +89,8 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
           " already defined within scope!",
       );
     } else scope.put(new VarSymbol(node));
+    if (node instanceof core.VarDeclaration)
+      visitNameAnalyzer(node.value, scope);
   } else if (node instanceof core.UnionDeclaration) {
     node.options.forEach((option) => visitNameAnalyzer(option, scope));
     const unionSymbol = scope.lookupCurrent(
@@ -341,6 +341,10 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
         ) {
           errors++;
           console.log("Both sides of assigment must be same type!");
+          break;
+        } else if (leftHandType instanceof core.FunctionType) {
+          errors++;
+          console.log("Function declarations are immutable!");
           break;
         } else {
           if (
