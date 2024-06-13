@@ -110,18 +110,389 @@ export class BaseType extends Type {
     return astBaseTypeMap.get(this.kind);
   }
 }
-export abstract class ContainerType extends Type {
-  _attributes: Map<FunDeclaration, (...args: unknown[]) => unknown>;
-  scope: Scope;
+export abstract class SpatialType extends Type {}
+export abstract class LocalityDecorator extends SpatialType {
+  delegate: SpatialType;
 
-  constructor(
-    attributes: Map<FunDeclaration, (...args: unknown[]) => unknown>,
-  ) {
+  constructor(delegate: SpatialType) {
     super();
-    this._attributes = attributes;
+    this.delegate = delegate;
   }
 }
+export class PhysicalDecorator extends LocalityDecorator {
+  constructor(delegate: SpatialType) {
+    super(delegate);
+  }
 
+  children(): ASTNode[] {
+    return this.delegate.children();
+  }
+
+  print(): string {
+    const physicalNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(physicalNodeId + '[label=" Physical "];\n');
+    const delegateNodeId = this.delegate.print();
+    dotString = dotString.concat(
+      physicalNodeId + "->" + delegateNodeId + ";\n",
+    );
+    return physicalNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return this.delegate.equals(_type);
+  }
+}
+export class VirtualDecorator extends LocalityDecorator {
+  constructor(delegate: SpatialType) {
+    super(delegate);
+  }
+
+  children(): ASTNode[] {
+    return this.delegate.children();
+  }
+
+  print(): string {
+    const virtualNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(virtualNodeId + '[label=" Virtual "];\n');
+    const delegateNodeId = this.delegate.print();
+    dotString = dotString.concat(virtualNodeId + "->" + delegateNodeId + ";\n");
+    return virtualNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return this.delegate.equals(_type);
+  }
+}
+export class PathType extends SpatialType {
+  constructor() {
+    super();
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const pathNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(pathNodeId + '[label=" Path "];\n');
+    return pathNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return _type instanceof PathType;
+  }
+}
+export class LandPathType extends PathType {
+  constructor() {
+    super();
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const landPathNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(landPathNodeId + '[label=" Land Path "];\n');
+    return landPathNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return _type instanceof LandPathType;
+  }
+}
+export class AirPathType extends PathType {
+  constructor() {
+    super();
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const airPathNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(airPathNodeId + '[label=" Air Path "];\n');
+    return airPathNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return _type instanceof AirPathType;
+  }
+}
+export abstract class SpatialObjectType extends SpatialType {}
+export abstract class ControlDecorator extends SpatialObjectType {
+  delegate: SpatialObjectType;
+  constructor(delegate: SpatialObjectType) {
+    super();
+    this.delegate = delegate;
+  }
+}
+export class ControlledDecorator extends ControlDecorator {
+  constructor(delegate: SpatialObjectType) {
+    super(delegate);
+  }
+  children(): ASTNode[] {
+    return this.delegate.children();
+  }
+
+  print(): string {
+    const controlledNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      controlledNodeId + '[label=" Controlled "];\n',
+    );
+    const delegateNodeId = this.delegate.print();
+    dotString = dotString.concat(
+      controlledNodeId + "->" + delegateNodeId + ";\n",
+    );
+    return controlledNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return this.delegate.equals(_type);
+  }
+}
+export class NotControlledDecorator extends ControlDecorator {
+  constructor(delegate: SpatialObjectType) {
+    super(delegate);
+  }
+
+  children(): ASTNode[] {
+    return this.delegate.children();
+  }
+
+  print(): string {
+    const notControlledNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      notControlledNodeId + '[label=" Not Controlled "];\n',
+    );
+    const delegateNodeId = this.delegate.print();
+    dotString = dotString.concat(
+      notControlledNodeId + "->" + delegateNodeId + ";\n",
+    );
+    return notControlledNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return this.delegate.equals(_type);
+  }
+}
+export abstract class SpaceType extends SpatialObjectType {}
+export class OpenSpaceType extends SpaceType {
+  constructor() {
+    super();
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const openSpaceNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(openSpaceNodeId + '[label=" Open Space "];\n');
+    return openSpaceNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return _type instanceof OpenSpaceType;
+  }
+}
+export class EnclosedSpaceType extends SpaceType {
+  constructor() {
+    super();
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const enclosedSpaceNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      enclosedSpaceNodeId + '[label=" Enclosed Space "];\n',
+    );
+    return enclosedSpaceNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return _type instanceof EnclosedSpaceType;
+  }
+}
+export abstract class EntityType extends SpatialObjectType {}
+export class StaticEntityType extends EntityType {
+  constructor() {
+    super();
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const staticEntityNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      staticEntityNodeId + '[label=" Static Entity "];\n',
+    );
+    return staticEntityNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return _type instanceof StaticEntityType;
+  }
+}
+export abstract class DynamicEntityType extends EntityType {}
+export class AnimateEntityType extends DynamicEntityType {
+  constructor() {
+    super();
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const animateEntityNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      animateEntityNodeId + '[label=" Animate Entity "];\n',
+    );
+    return animateEntityNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return _type instanceof AnimateEntityType;
+  }
+}
+export class SmartEntityType extends DynamicEntityType {
+  constructor() {
+    super();
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const smartEntityNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      smartEntityNodeId + '[label=" Smart Entity "];\n',
+    );
+    return smartEntityNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return _type instanceof SmartEntityType;
+  }
+}
+export abstract class MotionDecorator extends DynamicEntityType {
+  delegate: DynamicEntityType;
+
+  constructor(delegate: DynamicEntityType) {
+    super();
+    this.delegate = delegate;
+  }
+}
+export class MobileDecorator extends MotionDecorator {
+  constructor(delegate: DynamicEntityType) {
+    super(delegate);
+  }
+
+  children(): ASTNode[] {
+    return this.delegate.children();
+  }
+
+  print(): string {
+    const mobileNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(mobileNodeId + '[label=" Mobile "];\n');
+    const delegateNodeId = this.delegate.print();
+    dotString = dotString.concat(mobileNodeId + "->" + delegateNodeId + ";\n");
+    return mobileNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return this.delegate.equals(_type);
+  }
+}
+export class StationaryDecorator extends MotionDecorator {
+  constructor(delegate: DynamicEntityType) {
+    super(delegate);
+  }
+
+  children(): ASTNode[] {
+    return this.delegate.children();
+  }
+
+  print(): string {
+    const stationaryNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      stationaryNodeId + '[label=" Stationary "];\n',
+    );
+    const delegateNodeId = this.delegate.print();
+    dotString = dotString.concat(
+      stationaryNodeId + "->" + delegateNodeId + ";\n",
+    );
+    return stationaryNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return this.delegate.equals(_type);
+  }
+}
 export class UnionType extends Type {
   identifier: Identifier;
 

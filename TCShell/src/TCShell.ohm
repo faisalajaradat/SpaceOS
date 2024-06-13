@@ -65,15 +65,32 @@ TCShell {
 
     Parameter = Type identifier
 
-    TypeSpecifier = "[]"   --array
+    PostTypeSpecifier = "[]"   --array
                   |"(" ListOf<Type, ","> ")"    --function
 
-    Type = (baseTypeKeyword | UnionType) TypeSpecifier*
+    PreTypeSpecifier = virtual
+                    | immutable
+                    | mobile
+
+    Type = PreTypeSpecifier* (baseTypeKeyword | spatialTypeKeyword | UnionType) PostTypeSpecifier*
 
     baseTypeKeyword = "number" ~identPart
     						    | "string" ~identPart
                     | "bool" ~identPart
                     | "void" ~identPart
+
+    spatialTypeKeyword = "SpacialObject" ~identPart
+                        | "Space" ~identPart
+                        | "OpenSpace" ~identPart
+                        | "EnclosedSpace" ~identPart
+                        | "Entity" ~identPart
+                        | "StaticEntity" ~identPart
+                        | "DynamicEntity" ~identPart
+                        | "AnimateEntity" ~identPart
+                        | "SmartEntity" ~identPart
+                        | "Path" ~identPart
+                        | "LandPath" ~identPart
+                        | "AirPath" ~identPart
 
     UnionType = union identifier
 
@@ -86,6 +103,9 @@ TCShell {
             | else
             | return
             | match
+            | virtual
+            | immutable
+            | mobile
 
     union = "union" ~identPart
     while = "while" ~identPart
@@ -93,6 +113,9 @@ TCShell {
     else = "else" ~identPart
     return = "return" ~identPart
     match = "match" ~identPart
+    virtual = "virtual" ~identPart
+    immutable = "immutable" ~identPart
+    mobile = "mobile" ~identPart
 
     identStart      = letter | "_"
     identPart       = identStart | decimalDigit
