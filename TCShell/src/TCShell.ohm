@@ -68,29 +68,22 @@ TCShell {
     PostTypeSpecifier = "[]"   --array
                   |"(" ListOf<Type, ","> ")"    --function
 
-    PreTypeSpecifier = virtual
-                    | immutable
-                    | mobile
+    SpatialType = landPath
+                | airPath
+                | MaybeVirtualSpatialType
 
-    Type = PreTypeSpecifier* (baseTypeKeyword | spatialTypeKeyword | UnionType) PostTypeSpecifier*
+    MaybeVirtualSpatialType = virtual? (path | MaybeImmutableSpatialType)
+
+    MaybeImmutableSpatialType = immutable? (spaceKeyword | openSpace | enclosedSpace | entity | staticEntity | MaybeMobileSpatialType)
+
+    MaybeMobileSpatialType = mobile? (dynamicEntity | animateEntity | smartEntity)
+
+    Type = (baseTypeKeyword | SpatialType | UnionType) PostTypeSpecifier*
 
     baseTypeKeyword = "number" ~identPart
     						    | "string" ~identPart
                     | "bool" ~identPart
                     | "void" ~identPart
-
-    spatialTypeKeyword = "SpacialObject" ~identPart
-                        | "Space" ~identPart
-                        | "OpenSpace" ~identPart
-                        | "EnclosedSpace" ~identPart
-                        | "Entity" ~identPart
-                        | "StaticEntity" ~identPart
-                        | "DynamicEntity" ~identPart
-                        | "AnimateEntity" ~identPart
-                        | "SmartEntity" ~identPart
-                        | "Path" ~identPart
-                        | "LandPath" ~identPart
-                        | "AirPath" ~identPart
 
     UnionType = union identifier
 
@@ -106,6 +99,17 @@ TCShell {
             | virtual
             | immutable
             | mobile
+            | spaceKeyword
+            | openSpace
+            | enclosedSpace
+            | entity
+            | staticEntity
+            | dynamicEntity
+            | animateEntity
+            | smartEntity
+            | path
+            | landPath
+            | airPath
 
     union = "union" ~identPart
     while = "while" ~identPart
@@ -116,6 +120,18 @@ TCShell {
     virtual = "virtual" ~identPart
     immutable = "immutable" ~identPart
     mobile = "mobile" ~identPart
+    spaceKeyword = "Space" ~identPart
+    openSpace = "OpenSpace" ~identPart
+    enclosedSpace = "EnclosedSpace" ~identPart
+    entity = "Entity" ~identPart
+    staticEntity = "StaticEntity" ~identPart
+    dynamicEntity = "DynamicEntity" ~identPart
+    animateEntity = "AnimateEntity" ~identPart
+    smartEntity = "SmartEntity" ~identPart
+    path = "Path" ~identPart
+    landPath = "LandPath" ~identPart
+    airPath = "AirPath" ~identPart
+
 
     identStart      = letter | "_"
     identPart       = identStart | decimalDigit
