@@ -65,7 +65,7 @@ TCShell {
 
     Parameter = Type identifier
 
-    PostTypeSpecifier = "[]"   --array
+    TypeSpecifier = "[]"   --array
                   |"(" ListOf<Type, ","> ")"    --function
 
     SpatialType = landPath
@@ -78,7 +78,7 @@ TCShell {
 
     MaybeMobileSpatialType = (stationary | mobile)? (dynamicEntity | animateEntity | smartEntity)
 
-    Type = (baseTypeKeyword | SpatialType | UnionType) PostTypeSpecifier*
+    Type = (baseTypeKeyword | SpatialType | UnionType) TypeSpecifier*
 
     baseTypeKeyword = "number" ~identPart
     						    | "string" ~identPart
