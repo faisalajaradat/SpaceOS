@@ -267,12 +267,20 @@ export class PathType extends SpatialType {
     return (
       isAnyType(_type) ||
       (this.contains(_type) &&
-        !(_type instanceof LandPathType || _type instanceof AirPathType))
+        !(
+          _type instanceof LandPathType ||
+          _type instanceof AirPathType ||
+          _type instanceof LocalityDecorator
+        ))
     );
   }
 
   contains(_type: Type): boolean {
-    return isAnyType(_type) || _type instanceof PathType;
+    return (
+      isAnyType(_type) ||
+      _type instanceof PathType ||
+      (_type instanceof LocalityDecorator && this.contains(_type.delegate))
+    );
   }
 }
 export class LandPathType extends PathType {
@@ -441,12 +449,20 @@ export class SpaceType extends SpatialObjectType {
     return (
       isAnyType(_type) ||
       (this.contains(_type) &&
-        !(_type instanceof OpenSpaceType || _type instanceof EnclosedSpaceType))
+        !(
+          _type instanceof OpenSpaceType ||
+          _type instanceof EnclosedSpaceType ||
+          _type instanceof LocalityDecorator
+        ))
     );
   }
 
   contains(_type: Type): boolean {
-    return isAnyType(_type) || _type instanceof SpaceType;
+    return (
+      isAnyType(_type) ||
+      _type instanceof SpaceType ||
+      (_type instanceof LocalityDecorator && this.contains(_type.delegate))
+    );
   }
 }
 export class OpenSpaceType extends SpaceType {
@@ -530,13 +546,18 @@ export class EntityType extends SpatialObjectType {
       (this.contains(_type) &&
         !(
           _type instanceof DynamicEntityType ||
-          _type instanceof StaticEntityType
+          _type instanceof StaticEntityType ||
+          _type instanceof LocalityDecorator
         ))
     );
   }
 
   contains(_type: Type): boolean {
-    return isAnyType(_type) || _type instanceof EntityType;
+    return (
+      isAnyType(_type) ||
+      _type instanceof EntityType ||
+      (_type instanceof LocalityDecorator && this.contains(_type.delegate))
+    );
   }
 }
 export class StaticEntityType extends EntityType {

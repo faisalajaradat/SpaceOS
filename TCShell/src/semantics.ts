@@ -197,7 +197,7 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
           assignArraySize(node.stmtType, valueType);
         node.value.stmtType = node.stmtType;
       }
-    }
+    } else return node.stmtType;
   } else if (node instanceof core.Return) {
     if (node.possibleValue === null) {
       if (!returnFunction.stmtType.equals(voidType)) {

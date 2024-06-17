@@ -314,6 +314,9 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   mobile(_mobile) {
     return this.sourceString;
   },
+  spatialTypeKeyword(_spatialType) {
+    return new core.SpatialType();
+  },
   landPath(_landPath) {
     return new core.PhysicalDecorator(new core.LandPathType());
   },

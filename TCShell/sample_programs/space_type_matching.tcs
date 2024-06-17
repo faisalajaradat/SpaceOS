@@ -1,0 +1,62 @@
+void(Space) handleSpace = void (Space s) {
+  print("Is Space")
+  match s {
+    EnclosedSpace es => print("Is Enclosed")
+    OpenSpace os => print("Is Open")
+  }
+}
+
+void(Path) handlePath = void (Path p) {
+  print("Is Path")
+  match p {
+    AirPath ap => print("Is Air")
+    LandPath lp => print("Is Land")
+  }
+}
+
+void(Entity) handleEntity = void (Entity e) {
+  print("Is Entity")
+  match e {
+    StaticEntity se => print("Is Static")
+    DynamicEntity de => {
+      match de {
+        mobile DynamicEntity mde => print("Is mobile")
+        stationary DynamicEntity sde => print("Is stationary")
+      }
+      match de {
+        AnimateEntity ae => print("Is Animate")
+        SmartEntity se => print("Is Smart")
+      }
+    }
+  }
+}
+
+void(physical SpatialType) handlePhysicalSpatialType = void (physical SpatialType physicalSpatialType) {
+  print("Is physical")
+  match physicalSpatialType {
+    physical Space ps => handleSpace((Space) ps)
+    physical Path pp => handlePath((Path) pp)
+    physical Entity pe => handleEntity((Entity) pe)
+  }
+}
+
+void(virtual SpatialType) handleVirtualSpatialType = void (virtual SpatialType virtualSpatialType) {
+  print("Is virtual")
+  match virtualSpatialType {
+    virtual Space vs => handleSpace((Space) vs)
+    virtual Path vp => handlePath((Path) vp)
+    virtual Entity ve => handleEntity((Entity) ve)
+  }
+}
+
+void(SpatialType[]) parseAndDescribeSpacialTypes = void (SpatialType[] listOfSpatialTypes) {
+  number iter = 0
+  number numOfSpatialType = len(listOfSpatialTypes)
+  while iter < numOfSpatialType {
+    print(listOfSpatialTypes[iter])
+    match listOfSpatialTypes[iter] {
+      physical SpatialType pst => handlePhysicalSpatialType(pst)
+      virtual SpatialType vst => handleVirtualSpatialType(vst)
+    }
+  }
+}
