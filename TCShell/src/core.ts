@@ -63,6 +63,9 @@ export abstract class Type implements ASTNode {
   abstract evaluate(): unknown;
   abstract equals(_type: Type): boolean;
 }
+export abstract class CompositionType extends Type {
+  abstract contains(_type: Type): boolean;
+}
 export class BaseType extends Type {
   kind: BaseTypeKind;
 
@@ -110,9 +113,13 @@ export class BaseType extends Type {
     return astBaseTypeMap.get(this.kind);
   }
 }
-export class SpatialType extends Type {
+export class SpatialType extends CompositionType {
   constructor() {
     super();
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
   }
 
   print(): string {
@@ -128,6 +135,17 @@ export class SpatialType extends Type {
   }
 
   equals(_type: Type): boolean {
+    return (
+      this.contains(_type) &&
+      !(
+        _type instanceof LocalityDecorator ||
+        _type instanceof SpatialObjectType ||
+        _type instanceof PathType
+      )
+    );
+  }
+
+  contains(_type: Type): boolean {
     return _type instanceof SpatialType;
   }
 }
@@ -164,7 +182,15 @@ export class PhysicalDecorator extends LocalityDecorator {
 
   equals(_type: Type): boolean {
     return (
-      _type instanceof PhysicalDecorator && this.delegate.equals(_type.delegate)
+      this.contains(_type) &&
+      this.delegate.equals((<PhysicalDecorator>_type).delegate)
+    );
+  }
+
+  contains(_type: Type): boolean {
+    return (
+      _type instanceof PhysicalDecorator &&
+      this.delegate.contains(_type.delegate)
     );
   }
 }
@@ -191,7 +217,15 @@ export class VirtualDecorator extends LocalityDecorator {
 
   equals(_type: Type): boolean {
     return (
-      _type instanceof VirtualDecorator && this.delegate.equals(_type.delegate)
+      this.contains(_type) &&
+      this.delegate.equals((<VirtualDecorator>_type).delegate)
+    );
+  }
+
+  contains(_type: Type): boolean {
+    return (
+      _type instanceof VirtualDecorator &&
+      this.delegate.contains(_type.delegate)
     );
   }
 }
@@ -215,6 +249,13 @@ export class PathType extends SpatialType {
   }
 
   equals(_type: Type): boolean {
+    return (
+      this.contains(_type) &&
+      !(_type instanceof LandPathType || _type instanceof AirPathType)
+    );
+  }
+
+  contains(_type: Type): boolean {
     return _type instanceof PathType;
   }
 }
@@ -238,6 +279,10 @@ export class LandPathType extends PathType {
   }
 
   equals(_type: Type): boolean {
+    return this.contains(_type);
+  }
+
+  contains(_type: Type): boolean {
     return _type instanceof LandPathType;
   }
 }
@@ -261,6 +306,10 @@ export class AirPathType extends PathType {
   }
 
   equals(_type: Type): boolean {
+    return this.contains(_type);
+  }
+
+  contains(_type: Type): boolean {
     return _type instanceof AirPathType;
   }
 }
@@ -298,8 +347,15 @@ export class ControlledDecorator extends ControlDecorator {
 
   equals(_type: Type): boolean {
     return (
+      this.contains(_type) &&
+      this.delegate.equals((<ControlledDecorator>_type).delegate)
+    );
+  }
+
+  contains(_type: Type): boolean {
+    return (
       _type instanceof ControlledDecorator &&
-      this.delegate.equals(_type.delegate)
+      this.delegate.contains(_type.delegate)
     );
   }
 }
@@ -330,8 +386,15 @@ export class NotControlledDecorator extends ControlDecorator {
 
   equals(_type: Type): boolean {
     return (
+      this.contains(_type) &&
+      this.delegate.equals((<NotControlledDecorator>_type).delegate)
+    );
+  }
+
+  contains(_type: Type): boolean {
+    return (
       _type instanceof NotControlledDecorator &&
-      this.delegate.equals(_type.delegate)
+      this.delegate.contains(_type.delegate)
     );
   }
 }
@@ -355,6 +418,13 @@ export class SpaceType extends SpatialObjectType {
   }
 
   equals(_type: Type): boolean {
+    return (
+      this.contains(_type) &&
+      !(_type instanceof OpenSpaceType || _type instanceof EnclosedSpaceType)
+    );
+  }
+
+  contains(_type: Type): boolean {
     return _type instanceof SpaceType;
   }
 }
@@ -378,6 +448,10 @@ export class OpenSpaceType extends SpaceType {
   }
 
   equals(_type: Type): boolean {
+    return this.contains(_type);
+  }
+
+  contains(_type: Type): boolean {
     return _type instanceof OpenSpaceType;
   }
 }
@@ -403,6 +477,10 @@ export class EnclosedSpaceType extends SpaceType {
   }
 
   equals(_type: Type): boolean {
+    return this.contains(_type);
+  }
+
+  contains(_type: Type): boolean {
     return _type instanceof EnclosedSpaceType;
   }
 }
@@ -426,6 +504,13 @@ export class EntityType extends SpatialObjectType {
   }
 
   equals(_type: Type): boolean {
+    return (
+      this.contains(_type) &&
+      !(_type instanceof DynamicEntityType || _type instanceof StaticEntityType)
+    );
+  }
+
+  contains(_type: Type): boolean {
     return _type instanceof EntityType;
   }
 }
@@ -451,6 +536,10 @@ export class StaticEntityType extends EntityType {
   }
 
   equals(_type: Type): boolean {
+    return this.contains(_type);
+  }
+
+  contains(_type: Type): boolean {
     return _type instanceof StaticEntityType;
   }
 }
@@ -476,6 +565,17 @@ export class DynamicEntityType extends EntityType {
   }
 
   equals(_type: Type): boolean {
+    return (
+      this.contains(_type) &&
+      !(
+        _type instanceof MotionDecorator ||
+        _type instanceof AnimateEntityType ||
+        _type instanceof SmartEntityType
+      )
+    );
+  }
+
+  contains(_type: Type): boolean {
     return _type instanceof DynamicEntityType;
   }
 }
@@ -501,6 +601,10 @@ export class AnimateEntityType extends DynamicEntityType {
   }
 
   equals(_type: Type): boolean {
+    return this.contains(_type);
+  }
+
+  contains(_type: Type): boolean {
     return _type instanceof AnimateEntityType;
   }
 }
@@ -526,6 +630,10 @@ export class SmartEntityType extends DynamicEntityType {
   }
 
   equals(_type: Type): boolean {
+    return this.contains(_type);
+  }
+
+  contains(_type: Type): boolean {
     return _type instanceof SmartEntityType;
   }
 }
@@ -560,7 +668,14 @@ export class MobileDecorator extends MotionDecorator {
 
   equals(_type: Type): boolean {
     return (
-      _type instanceof MobileDecorator && this.delegate.equals(_type.delegate)
+      this.contains(_type) &&
+      this.delegate.equals((<MobileDecorator>_type).delegate)
+    );
+  }
+
+  contains(_type: Type): boolean {
+    return (
+      _type instanceof MobileDecorator && this.delegate.contains(_type.delegate)
     );
   }
 }
@@ -591,28 +706,24 @@ export class StationaryDecorator extends MotionDecorator {
 
   equals(_type: Type): boolean {
     return (
+      this.contains(_type) &&
+      this.delegate.equals((<StationaryDecorator>_type).delegate)
+    );
+  }
+
+  contains(_type: Type): boolean {
+    return (
       _type instanceof StationaryDecorator &&
-      this.delegate.equals(_type.delegate)
+      this.delegate.contains(_type.delegate)
     );
   }
 }
-export class UnionType extends Type {
+export class UnionType extends CompositionType {
   identifier: Identifier;
 
   constructor(identifier: Identifier) {
     super();
     this.identifier = identifier;
-  }
-
-  contains(_type: Type): boolean {
-    let containsType = false;
-    (<UnionDeclaration>this.identifier.declaration).options.forEach(
-      (option) => {
-        if (containsType) return;
-        containsType = option.equals(_type);
-      },
-    );
-    return containsType;
   }
 
   children(): ASTNode[] {
@@ -653,6 +764,17 @@ export class UnionType extends Type {
 
   evaluate(): unknown {
     return undefined;
+  }
+
+  contains(_type: Type): boolean {
+    let containsType = false;
+    (<UnionDeclaration>this.identifier.declaration).options.forEach(
+      (option) => {
+        if (containsType) return;
+        containsType = option.equals(_type);
+      },
+    );
+    return containsType;
   }
 }
 
