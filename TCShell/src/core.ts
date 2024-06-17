@@ -264,21 +264,12 @@ export class PathType extends SpatialType {
   }
 
   equals(_type: Type): boolean {
-    return (
-      isAnyType(_type) ||
-      (this.contains(_type) &&
-        !(
-          _type instanceof LandPathType ||
-          _type instanceof AirPathType ||
-          _type instanceof LocalityDecorator
-        ))
-    );
+    return isAnyType(_type) || _type instanceof PathType;
   }
 
   contains(_type: Type): boolean {
     return (
-      isAnyType(_type) ||
-      _type instanceof PathType ||
+      this.equals(_type) ||
       (_type instanceof LocalityDecorator && this.contains(_type.delegate))
     );
   }
@@ -303,11 +294,14 @@ export class LandPathType extends PathType {
   }
 
   equals(_type: Type): boolean {
-    return this.contains(_type);
+    return isAnyType(_type) || _type instanceof LandPathType;
   }
 
   contains(_type: Type): boolean {
-    return isAnyType(_type) || _type instanceof LandPathType;
+    return (
+      this.equals(_type) ||
+      (_type instanceof LocalityDecorator && this.contains(_type.delegate))
+    );
   }
 }
 export class AirPathType extends PathType {
@@ -330,11 +324,14 @@ export class AirPathType extends PathType {
   }
 
   equals(_type: Type): boolean {
-    return this.contains(_type);
+    return isAnyType(_type) || _type instanceof AirPathType;
   }
 
   contains(_type: Type): boolean {
-    return isAnyType(_type) || _type instanceof AirPathType;
+    return (
+      this.equals(_type) ||
+      (_type instanceof LocalityDecorator && this.contains(_type.delegate))
+    );
   }
 }
 export abstract class SpatialObjectType extends SpatialType {}
@@ -446,22 +443,15 @@ export class SpaceType extends SpatialObjectType {
   }
 
   equals(_type: Type): boolean {
-    return (
-      isAnyType(_type) ||
-      (this.contains(_type) &&
-        !(
-          _type instanceof OpenSpaceType ||
-          _type instanceof EnclosedSpaceType ||
-          _type instanceof LocalityDecorator
-        ))
-    );
+    return isAnyType(_type) || _type instanceof SpaceType;
   }
 
   contains(_type: Type): boolean {
     return (
-      isAnyType(_type) ||
-      _type instanceof SpaceType ||
-      (_type instanceof LocalityDecorator && this.contains(_type.delegate))
+      this.equals(_type) ||
+      ((_type instanceof LocalityDecorator ||
+        _type instanceof ControlDecorator) &&
+        this.contains(_type.delegate))
     );
   }
 }
@@ -485,11 +475,16 @@ export class OpenSpaceType extends SpaceType {
   }
 
   equals(_type: Type): boolean {
-    return this.contains(_type);
+    return isAnyType(_type) || _type instanceof OpenSpaceType;
   }
 
   contains(_type: Type): boolean {
-    return isAnyType(_type) || _type instanceof OpenSpaceType;
+    return (
+      this.equals(_type) ||
+      ((_type instanceof LocalityDecorator ||
+        _type instanceof ControlDecorator) &&
+        this.contains(_type.delegate))
+    );
   }
 }
 export class EnclosedSpaceType extends SpaceType {
@@ -514,11 +509,16 @@ export class EnclosedSpaceType extends SpaceType {
   }
 
   equals(_type: Type): boolean {
-    return this.contains(_type);
+    return isAnyType(_type) || _type instanceof EnclosedSpaceType;
   }
 
   contains(_type: Type): boolean {
-    return isAnyType(_type) || _type instanceof EnclosedSpaceType;
+    return (
+      this.equals(_type) ||
+      ((_type instanceof LocalityDecorator ||
+        _type instanceof ControlDecorator) &&
+        this.contains(_type.delegate))
+    );
   }
 }
 export class EntityType extends SpatialObjectType {
@@ -541,22 +541,15 @@ export class EntityType extends SpatialObjectType {
   }
 
   equals(_type: Type): boolean {
-    return (
-      isAnyType(_type) ||
-      (this.contains(_type) &&
-        !(
-          _type instanceof DynamicEntityType ||
-          _type instanceof StaticEntityType ||
-          _type instanceof LocalityDecorator
-        ))
-    );
+    return isAnyType(_type) || _type instanceof EntityType;
   }
 
   contains(_type: Type): boolean {
     return (
-      isAnyType(_type) ||
-      _type instanceof EntityType ||
-      (_type instanceof LocalityDecorator && this.contains(_type.delegate))
+      this.equals(_type) ||
+      ((_type instanceof LocalityDecorator ||
+        _type instanceof ControlDecorator) &&
+        this.contains(_type.delegate))
     );
   }
 }
@@ -582,11 +575,16 @@ export class StaticEntityType extends EntityType {
   }
 
   equals(_type: Type): boolean {
-    return this.contains(_type);
+    return isAnyType(_type) || _type instanceof StaticEntityType;
   }
 
   contains(_type: Type): boolean {
-    return isAnyType(_type) || _type instanceof StaticEntityType;
+    return (
+      this.equals(_type) ||
+      ((_type instanceof LocalityDecorator ||
+        _type instanceof ControlDecorator) &&
+        this.contains(_type.delegate))
+    );
   }
 }
 export class DynamicEntityType extends EntityType {
@@ -611,19 +609,16 @@ export class DynamicEntityType extends EntityType {
   }
 
   equals(_type: Type): boolean {
-    return (
-      isAnyType(_type) ||
-      (this.contains(_type) &&
-        !(
-          _type instanceof MotionDecorator ||
-          _type instanceof AnimateEntityType ||
-          _type instanceof SmartEntityType
-        ))
-    );
+    return isAnyType(_type) || _type instanceof DynamicEntityType;
   }
 
   contains(_type: Type): boolean {
-    return isAnyType(_type) || _type instanceof DynamicEntityType;
+    return (
+      this.equals(_type) ||
+      ((_type instanceof LocalityDecorator ||
+        _type instanceof ControlDecorator) &&
+        this.contains(_type.delegate))
+    );
   }
 }
 export class AnimateEntityType extends DynamicEntityType {
@@ -648,11 +643,17 @@ export class AnimateEntityType extends DynamicEntityType {
   }
 
   equals(_type: Type): boolean {
-    return this.contains(_type);
+    return isAnyType(_type) || _type instanceof AnimateEntityType;
   }
 
   contains(_type: Type): boolean {
-    return isAnyType(_type) || _type instanceof AnimateEntityType;
+    return (
+      this.equals(_type) ||
+      ((_type instanceof LocalityDecorator ||
+        _type instanceof ControlDecorator ||
+        _type instanceof MotionDecorator) &&
+        this.contains(_type.delegate))
+    );
   }
 }
 export class SmartEntityType extends DynamicEntityType {
@@ -677,11 +678,17 @@ export class SmartEntityType extends DynamicEntityType {
   }
 
   equals(_type: Type): boolean {
-    return isAnyType(_type) || this.contains(_type);
+    return isAnyType(_type) || _type instanceof SmartEntityType;
   }
 
   contains(_type: Type): boolean {
-    return _type instanceof SmartEntityType;
+    return (
+      this.equals(_type) ||
+      ((_type instanceof LocalityDecorator ||
+        _type instanceof ControlDecorator ||
+        _type instanceof MotionDecorator) &&
+        this.contains(_type.delegate))
+    );
   }
 }
 export abstract class MotionDecorator extends DynamicEntityType {
