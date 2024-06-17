@@ -57,6 +57,16 @@ astBaseTypeMap.set(BaseTypeKind.STRING, "string");
 astBaseTypeMap.set(BaseTypeKind.BOOL, "boolean");
 astBaseTypeMap.set(BaseTypeKind.VOID, "undefined");
 
+function isAnyType(_type: Type) {
+  return _type instanceof BaseType && _type.kind === BaseTypeKind.ANY;
+}
+
+function isWildcard(matchCondition: Parameter | Expr) {
+  return (
+    matchCondition instanceof Parameter && isAnyType(matchCondition.stmtType)
+  );
+}
+
 export abstract class Type implements ASTNode {
   abstract children(): ASTNode[];
   abstract print(): string;
@@ -136,17 +146,18 @@ export class SpatialType extends CompositionType {
 
   equals(_type: Type): boolean {
     return (
-      this.contains(_type) &&
-      !(
-        _type instanceof LocalityDecorator ||
-        _type instanceof SpatialObjectType ||
-        _type instanceof PathType
-      )
+      isAnyType(_type) ||
+      (this.contains(_type) &&
+        !(
+          _type instanceof LocalityDecorator ||
+          _type instanceof SpatialObjectType ||
+          _type instanceof PathType
+        ))
     );
   }
 
   contains(_type: Type): boolean {
-    return _type instanceof SpatialType;
+    return isAnyType(_type) || _type instanceof SpatialType;
   }
 }
 export abstract class LocalityDecorator extends SpatialType {
@@ -182,15 +193,17 @@ export class PhysicalDecorator extends LocalityDecorator {
 
   equals(_type: Type): boolean {
     return (
-      this.contains(_type) &&
-      this.delegate.equals((<PhysicalDecorator>_type).delegate)
+      isAnyType(_type) ||
+      (this.contains(_type) &&
+        this.delegate.equals((<PhysicalDecorator>_type).delegate))
     );
   }
 
   contains(_type: Type): boolean {
     return (
-      _type instanceof PhysicalDecorator &&
-      this.delegate.contains(_type.delegate)
+      isAnyType(_type) ||
+      (_type instanceof PhysicalDecorator &&
+        this.delegate.contains(_type.delegate))
     );
   }
 }
@@ -217,15 +230,17 @@ export class VirtualDecorator extends LocalityDecorator {
 
   equals(_type: Type): boolean {
     return (
-      this.contains(_type) &&
-      this.delegate.equals((<VirtualDecorator>_type).delegate)
+      isAnyType(_type) ||
+      (this.contains(_type) &&
+        this.delegate.equals((<VirtualDecorator>_type).delegate))
     );
   }
 
   contains(_type: Type): boolean {
     return (
-      _type instanceof VirtualDecorator &&
-      this.delegate.contains(_type.delegate)
+      isAnyType(_type) ||
+      (_type instanceof VirtualDecorator &&
+        this.delegate.contains(_type.delegate))
     );
   }
 }
@@ -250,13 +265,14 @@ export class PathType extends SpatialType {
 
   equals(_type: Type): boolean {
     return (
-      this.contains(_type) &&
-      !(_type instanceof LandPathType || _type instanceof AirPathType)
+      isAnyType(_type) ||
+      (this.contains(_type) &&
+        !(_type instanceof LandPathType || _type instanceof AirPathType))
     );
   }
 
   contains(_type: Type): boolean {
-    return _type instanceof PathType;
+    return isAnyType(_type) || _type instanceof PathType;
   }
 }
 export class LandPathType extends PathType {
@@ -283,7 +299,7 @@ export class LandPathType extends PathType {
   }
 
   contains(_type: Type): boolean {
-    return _type instanceof LandPathType;
+    return isAnyType(_type) || _type instanceof LandPathType;
   }
 }
 export class AirPathType extends PathType {
@@ -310,7 +326,7 @@ export class AirPathType extends PathType {
   }
 
   contains(_type: Type): boolean {
-    return _type instanceof AirPathType;
+    return isAnyType(_type) || _type instanceof AirPathType;
   }
 }
 export abstract class SpatialObjectType extends SpatialType {}
@@ -347,15 +363,17 @@ export class ControlledDecorator extends ControlDecorator {
 
   equals(_type: Type): boolean {
     return (
-      this.contains(_type) &&
-      this.delegate.equals((<ControlledDecorator>_type).delegate)
+      isAnyType(_type) ||
+      (this.contains(_type) &&
+        this.delegate.equals((<ControlledDecorator>_type).delegate))
     );
   }
 
   contains(_type: Type): boolean {
     return (
-      _type instanceof ControlledDecorator &&
-      this.delegate.contains(_type.delegate)
+      isAnyType(_type) ||
+      (_type instanceof ControlledDecorator &&
+        this.delegate.contains(_type.delegate))
     );
   }
 }
@@ -386,15 +404,17 @@ export class NotControlledDecorator extends ControlDecorator {
 
   equals(_type: Type): boolean {
     return (
-      this.contains(_type) &&
-      this.delegate.equals((<NotControlledDecorator>_type).delegate)
+      isAnyType(_type) ||
+      (this.contains(_type) &&
+        this.delegate.equals((<NotControlledDecorator>_type).delegate))
     );
   }
 
   contains(_type: Type): boolean {
     return (
-      _type instanceof NotControlledDecorator &&
-      this.delegate.contains(_type.delegate)
+      isAnyType(_type) ||
+      (_type instanceof NotControlledDecorator &&
+        this.delegate.contains(_type.delegate))
     );
   }
 }
@@ -419,13 +439,14 @@ export class SpaceType extends SpatialObjectType {
 
   equals(_type: Type): boolean {
     return (
-      this.contains(_type) &&
-      !(_type instanceof OpenSpaceType || _type instanceof EnclosedSpaceType)
+      isAnyType(_type) ||
+      (this.contains(_type) &&
+        !(_type instanceof OpenSpaceType || _type instanceof EnclosedSpaceType))
     );
   }
 
   contains(_type: Type): boolean {
-    return _type instanceof SpaceType;
+    return isAnyType(_type) || _type instanceof SpaceType;
   }
 }
 export class OpenSpaceType extends SpaceType {
@@ -452,7 +473,7 @@ export class OpenSpaceType extends SpaceType {
   }
 
   contains(_type: Type): boolean {
-    return _type instanceof OpenSpaceType;
+    return isAnyType(_type) || _type instanceof OpenSpaceType;
   }
 }
 export class EnclosedSpaceType extends SpaceType {
@@ -481,7 +502,7 @@ export class EnclosedSpaceType extends SpaceType {
   }
 
   contains(_type: Type): boolean {
-    return _type instanceof EnclosedSpaceType;
+    return isAnyType(_type) || _type instanceof EnclosedSpaceType;
   }
 }
 export class EntityType extends SpatialObjectType {
@@ -505,13 +526,17 @@ export class EntityType extends SpatialObjectType {
 
   equals(_type: Type): boolean {
     return (
-      this.contains(_type) &&
-      !(_type instanceof DynamicEntityType || _type instanceof StaticEntityType)
+      isAnyType(_type) ||
+      (this.contains(_type) &&
+        !(
+          _type instanceof DynamicEntityType ||
+          _type instanceof StaticEntityType
+        ))
     );
   }
 
   contains(_type: Type): boolean {
-    return _type instanceof EntityType;
+    return isAnyType(_type) || _type instanceof EntityType;
   }
 }
 export class StaticEntityType extends EntityType {
@@ -540,7 +565,7 @@ export class StaticEntityType extends EntityType {
   }
 
   contains(_type: Type): boolean {
-    return _type instanceof StaticEntityType;
+    return isAnyType(_type) || _type instanceof StaticEntityType;
   }
 }
 export class DynamicEntityType extends EntityType {
@@ -566,17 +591,18 @@ export class DynamicEntityType extends EntityType {
 
   equals(_type: Type): boolean {
     return (
-      this.contains(_type) &&
-      !(
-        _type instanceof MotionDecorator ||
-        _type instanceof AnimateEntityType ||
-        _type instanceof SmartEntityType
-      )
+      isAnyType(_type) ||
+      (this.contains(_type) &&
+        !(
+          _type instanceof MotionDecorator ||
+          _type instanceof AnimateEntityType ||
+          _type instanceof SmartEntityType
+        ))
     );
   }
 
   contains(_type: Type): boolean {
-    return _type instanceof DynamicEntityType;
+    return isAnyType(_type) || _type instanceof DynamicEntityType;
   }
 }
 export class AnimateEntityType extends DynamicEntityType {
@@ -605,7 +631,7 @@ export class AnimateEntityType extends DynamicEntityType {
   }
 
   contains(_type: Type): boolean {
-    return _type instanceof AnimateEntityType;
+    return isAnyType(_type) || _type instanceof AnimateEntityType;
   }
 }
 export class SmartEntityType extends DynamicEntityType {
@@ -630,7 +656,7 @@ export class SmartEntityType extends DynamicEntityType {
   }
 
   equals(_type: Type): boolean {
-    return this.contains(_type);
+    return isAnyType(_type) || this.contains(_type);
   }
 
   contains(_type: Type): boolean {
@@ -668,14 +694,17 @@ export class MobileDecorator extends MotionDecorator {
 
   equals(_type: Type): boolean {
     return (
-      this.contains(_type) &&
-      this.delegate.equals((<MobileDecorator>_type).delegate)
+      isAnyType(_type) ||
+      (this.contains(_type) &&
+        this.delegate.equals((<MobileDecorator>_type).delegate))
     );
   }
 
   contains(_type: Type): boolean {
     return (
-      _type instanceof MobileDecorator && this.delegate.contains(_type.delegate)
+      isAnyType(_type) ||
+      (_type instanceof MobileDecorator &&
+        this.delegate.contains(_type.delegate))
     );
   }
 }
@@ -706,15 +735,17 @@ export class StationaryDecorator extends MotionDecorator {
 
   equals(_type: Type): boolean {
     return (
-      this.contains(_type) &&
-      this.delegate.equals((<StationaryDecorator>_type).delegate)
+      isAnyType(_type) ||
+      (this.contains(_type) &&
+        this.delegate.equals((<StationaryDecorator>_type).delegate))
     );
   }
 
   contains(_type: Type): boolean {
     return (
-      _type instanceof StationaryDecorator &&
-      this.delegate.contains(_type.delegate)
+      isAnyType(_type) ||
+      (_type instanceof StationaryDecorator &&
+        this.delegate.contains(_type.delegate))
     );
   }
 }
@@ -731,8 +762,7 @@ export class UnionType extends CompositionType {
   }
 
   equals(_type: Type): boolean {
-    if (_type instanceof BaseType && _type.kind === BaseTypeKind.ANY)
-      return true;
+    if (isAnyType(_type)) return true;
     if (
       _type instanceof UnionType &&
       (<UnionDeclaration>this.identifier.declaration).options.length ===
@@ -797,7 +827,7 @@ export class FunctionType extends Type {
 
   equals(_type: Type): boolean {
     return (
-      (_type instanceof BaseType && _type.kind === BaseTypeKind.ANY) ||
+      isAnyType(_type) ||
       (_type instanceof FunctionType &&
         this.returnType.equals(_type.returnType) &&
         this.paramTypes.filter(
@@ -846,7 +876,7 @@ export class ArrayType extends Type {
 
   equals(_type: Type): boolean {
     return (
-      (_type instanceof BaseType && _type.kind === BaseTypeKind.ANY) ||
+      isAnyType(_type) ||
       (_type instanceof ArrayType && this._type.equals(_type._type))
     );
   }
@@ -1181,7 +1211,13 @@ export class CaseStmt extends Stmt {
 
   children(): ASTNode[] {
     const children = new Array<ASTNode>();
-    children.push(this.matchCondition);
+    if (
+      !(
+        this.matchCondition instanceof Parameter &&
+        isAnyType(this.matchCondition.stmtType)
+      )
+    )
+      children.push(this.matchCondition);
     children.push(this.stmt);
     return children;
   }
@@ -1221,6 +1257,7 @@ export class Match extends Stmt {
 
   match(condition: Parameter | Expr, subject: unknown) {
     if (condition instanceof Parameter) {
+      if (isAnyType(condition.stmtType)) return true;
       if (condition.stmtType instanceof BaseType)
         return typeof subject === condition.stmtType.evaluate();
       if (
@@ -1272,20 +1309,26 @@ export class Match extends Stmt {
     const matchedCases = this.caseStmts
       .sort((a, b) => {
         if (
-          a.matchCondition instanceof Expr &&
-          b.matchCondition instanceof Parameter
+          (a.matchCondition instanceof Expr &&
+            b.matchCondition instanceof Parameter) ||
+          (isWildcard(b.matchCondition) && !isWildcard(a.matchCondition))
         )
           return -1;
         if (
-          a.matchCondition instanceof Type &&
-          b.matchCondition instanceof Parameter
+          (a.matchCondition instanceof Parameter &&
+            b.matchCondition instanceof Expr) ||
+          isWildcard(a.matchCondition) ||
+          !isWildcard(b.matchCondition)
         )
           return 1;
         return 0;
       })
       .filter((caseStmt) => this.match(caseStmt.matchCondition, subjectValue));
     const matchedCase = matchedCases[0];
-    if (matchedCase.matchCondition instanceof Parameter) {
+    if (
+      matchedCase.matchCondition instanceof Parameter &&
+      !isWildcard(matchedCase.matchCondition)
+    ) {
       const paramStack = varStacks.get(matchedCase.matchCondition);
       if (paramStack === undefined)
         varStacks.set(matchedCase.matchCondition, [subjectValue]);

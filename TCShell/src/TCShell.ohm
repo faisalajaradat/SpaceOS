@@ -54,7 +54,7 @@ TCShell {
               | numberLiteral
               | booleanLiteral
               | noneLiteral
-              | Type "(" (noneLiteral | NonemptyListOf<Parameter, ",">) ")" Stmt  --function
+              | Type "(" (noneLiteral | NonemptyListOf<Parameter, ","> | wildcard) ")" Stmt  --function
               | "(" Exp ")"		--group
               | "{" ListOf<Exp, ","> "}"		--array
 
@@ -114,6 +114,7 @@ TCShell {
             | path
             | landPath
             | airPath
+            | wildcard
 
     union = "union" ~identPart
     while = "while" ~identPart
@@ -139,6 +140,7 @@ TCShell {
     path = "Path" ~identPart
     landPath = "LandPath" ~identPart
     airPath = "AirPath" ~identPart
+    wildcard = "_" ~identPart
 
 
     identStart      = letter | "_"

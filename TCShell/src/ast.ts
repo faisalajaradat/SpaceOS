@@ -347,6 +347,12 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   smartEntity(_smartEntity) {
     return new core.SmartEntityType();
   },
+  wildcard(_underscore) {
+    return new core.Parameter(
+      new core.BaseType(core.BaseTypeKind.ANY),
+      new core.Identifier("_"),
+    );
+  },
   identifier(component) {
     return new core.Identifier(this.sourceString);
   },
