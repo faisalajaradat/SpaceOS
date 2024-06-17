@@ -72,11 +72,11 @@ TCShell {
                 | airPath
                 | MaybeVirtualSpatialType
 
-    MaybeVirtualSpatialType = virtual? (path | MaybeImmutableSpatialType)
+    MaybeVirtualSpatialType = (physical | virtual)? (spatialTypeKeyword | path | MaybeImmutableSpatialType)
 
-    MaybeImmutableSpatialType = immutable? (spaceKeyword | openSpace | enclosedSpace | entity | staticEntity | MaybeMobileSpatialType)
+    MaybeImmutableSpatialType = (mutable | immutable)? (spaceKeyword | openSpace | enclosedSpace | entity | staticEntity | MaybeMobileSpatialType)
 
-    MaybeMobileSpatialType = mobile? (dynamicEntity | animateEntity | smartEntity)
+    MaybeMobileSpatialType = (stationary | mobile)? (dynamicEntity | animateEntity | smartEntity)
 
     Type = (baseTypeKeyword | SpatialType | UnionType) PostTypeSpecifier*
 
@@ -97,8 +97,12 @@ TCShell {
             | return
             | match
             | virtual
+            | physical
+            | mutable
             | immutable
+            | stationary
             | mobile
+            | spatialTypeKeyword
             | spaceKeyword
             | openSpace
             | enclosedSpace
@@ -118,8 +122,12 @@ TCShell {
     return = "return" ~identPart
     match = "match" ~identPart
     virtual = "virtual" ~identPart
+    physical = "physical" ~identPart
+    mutable = "mutable" ~identPart
     immutable = "immutable" ~identPart
     mobile = "mobile" ~identPart
+    stationary = "stationary" ~identPart
+    spatialTypeKeyword = "SpatialType" ~identPart
     spaceKeyword = "Space" ~identPart
     openSpace = "OpenSpace" ~identPart
     enclosedSpace = "EnclosedSpace" ~identPart

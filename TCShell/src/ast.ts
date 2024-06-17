@@ -266,6 +266,87 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   TypeSpecifier_function(_leftParenthesis, listOfTypes, _rightParenthesis) {
     return new core.FunctionType(null, listOfTypes.asIteration().ast());
   },
+  SpatialType(spatialType) {
+    return spatialType.ast();
+  },
+  MaybeVirtualSpatialType(possibleVirtualOrPhysical, spatialType) {
+    const maybeVirtualSpatialType: core.SpatialType = spatialType.ast();
+    const localityDescriptor = possibleVirtualOrPhysical.ast()[0];
+    return localityDescriptor === undefined
+      ? maybeVirtualSpatialType
+      : localityDescriptor === "physical"
+        ? new core.PhysicalDecorator(maybeVirtualSpatialType)
+        : new core.VirtualDecorator(maybeVirtualSpatialType);
+  },
+  MaybeImmutableSpatialType(possibleImmutableOrMutable, spatialType) {
+    const maybeImmutableSpatialType: core.SpatialObjectType = spatialType.ast();
+    const controllDescriptor = possibleImmutableOrMutable.ast()[0];
+    return controllDescriptor === undefined
+      ? maybeImmutableSpatialType
+      : controllDescriptor === "mutable"
+        ? new core.ControlledDecorator(maybeImmutableSpatialType)
+        : new core.NotControlledDecorator(maybeImmutableSpatialType);
+  },
+  MaybeMobileSpatialType(possibleMobileOrStationary, spatialType) {
+    const maybeMobileSpatialType: core.DynamicEntityType = spatialType.ast();
+    const motionDescriptor = possibleMobileOrStationary.ast()[0];
+    return motionDescriptor === undefined
+      ? maybeMobileSpatialType
+      : motionDescriptor === "stationary"
+        ? new core.StationaryDecorator(maybeMobileSpatialType)
+        : new core.MobileDecorator(maybeMobileSpatialType);
+  },
+  physical(_physical) {
+    return this.sourceString;
+  },
+  virtual(_virtual) {
+    return this.sourceString;
+  },
+  mutable(_mutable) {
+    return this.sourceString;
+  },
+  immutable(_immutable) {
+    return this.sourceString;
+  },
+  stationary(_stationary) {
+    return this.sourceString;
+  },
+  mobile(_mobile) {
+    return this.sourceString;
+  },
+  landPath(_landPath) {
+    return new core.PhysicalDecorator(new core.LandPathType());
+  },
+  airPath(_airPath) {
+    return new core.PhysicalDecorator(new core.AirPathType());
+  },
+  path(_path) {
+    return new core.PathType();
+  },
+  spaceKeyword(_space) {
+    return new core.SpaceType();
+  },
+  openSpace(_openSpace) {
+    return new core.OpenSpaceType();
+  },
+  enclosedSpace(_enclosedSpace) {
+    return new core.EnclosedSpaceType();
+  },
+  entity(_entity) {
+    return new core.EntityType();
+  },
+  staticEntity(_staticEntity) {
+    return new core.StaticEntityType();
+  },
+  dynamicEntity(_dynamicEntity) {
+    return new core.DynamicEntityType();
+  },
+  animateEntity(_animateEntity) {
+    return new core.AnimateEntityType();
+  },
+  smartEntity(_smartEntity) {
+    return new core.SmartEntityType();
+  },
   identifier(component) {
     return new core.Identifier(this.sourceString);
   },

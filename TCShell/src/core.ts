@@ -110,7 +110,27 @@ export class BaseType extends Type {
     return astBaseTypeMap.get(this.kind);
   }
 }
-export abstract class SpatialType extends Type {}
+export class SpatialType extends Type {
+  constructor() {
+    super();
+  }
+
+  print(): string {
+    const spatialTypeNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      spatialTypeNodeId + '[label=" Spatial Type "];\n',
+    );
+    return spatialTypeNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return _type instanceof SpatialType;
+  }
+}
 export abstract class LocalityDecorator extends SpatialType {
   delegate: SpatialType;
 
@@ -143,7 +163,9 @@ export class PhysicalDecorator extends LocalityDecorator {
   }
 
   equals(_type: Type): boolean {
-    return this.delegate.equals(_type);
+    return (
+      _type instanceof PhysicalDecorator && this.delegate.equals(_type.delegate)
+    );
   }
 }
 export class VirtualDecorator extends LocalityDecorator {
@@ -168,7 +190,9 @@ export class VirtualDecorator extends LocalityDecorator {
   }
 
   equals(_type: Type): boolean {
-    return this.delegate.equals(_type);
+    return (
+      _type instanceof VirtualDecorator && this.delegate.equals(_type.delegate)
+    );
   }
 }
 export class PathType extends SpatialType {
@@ -273,7 +297,10 @@ export class ControlledDecorator extends ControlDecorator {
   }
 
   equals(_type: Type): boolean {
-    return this.delegate.equals(_type);
+    return (
+      _type instanceof ControlledDecorator &&
+      this.delegate.equals(_type.delegate)
+    );
   }
 }
 export class NotControlledDecorator extends ControlDecorator {
@@ -302,10 +329,35 @@ export class NotControlledDecorator extends ControlDecorator {
   }
 
   equals(_type: Type): boolean {
-    return this.delegate.equals(_type);
+    return (
+      _type instanceof NotControlledDecorator &&
+      this.delegate.equals(_type.delegate)
+    );
   }
 }
-export abstract class SpaceType extends SpatialObjectType {}
+export class SpaceType extends SpatialObjectType {
+  constructor() {
+    super();
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const spaceNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(spaceNodeId + '[label=" Space "];\n');
+    return spaceNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return _type instanceof SpaceType;
+  }
+}
 export class OpenSpaceType extends SpaceType {
   constructor() {
     super();
@@ -354,7 +406,29 @@ export class EnclosedSpaceType extends SpaceType {
     return _type instanceof EnclosedSpaceType;
   }
 }
-export abstract class EntityType extends SpatialObjectType {}
+export class EntityType extends SpatialObjectType {
+  constructor() {
+    super();
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const entityNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(entityNodeId + '[label=" Entity "];\n');
+    return entityNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return _type instanceof EntityType;
+  }
+}
 export class StaticEntityType extends EntityType {
   constructor() {
     super();
@@ -380,7 +454,31 @@ export class StaticEntityType extends EntityType {
     return _type instanceof StaticEntityType;
   }
 }
-export abstract class DynamicEntityType extends EntityType {}
+export class DynamicEntityType extends EntityType {
+  constructor() {
+    super();
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const dynamicEntityNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      dynamicEntityNodeId + '[label=" Dynamic Entity "];\n',
+    );
+    return dynamicEntityNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return _type instanceof DynamicEntityType;
+  }
+}
 export class AnimateEntityType extends DynamicEntityType {
   constructor() {
     super();
@@ -461,7 +559,9 @@ export class MobileDecorator extends MotionDecorator {
   }
 
   equals(_type: Type): boolean {
-    return this.delegate.equals(_type);
+    return (
+      _type instanceof MobileDecorator && this.delegate.equals(_type.delegate)
+    );
   }
 }
 export class StationaryDecorator extends MotionDecorator {
@@ -490,7 +590,10 @@ export class StationaryDecorator extends MotionDecorator {
   }
 
   equals(_type: Type): boolean {
-    return this.delegate.equals(_type);
+    return (
+      _type instanceof StationaryDecorator &&
+      this.delegate.equals(_type.delegate)
+    );
   }
 }
 export class UnionType extends Type {
