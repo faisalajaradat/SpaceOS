@@ -229,10 +229,10 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
       visitTypeAnalyzer(caseStmt),
     );
     if (
-      (!(subjectType instanceof core.UnionType) &&
+      (!(subjectType instanceof core.CompositionType) &&
         caseTypes.filter((caseType) => !caseType.equals(subjectType)).length >
           0) ||
-      (subjectType instanceof core.UnionType &&
+      (subjectType instanceof core.CompositionType &&
         caseTypes.filter((caseType) => !subjectType.contains(caseType)).length >
           0)
     ) {
@@ -391,22 +391,21 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
     }
   } else if (node instanceof core.TypeCast) {
     const desiredType = visitTypeAnalyzer(node.stmtType);
-    if (desiredType instanceof core.UnionType) {
+    if (desiredType instanceof core.CompositionType) {
       const castedExpressionType = visitTypeAnalyzer(node.castedExpr);
       if (desiredType.contains(castedExpressionType)) {
-        node.castedExpr.stmtType = desiredType;
         node.stmtType = desiredType;
         return node.stmtType;
       } else {
         errors++;
         console.log(
-          "Cannot cast an expression to a union type that does not contain the original type!",
+          "Cannot cast an expression to a composition type that does not contain the original type!",
         );
       }
     } else {
       errors++;
       console.log(
-        "Cannot cast an expression to any type other than a union type containing the original type!",
+        "Cannot cast an expression to any type other than a composition type containing the original type!",
       );
     }
   } else if (node instanceof core.FunCall) {
