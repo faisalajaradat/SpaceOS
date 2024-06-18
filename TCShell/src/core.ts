@@ -1927,3 +1927,32 @@ libFunctions.set(
   ),
   (...args) => (<unknown[]>args[0]).push(<unknown>args[1]),
 );
+libFunctions.set(
+  new VarDeclaration(
+    new FunctionType(new BaseType(BaseTypeKind.VOID), [
+      new ArrayType(new BaseType(BaseTypeKind.ANY), -1),
+      new BaseType(BaseTypeKind.NUMBER),
+      new BaseType(BaseTypeKind.NUMBER),
+    ]),
+    new Identifier("removeElements"),
+    new FunDeclaration(
+      new BaseType(BaseTypeKind.VOID),
+      [
+        new Parameter(
+          new ArrayType(new BaseType(BaseTypeKind.ANY), -1),
+          new Identifier("array"),
+        ),
+        new Parameter(
+          new BaseType(BaseTypeKind.NUMBER),
+          new Identifier("startIndex"),
+        ),
+        new Parameter(
+          new BaseType(BaseTypeKind.NUMBER),
+          new Identifier("count"),
+        ),
+      ],
+      new Block(new Array<Stmt>()),
+    ),
+  ),
+  (...args) => (<unknown[]>args[0]).splice(<number>args[1], <number>args[2]),
+);

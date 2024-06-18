@@ -8,9 +8,11 @@ void() Main = void(none) {
   push(nums, 7)
   print(nums)
   print(len(nums))
+  removeElements(nums, 0, 4)
+  print(nums)
+  print(len(nums))
   print(arraysOfStringArrays)
   print(arraysOfStringArrays[3][0])
-  print(len(nums))
   print(len(arraysOfStringArrays))
   print(len(arraysOfStringArrays[0]))
 }
