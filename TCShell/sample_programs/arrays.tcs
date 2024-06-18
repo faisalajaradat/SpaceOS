@@ -5,6 +5,9 @@ void() Main = void(none) {
   print(nums[0])
   nums[0] = 10
   print(nums[0])
+  push(nums, 7)
+  print(nums)
+  print(len(nums))
   print(arraysOfStringArrays)
   print(arraysOfStringArrays[3][0])
   print(len(nums))
