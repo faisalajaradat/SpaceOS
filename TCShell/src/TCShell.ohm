@@ -24,7 +24,7 @@ TCShell {
                   | match Exp "{" CaseStmt+ "}"    --match
           				| while Exp Stmt	--while
 
-     CaseStmt = (Parameter | Exp) "=>" Stmt
+     CaseStmt = (Parameter | Exp | wildcard) "=>" Stmt
 
      Exp = AssignExp
      AssignExp = UnaryExp "=" AssignExp		--assign
@@ -46,7 +46,6 @@ TCShell {
     				  | LeftExp
      LeftExp = LeftExp "(" ListOf<Exp, ","> ")"		--call
      				| LeftExp "[" Exp "]"		--array
-            | LeftExp "." LeftExp --attribute
             | PrimaryExp
 
     PrimaryExp = stringLiteral
@@ -54,7 +53,7 @@ TCShell {
               | numberLiteral
               | booleanLiteral
               | noneLiteral
-              | Type "(" (noneLiteral | NonemptyListOf<Parameter, ","> | wildcard) ")" Stmt  --function
+              | Type "(" (noneLiteral | NonemptyListOf<Parameter, ",">) ")" Stmt  --function
               | "(" Exp ")"		--group
               | "{" ListOf<Exp, ","> "}"		--array
 

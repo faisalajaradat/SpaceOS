@@ -35,6 +35,9 @@ function writeFunDeclarationDot(
 
 //Define all AST nodes
 export interface ASTNode {
+  line: number;
+  column: number;
+  getFilePos(): string;
   children(): ASTNode[];
   //Implement dot printer behaviour for node
   print(): string;
@@ -68,10 +71,21 @@ function isWildcard(matchCondition: Parameter | Expr) {
 }
 
 export abstract class Type implements ASTNode {
+  line: number;
+  column: number;
   abstract children(): ASTNode[];
   abstract print(): string;
   abstract evaluate(): unknown;
   abstract equals(_type: Type): boolean;
+
+  constructor(line: number, column: number) {
+    this.line = line;
+    this.column = column;
+  }
+
+  getFilePos(): string {
+    return "line: " + this.line + ", column: " + this.column + ", ";
+  }
 }
 export abstract class CompositionType extends Type {
   abstract contains(_type: Type): boolean;
@@ -79,8 +93,8 @@ export abstract class CompositionType extends Type {
 export class BaseType extends Type {
   kind: BaseTypeKind;
 
-  constructor(kind: BaseTypeKind) {
-    super();
+  constructor(line: number, column: number, kind: BaseTypeKind) {
+    super(line, column);
     this.kind = kind;
   }
 
@@ -124,8 +138,8 @@ export class BaseType extends Type {
   }
 }
 export class SpatialType extends CompositionType {
-  constructor() {
-    super();
+  constructor(line: number, column: number) {
+    super(line, column);
   }
 
   children(): ASTNode[] {
@@ -163,14 +177,14 @@ export class SpatialType extends CompositionType {
 export abstract class LocalityDecorator extends SpatialType {
   delegate: SpatialType;
 
-  constructor(delegate: SpatialType) {
-    super();
+  constructor(line: number, column: number, delegate: SpatialType) {
+    super(line, column);
     this.delegate = delegate;
   }
 }
 export class PhysicalDecorator extends LocalityDecorator {
-  constructor(delegate: SpatialType) {
-    super(delegate);
+  constructor(line: number, column: number, delegate: SpatialType) {
+    super(line, column, delegate);
   }
 
   children(): ASTNode[] {
@@ -208,8 +222,8 @@ export class PhysicalDecorator extends LocalityDecorator {
   }
 }
 export class VirtualDecorator extends LocalityDecorator {
-  constructor(delegate: SpatialType) {
-    super(delegate);
+  constructor(line: number, column: number, delegate: SpatialType) {
+    super(line, column, delegate);
   }
 
   children(): ASTNode[] {
@@ -245,8 +259,8 @@ export class VirtualDecorator extends LocalityDecorator {
   }
 }
 export class PathType extends SpatialType {
-  constructor() {
-    super();
+  constructor(line: number, column: number) {
+    super(line, column);
   }
 
   children(): ASTNode[] {
@@ -275,8 +289,8 @@ export class PathType extends SpatialType {
   }
 }
 export class LandPathType extends PathType {
-  constructor() {
-    super();
+  constructor(line: number, column: number) {
+    super(line, column);
   }
 
   children(): ASTNode[] {
@@ -305,8 +319,8 @@ export class LandPathType extends PathType {
   }
 }
 export class AirPathType extends PathType {
-  constructor() {
-    super();
+  constructor(line: number, column: number) {
+    super(line, column);
   }
 
   children(): ASTNode[] {
@@ -337,14 +351,14 @@ export class AirPathType extends PathType {
 export abstract class SpatialObjectType extends SpatialType {}
 export abstract class ControlDecorator extends SpatialObjectType {
   delegate: SpatialObjectType;
-  constructor(delegate: SpatialObjectType) {
-    super();
+  constructor(line: number, column: number, delegate: SpatialObjectType) {
+    super(line, column);
     this.delegate = delegate;
   }
 }
 export class ControlledDecorator extends ControlDecorator {
-  constructor(delegate: SpatialObjectType) {
-    super(delegate);
+  constructor(line: number, column: number, delegate: SpatialObjectType) {
+    super(line, column, delegate);
   }
   children(): ASTNode[] {
     return this.delegate.children();
@@ -383,8 +397,8 @@ export class ControlledDecorator extends ControlDecorator {
   }
 }
 export class NotControlledDecorator extends ControlDecorator {
-  constructor(delegate: SpatialObjectType) {
-    super(delegate);
+  constructor(line: number, column: number, delegate: SpatialObjectType) {
+    super(line, column, delegate);
   }
 
   children(): ASTNode[] {
@@ -424,8 +438,8 @@ export class NotControlledDecorator extends ControlDecorator {
   }
 }
 export class SpaceType extends SpatialObjectType {
-  constructor() {
-    super();
+  constructor(line: number, column: number) {
+    super(line, column);
   }
 
   children(): ASTNode[] {
@@ -456,8 +470,8 @@ export class SpaceType extends SpatialObjectType {
   }
 }
 export class OpenSpaceType extends SpaceType {
-  constructor() {
-    super();
+  constructor(line: number, column: number) {
+    super(line, column);
   }
 
   children(): ASTNode[] {
@@ -488,8 +502,8 @@ export class OpenSpaceType extends SpaceType {
   }
 }
 export class EnclosedSpaceType extends SpaceType {
-  constructor() {
-    super();
+  constructor(line: number, column: number) {
+    super(line, column);
   }
 
   children(): ASTNode[] {
@@ -522,8 +536,8 @@ export class EnclosedSpaceType extends SpaceType {
   }
 }
 export class EntityType extends SpatialObjectType {
-  constructor() {
-    super();
+  constructor(line: number, column: number) {
+    super(line, column);
   }
 
   children(): ASTNode[] {
@@ -554,8 +568,8 @@ export class EntityType extends SpatialObjectType {
   }
 }
 export class StaticEntityType extends EntityType {
-  constructor() {
-    super();
+  constructor(line: number, column: number) {
+    super(line, column);
   }
 
   children(): ASTNode[] {
@@ -588,8 +602,8 @@ export class StaticEntityType extends EntityType {
   }
 }
 export class DynamicEntityType extends EntityType {
-  constructor() {
-    super();
+  constructor(line: number, column: number) {
+    super(line, column);
   }
 
   children(): ASTNode[] {
@@ -622,8 +636,8 @@ export class DynamicEntityType extends EntityType {
   }
 }
 export class AnimateEntityType extends DynamicEntityType {
-  constructor() {
-    super();
+  constructor(line: number, column: number) {
+    super(line, column);
   }
 
   children(): ASTNode[] {
@@ -657,8 +671,8 @@ export class AnimateEntityType extends DynamicEntityType {
   }
 }
 export class SmartEntityType extends DynamicEntityType {
-  constructor() {
-    super();
+  constructor(line: number, column: number) {
+    super(line, column);
   }
 
   children(): ASTNode[] {
@@ -694,14 +708,14 @@ export class SmartEntityType extends DynamicEntityType {
 export abstract class MotionDecorator extends DynamicEntityType {
   delegate: DynamicEntityType;
 
-  constructor(delegate: DynamicEntityType) {
-    super();
+  constructor(line: number, column: number, delegate: DynamicEntityType) {
+    super(line, column);
     this.delegate = delegate;
   }
 }
 export class MobileDecorator extends MotionDecorator {
-  constructor(delegate: DynamicEntityType) {
-    super(delegate);
+  constructor(line: number, column: number, delegate: DynamicEntityType) {
+    super(line, column, delegate);
   }
 
   children(): ASTNode[] {
@@ -737,8 +751,8 @@ export class MobileDecorator extends MotionDecorator {
   }
 }
 export class StationaryDecorator extends MotionDecorator {
-  constructor(delegate: DynamicEntityType) {
-    super(delegate);
+  constructor(line: number, column: number, delegate: DynamicEntityType) {
+    super(line, column, delegate);
   }
 
   children(): ASTNode[] {
@@ -780,8 +794,8 @@ export class StationaryDecorator extends MotionDecorator {
 export class UnionType extends CompositionType {
   identifier: Identifier;
 
-  constructor(identifier: Identifier) {
-    super();
+  constructor(line: number, column: number, identifier: Identifier) {
+    super(line, column);
     this.identifier = identifier;
   }
 
@@ -840,8 +854,13 @@ export class FunctionType extends Type {
   returnType: Type;
   paramTypes: Type[];
 
-  constructor(returnType: Type, paramTypes: Type[]) {
-    super();
+  constructor(
+    line: number,
+    column: number,
+    returnType: Type,
+    paramTypes: Type[],
+  ) {
+    super(line, column);
     this.returnType = returnType;
     this.paramTypes = paramTypes;
   }
@@ -892,8 +911,8 @@ export class ArrayType extends Type {
   _type: Type;
   _size: number;
 
-  constructor(type: Type, size: number) {
-    super();
+  constructor(line: number, column: number, type: Type, size: number) {
+    super(line, column);
     this._type = type;
     this._size = size;
   }
@@ -922,11 +941,19 @@ export class ArrayType extends Type {
   }
 }
 export class Program implements ASTNode {
+  line: number;
+  column: number;
   stmts: ASTNode[];
   scope: Scope;
 
-  constructor(stmts: ASTNode[]) {
+  constructor(line: number, column: number, stmts: ASTNode[]) {
+    this.line = line;
+    this.column = column;
     this.stmts = stmts;
+  }
+
+  getFilePos(): string {
+    return "line: " + this.line + ", column: " + this.column + ", ";
   }
 
   children(): ASTNode[] {
@@ -958,22 +985,35 @@ export abstract class Stmt implements ASTNode {
   abstract children(): ASTNode[];
   abstract print(): string;
   abstract evaluate(): unknown;
+  line: number;
+  column: number;
   stmtType: Type;
 
-  constructor(type: Type) {
+  constructor(line: number, column: number, type: Type) {
+    this.line = line;
+    this.column = column;
     this.stmtType = type;
+  }
+
+  getFilePos(): string {
+    return "line: " + this.line + ", column: " + this.column + ", ";
   }
 }
 export abstract class Expr extends Stmt {
-  constructor(type: Type) {
-    super(type);
+  constructor(line: number, column: number, type: Type) {
+    super(line, column, type);
   }
 }
 export class Parameter extends Stmt {
   identifier: Identifier;
 
-  constructor(paramType: Type, identifier: Identifier) {
-    super(paramType);
+  constructor(
+    line: number,
+    column: number,
+    paramType: Type,
+    identifier: Identifier,
+  ) {
+    super(line, column, paramType);
     this.identifier = identifier;
   }
 
@@ -1003,8 +1043,14 @@ export class VarDeclaration extends Stmt {
   identifier: Identifier;
   value: Expr;
 
-  constructor(type: Type, identifier: Identifier, value: Expr) {
-    super(type);
+  constructor(
+    line: number,
+    column: number,
+    type: Type,
+    identifier: Identifier,
+    value: Expr,
+  ) {
+    super(line, column, type);
     this.identifier = identifier;
     this.value = value;
   }
@@ -1044,8 +1090,8 @@ export class VarDeclaration extends Stmt {
 export class UnionDeclaration extends Stmt {
   options: Type[];
 
-  constructor(unionType: Type, options: Type[]) {
-    super(unionType);
+  constructor(line: number, column: number, unionType: Type, options: Type[]) {
+    super(line, column, unionType);
     this.options = options;
   }
 
@@ -1078,8 +1124,8 @@ export class UnionDeclaration extends Stmt {
 export class Return extends Stmt {
   possibleValue: Expr;
 
-  constructor(possibleValue: Expr) {
-    super(new BaseType(BaseTypeKind.NONE));
+  constructor(line: number, column: number, possibleValue: Expr) {
+    super(line, column, new BaseType(-1, -1, BaseTypeKind.NONE));
     this.possibleValue = possibleValue;
   }
 
@@ -1107,8 +1153,14 @@ export class If extends Stmt {
   ifStmt: Stmt;
   possibleElseStmt: Stmt;
 
-  constructor(condition: Expr, ifStmt: Stmt, possibleElseStmt: Stmt) {
-    super(new BaseType(BaseTypeKind.NONE));
+  constructor(
+    line: number,
+    column: number,
+    condition: Expr,
+    ifStmt: Stmt,
+    possibleElseStmt: Stmt,
+  ) {
+    super(line, column, new BaseType(-1, -1, BaseTypeKind.NONE));
     this.condition = condition;
     this.ifStmt = ifStmt;
     this.possibleElseStmt = possibleElseStmt;
@@ -1154,8 +1206,8 @@ export class While extends Stmt {
   condition: Expr;
   whileStmt: Stmt;
 
-  constructor(condition: Expr, whileStmt: Stmt) {
-    super(new BaseType(BaseTypeKind.NONE));
+  constructor(line: number, column: number, condition: Expr, whileStmt: Stmt) {
+    super(line, column, new BaseType(-1, -1, BaseTypeKind.NONE));
     this.condition = condition;
     this.whileStmt = whileStmt;
   }
@@ -1188,8 +1240,8 @@ export class Block extends Stmt {
   stmts: Stmt[];
   scope: Scope;
 
-  constructor(stmts: Stmt[]) {
-    super(new BaseType(BaseTypeKind.NONE));
+  constructor(line: number, column: number, stmts: Stmt[]) {
+    super(line, column, new BaseType(-1, -1, BaseTypeKind.NONE));
     this.stmts = stmts;
   }
 
@@ -1231,8 +1283,13 @@ export class CaseStmt extends Stmt {
   stmt: Stmt;
   scope: Scope;
 
-  constructor(matchCondition: Parameter | Expr, stmt: Stmt) {
-    super(new BaseType(BaseTypeKind.NONE));
+  constructor(
+    line: number,
+    column: number,
+    matchCondition: Parameter | Expr,
+    stmt: Stmt,
+  ) {
+    super(line, column, new BaseType(-1, -1, BaseTypeKind.NONE));
     this.matchCondition = matchCondition;
     this.stmt = stmt;
   }
@@ -1277,8 +1334,13 @@ export class Match extends Stmt {
   subject: Expr;
   caseStmts: CaseStmt[];
 
-  constructor(subject: Expr, caseStmts: CaseStmt[]) {
-    super(new BaseType(BaseTypeKind.NONE));
+  constructor(
+    line: number,
+    column: number,
+    subject: Expr,
+    caseStmts: CaseStmt[],
+  ) {
+    super(line, column, new BaseType(-1, -1, BaseTypeKind.NONE));
     this.subject = subject;
     this.caseStmts = caseStmts;
   }
@@ -1370,8 +1432,15 @@ export class BinaryExpr extends Expr {
   operator: string;
   rightExpr: Expr;
 
-  constructor(type: Type, operator: string, leftExpr: Expr, rightExpr: Expr) {
-    super(type);
+  constructor(
+    line: number,
+    column: number,
+    type: Type,
+    operator: string,
+    leftExpr: Expr,
+    rightExpr: Expr,
+  ) {
+    super(line, column, type);
     this.leftExpr = leftExpr;
     this.operator = operator;
     this.rightExpr = rightExpr;
@@ -1449,8 +1518,14 @@ export class UnaryExpr extends Expr {
   operator: string;
   expr: Expr;
 
-  constructor(type: Type, operator: string, expr: Expr) {
-    super(type);
+  constructor(
+    line: number,
+    column: number,
+    type: Type,
+    operator: string,
+    expr: Expr,
+  ) {
+    super(line, column, type);
     this.operator = operator;
     this.expr = expr;
   }
@@ -1488,9 +1563,19 @@ export class FunDeclaration extends Expr {
   _body: Stmt;
   scope: Scope;
 
-  constructor(type: Type, params: Parameter[], body: Stmt) {
+  constructor(
+    line: number,
+    column: number,
+    type: Type,
+    params: Parameter[],
+    body: Stmt,
+  ) {
     const paramTypes: Type[] = params.map((param) => param.stmtType);
-    super(new FunctionType(type, paramTypes));
+    super(
+      line,
+      column,
+      new FunctionType(type.line, type.column, type, paramTypes),
+    );
     this.params = params;
     this._body = body;
   }
@@ -1527,8 +1612,8 @@ export class ArrayAccess extends Expr {
   arrayExpr: Expr;
   accessExpr: Expr;
 
-  constructor(arrayExpr: Expr, accessExpr: Expr) {
-    super(null);
+  constructor(line: number, column: number, arrayExpr: Expr, accessExpr: Expr) {
+    super(line, column, null);
     this.arrayExpr = arrayExpr;
     this.accessExpr = accessExpr;
   }
@@ -1584,8 +1669,13 @@ export class ArrayAccess extends Expr {
 export class TypeCast extends Expr {
   castedExpr: Expr;
 
-  constructor(desiredType: Type, castedExpr: Expr) {
-    super(desiredType);
+  constructor(
+    line: number,
+    column: number,
+    desiredType: Type,
+    castedExpr: Expr,
+  ) {
+    super(line, column, desiredType);
     this.castedExpr = castedExpr;
   }
 
@@ -1614,47 +1704,19 @@ export class TypeCast extends Expr {
     return this.castedExpr.evaluate();
   }
 }
-export class AttributeAccess extends Expr {
-  containerExpr: Expr;
-  callExpr: Expr;
 
-  constructor(containerExpr: Expr, callExpr: Expr) {
-    super(null);
-    this.containerExpr = containerExpr;
-    this.callExpr = callExpr;
-  }
-
-  children(): ASTNode[] {
-    const children = new Array<ASTNode>();
-    children.push(this.containerExpr);
-    children.push(this.callExpr);
-    return children;
-  }
-
-  print(): string {
-    const attributeAccessNodeId = "Node" + nodeCount++;
-    dotString = dotString.concat(attributeAccessNodeId + '[label=" . "];\n');
-    const containerExprId = this.containerExpr.print();
-    const callExprId = this.callExpr.print();
-    dotString = dotString.concat(
-      attributeAccessNodeId + "->" + containerExprId + ";\n",
-    );
-    dotString = dotString.concat(
-      attributeAccessNodeId + "->" + callExprId + ";\n",
-    );
-    return attributeAccessNodeId;
-  }
-
-  evaluate(): unknown {
-    return undefined;
-  }
-}
 export class FunCall extends Expr {
   identifier: Expr;
   args: Expr[];
 
-  constructor(type: Type, identifier: Expr, args: Expr[]) {
-    super(type);
+  constructor(
+    line: number,
+    column: number,
+    type: Type,
+    identifier: Expr,
+    args: Expr[],
+  ) {
+    super(line, column, type);
     this.identifier = identifier;
     this.args = args;
   }
@@ -1711,8 +1773,8 @@ export class FunCall extends Expr {
 export class StringLiteral extends Expr {
   value: string;
 
-  constructor(value: string) {
-    super(new BaseType(BaseTypeKind.STRING));
+  constructor(line: number, column: number, value: string) {
+    super(line, column, new BaseType(-1, -1, BaseTypeKind.STRING));
     this.value = value;
   }
 
@@ -1735,8 +1797,8 @@ export class StringLiteral extends Expr {
 export class BoolLiteral extends Expr {
   value: boolean;
 
-  constructor(value: boolean) {
-    super(new BaseType(BaseTypeKind.BOOL));
+  constructor(line: number, column: number, value: boolean) {
+    super(line, column, new BaseType(-1, -1, BaseTypeKind.BOOL));
     this.value = value;
   }
 
@@ -1759,8 +1821,8 @@ export class BoolLiteral extends Expr {
 export class NumberLiteral extends Expr {
   value: number;
 
-  constructor(value: number) {
-    super(new BaseType(BaseTypeKind.NUMBER));
+  constructor(line: number, column: number, value: number) {
+    super(line, column, new BaseType(-1, -1, BaseTypeKind.NUMBER));
     this.value = value;
   }
 
@@ -1783,8 +1845,8 @@ export class NumberLiteral extends Expr {
 export class NoneLiteral extends Expr {
   value: undefined;
 
-  constructor() {
-    super(new BaseType(BaseTypeKind.VOID));
+  constructor(line: number, column: number) {
+    super(line, column, new BaseType(-1, -1, BaseTypeKind.VOID));
     this.value = undefined;
   }
 
@@ -1805,8 +1867,17 @@ export class NoneLiteral extends Expr {
 export class ArrayLiteral extends Expr {
   value: Expr[];
 
-  constructor(value: Expr[]) {
-    super(new ArrayType(new BaseType(BaseTypeKind.NONE), value.length));
+  constructor(line: number, column: number, value: Expr[]) {
+    super(
+      line,
+      column,
+      new ArrayType(
+        -1,
+        -1,
+        new BaseType(-1, -1, BaseTypeKind.NONE),
+        value.length,
+      ),
+    );
     this.value = value;
   }
 
@@ -1838,8 +1909,8 @@ export class Identifier extends Expr {
   value: string;
   declaration: VarDeclaration | Parameter | UnionDeclaration;
 
-  constructor(value: string) {
-    super(new BaseType(BaseTypeKind.NONE));
+  constructor(line: number, column: number, value: string) {
+    super(line, column, new BaseType(-1, -1, BaseTypeKind.NONE));
     this.value = value;
   }
   children(): ASTNode[] {
@@ -1867,91 +1938,121 @@ export const libFunctions = new Map<
 
 libFunctions.set(
   new VarDeclaration(
-    new FunctionType(new BaseType(BaseTypeKind.VOID), [
-      new BaseType(BaseTypeKind.ANY),
+    -1,
+    -1,
+    new FunctionType(-1, -1, new BaseType(-1, -1, BaseTypeKind.VOID), [
+      new BaseType(-1, -1, BaseTypeKind.ANY),
     ]),
-    new Identifier("print"),
+    new Identifier(-1, -1, "print"),
     new FunDeclaration(
-      new BaseType(BaseTypeKind.VOID),
+      -1,
+      -1,
+      new BaseType(-1, -1, BaseTypeKind.VOID),
       [
         new Parameter(
-          new BaseType(BaseTypeKind.ANY),
-          new Identifier("message"),
+          -1,
+          -1,
+          new BaseType(-1, -1, BaseTypeKind.ANY),
+          new Identifier(-1, -1, "message"),
         ),
       ],
-      new Block([]),
+      new Block(-1, -1, []),
     ),
   ),
   (...args) => console.log(args[0]),
 );
 libFunctions.set(
   new VarDeclaration(
-    new FunctionType(new BaseType(BaseTypeKind.NUMBER), [
-      new ArrayType(new BaseType(BaseTypeKind.ANY), -1),
+    -1,
+    -1,
+    new FunctionType(-1, -1, new BaseType(-1, -1, BaseTypeKind.NUMBER), [
+      new ArrayType(-1, -1, new BaseType(-1, -1, BaseTypeKind.ANY), -1),
     ]),
-    new Identifier("len"),
+    new Identifier(-1, -1, "len"),
     new FunDeclaration(
-      new BaseType(BaseTypeKind.NUMBER),
+      -1,
+      -1,
+      new BaseType(-1, -1, BaseTypeKind.NUMBER),
       [
         new Parameter(
-          new ArrayType(new BaseType(BaseTypeKind.ANY), -1),
-          new Identifier("array"),
+          -1,
+          -1,
+          new ArrayType(-1, -1, new BaseType(-1, -1, BaseTypeKind.ANY), -1),
+          new Identifier(-1, -1, "array"),
         ),
       ],
-      new Block(new Array<Stmt>()),
+      new Block(-1, -1, new Array<Stmt>()),
     ),
   ),
   (...args) => (<unknown[]>args[0]).length,
 );
 libFunctions.set(
   new VarDeclaration(
-    new FunctionType(new BaseType(BaseTypeKind.NUMBER), [
-      new ArrayType(new BaseType(BaseTypeKind.ANY), -1),
-      new BaseType(BaseTypeKind.ANY),
+    -1,
+    -1,
+    new FunctionType(-1, -1, new BaseType(-1, -1, BaseTypeKind.NUMBER), [
+      new ArrayType(-1, -1, new BaseType(-1, -1, BaseTypeKind.ANY), -1),
+      new BaseType(-1, -1, BaseTypeKind.ANY),
     ]),
-    new Identifier("push"),
+    new Identifier(-1, -1, "push"),
     new FunDeclaration(
-      new BaseType(BaseTypeKind.NUMBER),
+      -1,
+      -1,
+      new BaseType(-1, -1, BaseTypeKind.NUMBER),
       [
         new Parameter(
-          new ArrayType(new BaseType(BaseTypeKind.ANY), -1),
-          new Identifier("array"),
+          -1,
+          -1,
+          new ArrayType(-1, -1, new BaseType(-1, -1, BaseTypeKind.ANY), -1),
+          new Identifier(-1, -1, "array"),
         ),
         new Parameter(
-          new BaseType(BaseTypeKind.ANY),
-          new Identifier("element"),
+          -1,
+          -1,
+          new BaseType(-1, -1, BaseTypeKind.ANY),
+          new Identifier(-1, -1, "element"),
         ),
       ],
-      new Block(new Array<Stmt>()),
+      new Block(-1, -1, new Array<Stmt>()),
     ),
   ),
   (...args) => (<unknown[]>args[0]).push(<unknown>args[1]),
 );
 libFunctions.set(
   new VarDeclaration(
-    new FunctionType(new BaseType(BaseTypeKind.VOID), [
-      new ArrayType(new BaseType(BaseTypeKind.ANY), -1),
-      new BaseType(BaseTypeKind.NUMBER),
-      new BaseType(BaseTypeKind.NUMBER),
+    -1,
+    -1,
+    new FunctionType(-1, -1, new BaseType(-1, -1, BaseTypeKind.VOID), [
+      new ArrayType(-1, -1, new BaseType(-1, -1, BaseTypeKind.ANY), -1),
+      new BaseType(-1, -1, BaseTypeKind.NUMBER),
+      new BaseType(-1, -1, BaseTypeKind.NUMBER),
     ]),
-    new Identifier("removeElements"),
+    new Identifier(-1, -1, "removeElements"),
     new FunDeclaration(
-      new BaseType(BaseTypeKind.VOID),
+      -1,
+      -1,
+      new BaseType(-1, -1, BaseTypeKind.VOID),
       [
         new Parameter(
-          new ArrayType(new BaseType(BaseTypeKind.ANY), -1),
-          new Identifier("array"),
+          -1,
+          -1,
+          new ArrayType(-1, -1, new BaseType(-1, -1, BaseTypeKind.ANY), -1),
+          new Identifier(-1, -1, "array"),
         ),
         new Parameter(
-          new BaseType(BaseTypeKind.NUMBER),
-          new Identifier("startIndex"),
+          -1,
+          -1,
+          new BaseType(-1, -1, BaseTypeKind.NUMBER),
+          new Identifier(-1, -1, "startIndex"),
         ),
         new Parameter(
-          new BaseType(BaseTypeKind.NUMBER),
-          new Identifier("count"),
+          -1,
+          -1,
+          new BaseType(-1, -1, BaseTypeKind.NUMBER),
+          new Identifier(-1, -1, "count"),
         ),
       ],
-      new Block(new Array<Stmt>()),
+      new Block(-1, -1, new Array<Stmt>()),
     ),
   ),
   (...args) => (<unknown[]>args[0]).splice(<number>args[1], <number>args[2]),

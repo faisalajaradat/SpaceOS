@@ -84,7 +84,8 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
     if (paramSymbol !== null) {
       errors++;
       console.log(
-        "Variable name: " +
+        node.getFilePos() +
+          "Variable name: " +
           node.identifier.value +
           " already defined within scope!",
       );
@@ -99,7 +100,8 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
     if (unionSymbol !== null) {
       errors++;
       console.log(
-        "Union name: " +
+        node.getFilePos() +
+          "Union name: " +
           (<core.UnionType>node.stmtType).identifier.value +
           " already defined within scope!",
       );
@@ -116,7 +118,9 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
     const programSymbol = scope.lookup(node.value);
     if (programSymbol === null) {
       errors++;
-      console.log("Symbol: " + node.value + " has not been declared!");
+      console.log(
+        node.getFilePos() + "Symbol: " + node.value + " has not been declared!",
+      );
       return;
     } else if (programSymbol instanceof VarSymbol)
       node.declaration = programSymbol.varDeclaration;
@@ -140,7 +144,7 @@ function assignArraySize(type1: core.ArrayType, type2: core.ArrayType) {
 }
 
 function conditionIsValidType(node: core.If | core.While): boolean {
-  const boolType = new core.BaseType(core.BaseTypeKind.BOOL);
+  const boolType = new core.BaseType(-1, -1, core.BaseTypeKind.BOOL);
   const conditionType = visitTypeAnalyzer(node.condition);
   if (!conditionType.equals(boolType)) {
     errors++;
@@ -152,10 +156,10 @@ function conditionIsValidType(node: core.If | core.While): boolean {
 
 //Performs type analysis to enforce typing rules
 function visitTypeAnalyzer(node: core.ASTNode): core.Type {
-  const voidType = new core.BaseType(core.BaseTypeKind.VOID);
-  const numberType = new core.BaseType(core.BaseTypeKind.NUMBER);
-  const boolType = new core.BaseType(core.BaseTypeKind.BOOL);
-  const stringType = new core.BaseType(core.BaseTypeKind.STRING);
+  const voidType = new core.BaseType(-1, -1, core.BaseTypeKind.VOID);
+  const numberType = new core.BaseType(-1, -1, core.BaseTypeKind.NUMBER);
+  const boolType = new core.BaseType(-1, -1, core.BaseTypeKind.BOOL);
+  const stringType = new core.BaseType(-1, -1, core.BaseTypeKind.STRING);
   if (node instanceof core.FunDeclaration) {
     const oldFunDeclaration = returnFunction;
     returnFunction = node;
@@ -176,7 +180,12 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
       node.stmtType.equals(voidType)
     ) {
       errors++;
-      console.log("Var: " + node.identifier.value + " cannot be type void!");
+      console.log(
+        node.getFilePos() +
+          "Var: " +
+          node.identifier.value +
+          " cannot be type void!",
+      );
     } else if (node instanceof core.VarDeclaration) {
       const valueType = visitTypeAnalyzer(node.value);
       if (
@@ -188,7 +197,9 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
         )
       ) {
         errors++;
-        console.log("Both sides of assignment must be the same type!");
+        console.log(
+          node.getFilePos() + "Both sides of assignment must be the same type!",
+        );
       } else {
         if (
           node.stmtType instanceof core.ArrayType &&
@@ -202,7 +213,7 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
     if (node.possibleValue === null) {
       if (!returnFunction.stmtType.equals(voidType)) {
         errors++;
-        console.log("Function is not type void!");
+        console.log(node.getFilePos() + "Function is not type void!");
       }
     } else {
       const returnType: core.Type = visitTypeAnalyzer(node.possibleValue);
@@ -212,7 +223,7 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
         )
       ) {
         errors++;
-        console.log("Incorrect return type");
+        console.log(node.getFilePos() + "Incorrect return type");
       }
     }
   } else if (node instanceof core.If) {
@@ -228,17 +239,20 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
     const caseTypes = node.caseStmts.map((caseStmt) =>
       visitTypeAnalyzer(caseStmt),
     );
-    if (
-      (!(subjectType instanceof core.CompositionType) &&
-        caseTypes.filter((caseType) => !caseType.equals(subjectType)).length >
-          0) ||
-      (subjectType instanceof core.CompositionType &&
-        caseTypes.filter((caseType) => !subjectType.contains(caseType)).length >
-          0)
-    ) {
+    const incorrectCaseTypes = caseTypes.filter(
+      subjectType instanceof core.CompositionType
+        ? (caseType) => !subjectType.contains(caseType)
+        : (caseType) => !caseType.equals(subjectType),
+    );
+    incorrectCaseTypes.forEach((caseType) => {
       errors++;
-      console.log("One or more case type(s) do not match the subject!");
-    } else if (
+      console.log(
+        caseType.getFilePos() + "Case type incompatible with subject!",
+      );
+    });
+    if (incorrectCaseTypes.length > 0)
+      return new core.BaseType(-1, -1, core.BaseTypeKind.NONE);
+    if (
       subjectType instanceof core.UnionType &&
       caseTypes.filter(
         (caseType) =>
@@ -250,7 +264,10 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
           .length
     ) {
       errors++;
-      console.log("Need to cover each possible type the subject could be!");
+      console.log(
+        node.getFilePos() +
+          "Need to cover each possible type the subject could be!",
+      );
     }
   } else if (node instanceof core.CaseStmt) {
     visitTypeAnalyzer(node.stmt);
@@ -271,13 +288,22 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
           (leftHandType.equals(stringType) && rightHandType.equals(stringType))
         ) {
           node.stmtType = leftHandType.equals(numberType)
-            ? new core.BaseType(core.BaseTypeKind.NUMBER)
-            : new core.BaseType(core.BaseTypeKind.STRING);
+            ? new core.BaseType(
+                leftHandType.line,
+                leftHandType.column,
+                core.BaseTypeKind.NUMBER,
+              )
+            : new core.BaseType(
+                leftHandType.line,
+                leftHandType.column,
+                core.BaseTypeKind.STRING,
+              );
           return node.stmtType;
         }
         errors++;
         console.log(
-          "The + operator can only be used on expressions of the same type that are either numbers or strings!",
+          node.getFilePos() +
+            "The + operator can only be used on expressions of the same type that are either numbers or strings!",
         );
         break;
       case "-":
@@ -298,29 +324,47 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
             node.operator === "<" ||
             node.operator === "<=";
           node.stmtType = operatorCreatesBool
-            ? new core.BaseType(core.BaseTypeKind.BOOL)
-            : new core.BaseType(core.BaseTypeKind.NUMBER);
+            ? new core.BaseType(node.line, node.column, core.BaseTypeKind.BOOL)
+            : new core.BaseType(
+                node.line,
+                node.column,
+                core.BaseTypeKind.NUMBER,
+              );
           return node.stmtType;
         }
         errors++;
         console.log(
-          "Can only use the " + node.operator + " operator on numbers!",
+          node.getFilePos() +
+            "Can only use the " +
+            node.operator +
+            " operator on numbers!",
         );
         break;
       case "==":
       case "!=":
-        node.stmtType = new core.BaseType(core.BaseTypeKind.BOOL);
+        node.stmtType = new core.BaseType(
+          node.line,
+          node.column,
+          core.BaseTypeKind.BOOL,
+        );
         return node.stmtType;
         break;
       case "||":
       case "&&":
         if (leftHandType.equals(boolType) && rightHandType.equals(boolType)) {
-          node.stmtType = new core.BaseType(core.BaseTypeKind.BOOL);
+          node.stmtType = new core.BaseType(
+            node.line,
+            node.column,
+            core.BaseTypeKind.BOOL,
+          );
           return node.stmtType;
         }
         errors++;
         console.log(
-          "The " + node.operator + " operator can only be used with type bool!",
+          node.getFilePos() +
+            "The " +
+            node.operator +
+            " operator can only be used with type bool!",
         );
         break;
       case "=":
@@ -329,7 +373,10 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
           !(node.leftExpr instanceof core.ArrayAccess)
         ) {
           errors++;
-          console.log("Left-hand side of assignment must be an lvalue!");
+          console.log(
+            node.getFilePos() +
+              "Left-hand side of assignment must be an lvalue!",
+          );
           break;
         } else if (
           !leftHandType.equals(rightHandType) &&
@@ -340,11 +387,15 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
           )
         ) {
           errors++;
-          console.log("Both sides of assigment must be same type!");
+          console.log(
+            node.getFilePos() + "Both sides of assigment must be same type!",
+          );
           break;
         } else if (leftHandType instanceof core.FunctionType) {
           errors++;
-          console.log("Function declarations are immutable!");
+          console.log(
+            node.getFilePos() + "Function declarations are immutable!",
+          );
           break;
         } else {
           if (
@@ -364,22 +415,29 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
       !expType.equals(numberType)
     ) {
       errors++;
-      console.log("Can only use the " + node.operator + " on numbers!");
+      console.log(
+        node.getFilePos() +
+          "Can only use the " +
+          node.operator +
+          " on numbers!",
+      );
     } else if (node.operator === "!" && !expType.equals(boolType)) {
       errors++;
-      console.log("Can only use the " + node.operator + " on bools!");
+      console.log(
+        node.getFilePos() + "Can only use the " + node.operator + " on bools!",
+      );
     } else {
       node.stmtType =
         node.operator === "!"
-          ? new core.BaseType(core.BaseTypeKind.BOOL)
-          : new core.BaseType(core.BaseTypeKind.NUMBER);
+          ? new core.BaseType(node.line, node.column, core.BaseTypeKind.BOOL)
+          : new core.BaseType(node.line, node.column, core.BaseTypeKind.NUMBER);
       return node.stmtType;
     }
   } else if (node instanceof core.ArrayAccess) {
     const indexType = visitTypeAnalyzer(node.accessExpr);
     if (!indexType.equals(numberType)) {
       errors++;
-      console.log("Index must be type number!");
+      console.log(node.accessExpr.getFilePos() + "Index must be type number!");
     } else {
       const arrayElementType = visitTypeAnalyzer(node.arrayExpr);
       if (arrayElementType instanceof core.ArrayType) {
@@ -387,7 +445,9 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
         return node.stmtType;
       }
       errors++;
-      console.log("Cannot access type that is not an array!");
+      console.log(
+        node.getFilePos() + "Cannot access type that is not an array!",
+      );
     }
   } else if (node instanceof core.TypeCast) {
     const desiredType = visitTypeAnalyzer(node.stmtType);
@@ -399,30 +459,35 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
       } else {
         errors++;
         console.log(
-          "Cannot cast an expression to a composition type that does not contain the original type!",
+          node.getFilePos() +
+            "Cannot cast an expression to a composition type that does not contain the original type!",
         );
       }
     } else {
       errors++;
       console.log(
-        "Cannot cast an expression to any type other than a composition type containing the original type!",
+        node.getFilePos() +
+          "Cannot cast an expression to any type other than a composition type containing the original type!",
       );
     }
   } else if (node instanceof core.FunCall) {
     const funType = visitTypeAnalyzer(node.identifier);
     if (!(funType instanceof core.FunctionType)) {
       errors++;
-      console.log("Can only perform call on function types");
-      return new core.BaseType(core.BaseTypeKind.NONE);
+      console.log(
+        node.getFilePos() + "Can only perform call on function types",
+      );
+      return new core.BaseType(-1, -1, core.BaseTypeKind.NONE);
     }
     if (node.args.length !== funType.paramTypes.length) {
       errors++;
       console.log(
-        "Funtion " +
+        node.getFilePos() +
+          "Funtion " +
           node.identifier +
           " called with incorrect number of arguments!",
       );
-      return new core.BaseType(core.BaseTypeKind.NONE);
+      return new core.BaseType(-1, -1, core.BaseTypeKind.NONE);
     }
     const argsIncorrectTypingArray = node.args.filter(
       (arg, pos) => !visitTypeAnalyzer(arg).equals(funType.paramTypes[pos]),
@@ -441,10 +506,11 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
       node.stmtType = funType.returnType;
       return node.stmtType;
     }
-    argsIncorrectTypingArray.forEach(() => {
+    argsIncorrectTypingArray.forEach((arg) => {
       errors++;
       console.log(
-        "Function " +
+        arg.getFilePos() +
+          "Function " +
           node.identifier +
           " called with argument not matching paramater type!",
       );
@@ -459,6 +525,8 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
   else if (node instanceof core.ArrayLiteral) {
     if ((<core.ArrayType>node.stmtType)._size === 0) return node.stmtType;
     node.stmtType = new core.ArrayType(
+      node.stmtType.line,
+      node.stmtType.column,
       visitTypeAnalyzer(node.value[0]),
       (<core.ArrayType>node.stmtType)._size,
     );
@@ -467,14 +535,14 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
         !(<core.ArrayType>node.stmtType)._type.equals(visitTypeAnalyzer(exp)),
     );
     if (listOfArraysIncorrectTypes.length === 0) return node.stmtType;
-    listOfArraysIncorrectTypes.forEach(() => {
+    listOfArraysIncorrectTypes.forEach((exp) => {
       errors++;
-      console.log("Array literal has item of invalid type!");
+      console.log(exp.getFilePos() + "Array literal has item of invalid type!");
     });
   } else if (node instanceof core.Identifier) {
     node.stmtType = node.declaration.stmtType;
     return node.stmtType;
   } else if (node instanceof core.Type) return node;
   else node.children().forEach((child) => visitTypeAnalyzer(child));
-  return new core.BaseType(core.BaseTypeKind.NONE);
+  return new core.BaseType(-1, -1, core.BaseTypeKind.NONE);
 }
