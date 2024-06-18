@@ -7,9 +7,8 @@ import { ChatOllama } from "@langchain/community/chat_models/ollama";
 import { ChatModelType, initializedChatModel } from './Types/chatModelTypes';
 //prompt management 
 import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts';
-
-
 import { InMemoryChatMessageHistory } from "@langchain/core/chat_history";
+import { traceable } from "langsmith/traceable";
 
 //Env Variables
 import * as dotenv from 'dotenv';
@@ -42,26 +41,33 @@ SpaceBase is built to ensure high reliability and continuous operation, with rob
 const messageHistories: Record<string, InMemoryChatMessageHistory> = {};
 
 
-export function initializeChatModel(type:ChatModelType):initializedChatModel { //depending on enum, inits each type.
+export function initializeChatModel(type:ChatModelType, model?:string, temperature?: number, topP?: number):initializedChatModel { //depending on enum, inits each type.
     let chatModel;
-    
+    temperature = Number(temperature);
+    topP = Number(topP);
     switch (type.toLowerCase()) {
       case "chatgpt":
         chatModel = new ChatOpenAI({
-          model: "gpt-3.5-turbo-0125"
+          model: model || "gpt-3.5-turbo-0125",
+          temperature: temperature || 0.5,
+          topP: topP || 0.5
         });
         console.log("Initializing ChatGPT model");
         break;
       case "groq":
         chatModel = new ChatGroq({
-          apiKey: process.env.GROQ_API_KEY
+          model: model || "mixtral-8x7b-32768",
+          apiKey: process.env.GROQ_API_KEY,
+          temperature: temperature || 0.5,
         });
         console.log("Initializing Groq model");
         break;
       case "local":
         chatModel = new ChatOllama({
           baseUrl: process.env.OLLAMA_BASE_URL, 
-          model: process.env.OLLAMA_MODEL
+          model: model || process.env.OLLAMA_MODEL,
+          temperature: temperature || 0.5,
+          topP: topP || 0.5
         });
         console.log("Initializing Local (Ollama) model");
         break;
@@ -72,7 +78,7 @@ export function initializeChatModel(type:ChatModelType):initializedChatModel { /
     return chatModel;
   }
 
-function getUserPrompt(userInput:string): string{
+function getSystemPrompt(userInput:string): string{
   if (userInput!.toLowerCase().includes("spacebase") || userInput!.toLowerCase().includes("space base") || userInput!.toLowerCase().includes("space os") || userInput!.toLowerCase().includes("spaceos")) {
     return spaceOSInformation;
 
@@ -91,11 +97,12 @@ async function createMessageArray(userInput?: string ){ //creates the ChatPrompt
       return  { messages: null, userInput: null };
     }
     let messages;
-    systemPrompt = getUserPrompt(userInput);
+    systemPrompt = getSystemPrompt(userInput);
 
     messages = ChatPromptTemplate.fromMessages([
-      ["system", systemPrompt],  // Include detailed system info only if relevant
+      ["system", systemPrompt],  // Include detailed system depending on 
       ["user", userInput!],
+      ["placeholder", "{history}"]
       //new MessagesPlaceholder("history"),
     ]);
     return { messages, userInput }
@@ -103,8 +110,8 @@ async function createMessageArray(userInput?: string ){ //creates the ChatPrompt
   }
 
 
-export async function* makeCall(chatmodel: initializedChatModel, passedInput:string= ''){ // | initializedChatModel[]
-    const chatModel = chatmodel;
+async function* makeCallImplementation(chatmodellocation: initializedChatModel, passedInput:string= '',sessionID:string = '1'){ // | initializedChatModel[]
+    const chatModellocation = chatmodellocation;
     let messages, userInput;
     if (passedInput === ''){
       ({ messages, userInput } = await createMessageArray());
@@ -115,7 +122,7 @@ export async function* makeCall(chatmodel: initializedChatModel, passedInput:str
     
    
     if (messages !== null){
-      const response = messages!.pipe(chatModel);
+      const response = messages!.pipe(chatModellocation);
       
       
       const withHistory = new RunnableWithMessageHistory({
@@ -131,13 +138,13 @@ export async function* makeCall(chatmodel: initializedChatModel, passedInput:str
         // We set to "history" here because of our MessagesPlaceholder above.
         historyMessagesKey: "history",
       });
-      const config: RunnableConfig = { configurable: { sessionId: "1" } };
+      const config: RunnableConfig = { configurable: { sessionId: sessionID } };
+
       const output = await withHistory.stream( 
         {input: userInput},
         config
       );
-      
-      
+
       for await (const chunk of output) {
         yield chunk;
       }
@@ -145,3 +152,4 @@ export async function* makeCall(chatmodel: initializedChatModel, passedInput:str
     else return null;
   }
   
+export const makeCall  = traceable((makeCallImplementation));

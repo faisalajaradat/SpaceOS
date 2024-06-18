@@ -16,9 +16,15 @@ const AUDIOFILEPATH= path.join(__dirname, '../../public/Voice_Recordings');
 
 router.ws('/echo', (ws, req) => {
 
-    ws.on('message', async (msg: string) => {
+    ws.on('message', async (data) => {
+        let parsedData = JSON.parse(data.toString());
+        let msg = parsedData.message;
+        let model = parsedData.model;
         let chatmodel2;
-        for await (const {chunk, chatmodel} of await handleChatModel(msg)) {
+        console.log("session ID is:" + model.sessionID);
+        console.log("selected model is: " + model.forceModel, model.location);
+        for await (const {chunk, chatmodel} of await handleChatModel(msg, undefined, undefined, model)) {
+            
             ws.send(JSON.stringify({chunk, chatmodel,type:'streaming'}));
             chatmodel2 = chatmodel
         }
