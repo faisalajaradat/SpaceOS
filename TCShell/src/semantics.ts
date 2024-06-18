@@ -427,6 +427,16 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
     const argsIncorrectTypingArray = node.args.filter(
       (arg, pos) => !visitTypeAnalyzer(arg).equals(funType.paramTypes[pos]),
     );
+    if (
+      node.identifier instanceof core.Identifier &&
+      node.identifier.value === "push"
+    )
+      if (
+        !visitTypeAnalyzer(node.args[1]).equals(
+          (<core.ArrayType>visitTypeAnalyzer(node.args[0]))._type,
+        )
+      )
+        argsIncorrectTypingArray.push(node.args[1]);
     if (argsIncorrectTypingArray.length === 0) {
       node.stmtType = funType.returnType;
       return node.stmtType;

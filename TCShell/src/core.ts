@@ -1903,3 +1903,27 @@ libFunctions.set(
   ),
   (...args) => (<unknown[]>args[0]).length,
 );
+libFunctions.set(
+  new VarDeclaration(
+    new FunctionType(new BaseType(BaseTypeKind.NUMBER), [
+      new ArrayType(new BaseType(BaseTypeKind.ANY), -1),
+      new BaseType(BaseTypeKind.ANY),
+    ]),
+    new Identifier("push"),
+    new FunDeclaration(
+      new BaseType(BaseTypeKind.NUMBER),
+      [
+        new Parameter(
+          new ArrayType(new BaseType(BaseTypeKind.ANY), -1),
+          new Identifier("array"),
+        ),
+        new Parameter(
+          new BaseType(BaseTypeKind.ANY),
+          new Identifier("element"),
+        ),
+      ],
+      new Block(new Array<Stmt>()),
+    ),
+  ),
+  (...args) => (<unknown[]>args[0]).push(<unknown>args[1]),
+);
