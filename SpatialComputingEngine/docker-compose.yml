@@ -1,8 +1,8 @@
 version: '3'
 services:
-  engine-redis:
+  redis_db:
     environment:
-      - REDIS_ARGS="--requirepass password"
+        REDIS_ARGS: --requirepass password
     image: redis/redis-stack-server:latest
     volumes:
       - redis-data:/etc/data
