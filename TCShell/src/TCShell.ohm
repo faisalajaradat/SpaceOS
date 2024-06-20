@@ -43,6 +43,7 @@ TCShell {
      				| UnaryExp
 	   UnaryExp = ("+" | "-" | "!") UnaryExp	--unary
               | "(" Type ")" UnaryExp     --typecast
+              | new SpatialType "(" ListOf<Exp, ","> ")"    --new
     				  | LeftExp
      LeftExp = LeftExp "(" ListOf<Exp, ","> ")"		--call
      				| LeftExp "[" Exp "]"		--array
@@ -69,9 +70,12 @@ TCShell {
 
     SpatialType = landPath
                 | airPath
+                | spaceFactory
+                | entityFactory
+                | pathFactory
                 | MaybeVirtualSpatialType
 
-    MaybeVirtualSpatialType = (physical | virtual)? (spatialTypeKeyword | path | MaybeImmutableSpatialType)
+    MaybeVirtualSpatialType = (physical | virtual)? (spatialTypeKeyword | path | spacePathGraph | MaybeImmutableSpatialType)
 
     MaybeImmutableSpatialType = (mutable | immutable)? (spaceKeyword | openSpace | enclosedSpace | entity | staticEntity | MaybeMobileSpatialType)
 
@@ -114,6 +118,11 @@ TCShell {
             | landPath
             | airPath
             | wildcard
+            | spaceFactory
+            | entityFactory
+            | pathFactory
+            | spacePathGraph
+            | new
 
     union = "union" ~identPart
     while = "while" ~identPart
@@ -140,6 +149,11 @@ TCShell {
     landPath = "LandPath" ~identPart
     airPath = "AirPath" ~identPart
     wildcard = "_" ~identPart
+    spaceFactory = "SpaceFactory" ~identPart
+    entityFactory = "EntiyFactory" ~identPart
+    pathFactory = "PathFactory" ~identPart
+    spacePathGraph = "SpacePathGraph" ~identPart
+    new = "new" ~identPart
 
 
     identStart      = letter | "_"

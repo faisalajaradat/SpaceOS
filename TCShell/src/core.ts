@@ -1,3 +1,4 @@
+import { inspect } from "util";
 import { Scope } from "./semantics.js";
 import { popOutOfScopeVars, getValueOfExpression } from "./utils.js";
 
@@ -137,6 +138,87 @@ export class BaseType extends Type {
     return astBaseTypeMap.get(this.kind);
   }
 }
+export abstract class FactoryType extends Type {
+  constructor(line: number, column: number) {
+    super(line, column);
+  }
+}
+export class SpaceFactoryType extends FactoryType {
+  constructor(line: number, column: number) {
+    super(line, column);
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const spaceFactoryTypeNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      spaceFactoryTypeNodeId + '[label=" Space Factory Type "];\n',
+    );
+    return spaceFactoryTypeNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return isAnyType(_type) || _type instanceof SpaceFactoryType;
+  }
+}
+export class EntityFactoryType extends FactoryType {
+  constructor(line: number, column: number) {
+    super(line, column);
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const entityFactoryTypeNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      entityFactoryTypeNodeId + '[label=" Entity Factory Type "];\n',
+    );
+    return entityFactoryTypeNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return isAnyType(_type) || _type instanceof EntityFactoryType;
+  }
+}
+export class PathFactoryType extends FactoryType {
+  constructor(line: number, column: number) {
+    super(line, column);
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const pathFactoryTypeNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      pathFactoryTypeNodeId + '[label=" Path Factory Type "];\n',
+    );
+    return pathFactoryTypeNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return isAnyType(_type) || _type instanceof PathFactoryType;
+  }
+}
+
 export class SpatialType extends CompositionType {
   constructor(line: number, column: number) {
     super(line, column);
@@ -255,6 +337,38 @@ export class VirtualDecorator extends LocalityDecorator {
       isAnyType(_type) ||
       (_type instanceof VirtualDecorator &&
         this.delegate.contains(_type.delegate))
+    );
+  }
+}
+export class SpacePathGraphType extends SpatialType {
+  constructor(line: number, column: number) {
+    super(line, column);
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const spacePathGraphTypeNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      spacePathGraphTypeNodeId + '[label=" Space Path Graph Type "];\n',
+    );
+    return spacePathGraphTypeNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return isAnyType(_type) || _type instanceof SpacePathGraphType;
+  }
+
+  contains(_type: Type): boolean {
+    return (
+      this.equals(_type) ||
+      (_type instanceof LocalityDecorator && this.contains(_type.delegate))
     );
   }
 }
@@ -1767,6 +1881,42 @@ export class FunCall extends Expr {
       else paramStack.push(value);
     });
     return funDecl.evaluate();
+  }
+}
+
+export class SpacialObjectInstantiationExpr extends Expr {
+  args: Expr[];
+
+  constructor(
+    line: number,
+    column: number,
+    spatialType: SpatialType,
+    args: Expr[],
+  ) {
+    super(line, column, spatialType);
+    this.args = args;
+  }
+
+  children(): ASTNode[] {
+    const children = new Array<ASTNode>();
+    children.push(this.stmtType);
+    return children;
+  }
+
+  print(): string {
+    const spatialObjectInstantiationNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(
+      spatialObjectInstantiationNodeId + '[label=" new "];\n',
+    );
+    const spatialTypeNodeId = this.stmtType.print();
+    dotString = dotString.concat(
+      spatialObjectInstantiationNodeId + "->" + spatialTypeNodeId + ";\n",
+    );
+    return spatialObjectInstantiationNodeId;
+  }
+
+  evaluate(): unknown {
+    return undefined;
   }
 }
 

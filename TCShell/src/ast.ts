@@ -213,6 +213,15 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       unaryExpression.ast(),
     );
   },
+  UnaryExp_new(_new, spatialType, _leftParenthesis, args, _rightParenthesis) {
+    const lineAndColumn = this.source.getLineAndColumn();
+    return new core.SpacialObjectInstantiationExpr(
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
+      spatialType.ast(),
+      args.asIteration().ast(),
+    );
+  },
   UnaryExp(leftExpression) {
     return leftExpression.ast();
   },
@@ -483,6 +492,27 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       new core.AirPathType(lineAndColumn.lineNum, lineAndColumn.colNum),
     );
   },
+  spaceFactory(_spaceFactory) {
+    const lineAndColumn = this.source.getLineAndColumn();
+    return new core.SpaceFactoryType(
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
+    );
+  },
+  entityFactory(_entityFactory) {
+    const lineAndColumn = this.source.getLineAndColumn();
+    return new core.EntityFactoryType(
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
+    );
+  },
+  pathFactory(_pathFactory) {
+    const lineAndColumn = this.source.getLineAndColumn();
+    return new core.PathFactoryType(
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
+    );
+  },
   path(_path) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new core.PathType(lineAndColumn.lineNum, lineAndColumn.colNum);
@@ -530,6 +560,13 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   smartEntity(_smartEntity) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new core.SmartEntityType(
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
+    );
+  },
+  spacePathGraph(_spacePathGraph) {
+    const lineAndColumn = this.source.getLineAndColumn();
+    return new core.SpacePathGraphType(
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
     );
