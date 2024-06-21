@@ -6,5 +6,6 @@
     "sourceMap": true,
     "outDir": "dist"
   },
-  "include": ["src/**/*", "tests/**/*"]
+  "include": ["TCShell/src/**/*", "TCShell/tests/**/*", "SpatialComputingEngine/src/**/*",
+  "SpatialComputingEngine/tests/**/*"]
 }

@@ -36,14 +36,14 @@ export const function_declaration_test =
 export const array_access_test =
   'string[] array = {"Wrong!", "Right!", "Wrong!"}\nprint(array[1])';
 export const recursion_test = fs.readFileSync(
-  "./sample_programs/fib.tcs",
+  "./TCShell/sample_programs/fib.tcs",
   "utf-8",
 );
 export const first_class_functions_test = fs.readFileSync(
-  "./sample_programs/first_class.tcs",
+  "./TCShell/sample_programs/first_class.tcs",
   "utf-8",
 );
 export const pattern_matching_test = fs.readFileSync(
-  "./sample_programs/maybe_and_either.tcs",
+  "./TCShell/sample_programs/maybe_and_either.tcs",
   "utf-8",
 );
