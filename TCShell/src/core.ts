@@ -1,4 +1,3 @@
-import { inspect } from "util";
 import { Scope } from "./semantics.js";
 import { popOutOfScopeVars, getValueOfExpression } from "./utils.js";
 
@@ -69,6 +68,10 @@ function isWildcard(matchCondition: Parameter | Expr) {
   return (
     matchCondition instanceof Parameter && isAnyType(matchCondition.stmtType)
   );
+}
+
+function isDecorator(_type: Type): _type is SpatialTypeDecorator {
+  return (_type as SpatialTypeDecorator).delegate !== undefined;
 }
 
 export abstract class Type implements ASTNode {
@@ -245,7 +248,7 @@ export class SpatialType extends CompositionType {
       isAnyType(_type) ||
       (this.contains(_type) &&
         !(
-          _type instanceof LocalityDecorator ||
+          isDecorator(_type) ||
           _type instanceof SpatialObjectType ||
           _type instanceof PathType
         ))
@@ -256,7 +259,15 @@ export class SpatialType extends CompositionType {
     return isAnyType(_type) || _type instanceof SpatialType;
   }
 }
-export abstract class LocalityDecorator extends SpatialType {
+
+interface SpatialTypeDecorator extends SpatialType {
+  delegate: SpatialType;
+}
+
+export abstract class LocalityDecorator
+  extends SpatialType
+  implements SpatialTypeDecorator
+{
   delegate: SpatialType;
 
   constructor(line: number, column: number, delegate: SpatialType) {
@@ -265,10 +276,6 @@ export abstract class LocalityDecorator extends SpatialType {
   }
 }
 export class PhysicalDecorator extends LocalityDecorator {
-  constructor(line: number, column: number, delegate: SpatialType) {
-    super(line, column, delegate);
-  }
-
   children(): ASTNode[] {
     return this.delegate.children();
   }
@@ -304,10 +311,6 @@ export class PhysicalDecorator extends LocalityDecorator {
   }
 }
 export class VirtualDecorator extends LocalityDecorator {
-  constructor(line: number, column: number, delegate: SpatialType) {
-    super(line, column, delegate);
-  }
-
   children(): ASTNode[] {
     return this.delegate.children();
   }
@@ -368,7 +371,7 @@ export class SpacePathGraphType extends SpatialType {
   contains(_type: Type): boolean {
     return (
       this.equals(_type) ||
-      (_type instanceof LocalityDecorator && this.contains(_type.delegate))
+      (isDecorator(_type) && this.contains(_type.delegate))
     );
   }
 }
@@ -398,7 +401,7 @@ export class PathType extends SpatialType {
   contains(_type: Type): boolean {
     return (
       this.equals(_type) ||
-      (_type instanceof LocalityDecorator && this.contains(_type.delegate))
+      (isDecorator(_type) && this.contains(_type.delegate))
     );
   }
 }
@@ -428,7 +431,7 @@ export class LandPathType extends PathType {
   contains(_type: Type): boolean {
     return (
       this.equals(_type) ||
-      (_type instanceof LocalityDecorator && this.contains(_type.delegate))
+      (isDecorator(_type) && this.contains(_type.delegate))
     );
   }
 }
@@ -458,12 +461,15 @@ export class AirPathType extends PathType {
   contains(_type: Type): boolean {
     return (
       this.equals(_type) ||
-      (_type instanceof LocalityDecorator && this.contains(_type.delegate))
+      (isDecorator(_type) && this.contains(_type.delegate))
     );
   }
 }
 export abstract class SpatialObjectType extends SpatialType {}
-export abstract class ControlDecorator extends SpatialObjectType {
+export abstract class ControlDecorator
+  extends SpatialObjectType
+  implements SpatialTypeDecorator
+{
   delegate: SpatialObjectType;
   constructor(line: number, column: number, delegate: SpatialObjectType) {
     super(line, column);
@@ -471,9 +477,6 @@ export abstract class ControlDecorator extends SpatialObjectType {
   }
 }
 export class ControlledDecorator extends ControlDecorator {
-  constructor(line: number, column: number, delegate: SpatialObjectType) {
-    super(line, column, delegate);
-  }
   children(): ASTNode[] {
     return this.delegate.children();
   }
@@ -511,10 +514,6 @@ export class ControlledDecorator extends ControlDecorator {
   }
 }
 export class NotControlledDecorator extends ControlDecorator {
-  constructor(line: number, column: number, delegate: SpatialObjectType) {
-    super(line, column, delegate);
-  }
-
   children(): ASTNode[] {
     return this.delegate.children();
   }
@@ -577,9 +576,7 @@ export class SpaceType extends SpatialObjectType {
   contains(_type: Type): boolean {
     return (
       this.equals(_type) ||
-      ((_type instanceof LocalityDecorator ||
-        _type instanceof ControlDecorator) &&
-        this.contains(_type.delegate))
+      (isDecorator(_type) && this.contains(_type.delegate))
     );
   }
 }
@@ -609,9 +606,7 @@ export class OpenSpaceType extends SpaceType {
   contains(_type: Type): boolean {
     return (
       this.equals(_type) ||
-      ((_type instanceof LocalityDecorator ||
-        _type instanceof ControlDecorator) &&
-        this.contains(_type.delegate))
+      (isDecorator(_type) && this.contains(_type.delegate))
     );
   }
 }
@@ -643,9 +638,7 @@ export class EnclosedSpaceType extends SpaceType {
   contains(_type: Type): boolean {
     return (
       this.equals(_type) ||
-      ((_type instanceof LocalityDecorator ||
-        _type instanceof ControlDecorator) &&
-        this.contains(_type.delegate))
+      (isDecorator(_type) && this.contains(_type.delegate))
     );
   }
 }
@@ -675,9 +668,7 @@ export class EntityType extends SpatialObjectType {
   contains(_type: Type): boolean {
     return (
       this.equals(_type) ||
-      ((_type instanceof LocalityDecorator ||
-        _type instanceof ControlDecorator) &&
-        this.contains(_type.delegate))
+      (isDecorator(_type) && this.contains(_type.delegate))
     );
   }
 }
@@ -709,9 +700,7 @@ export class StaticEntityType extends EntityType {
   contains(_type: Type): boolean {
     return (
       this.equals(_type) ||
-      ((_type instanceof LocalityDecorator ||
-        _type instanceof ControlDecorator) &&
-        this.contains(_type.delegate))
+      (isDecorator(_type) && this.contains(_type.delegate))
     );
   }
 }
@@ -743,9 +732,7 @@ export class DynamicEntityType extends EntityType {
   contains(_type: Type): boolean {
     return (
       this.equals(_type) ||
-      ((_type instanceof LocalityDecorator ||
-        _type instanceof ControlDecorator) &&
-        this.contains(_type.delegate))
+      (isDecorator(_type) && this.contains(_type.delegate))
     );
   }
 }
@@ -777,10 +764,7 @@ export class AnimateEntityType extends DynamicEntityType {
   contains(_type: Type): boolean {
     return (
       this.equals(_type) ||
-      ((_type instanceof LocalityDecorator ||
-        _type instanceof ControlDecorator ||
-        _type instanceof MotionDecorator) &&
-        this.contains(_type.delegate))
+      (isDecorator(_type) && this.contains(_type.delegate))
     );
   }
 }
@@ -812,14 +796,14 @@ export class SmartEntityType extends DynamicEntityType {
   contains(_type: Type): boolean {
     return (
       this.equals(_type) ||
-      ((_type instanceof LocalityDecorator ||
-        _type instanceof ControlDecorator ||
-        _type instanceof MotionDecorator) &&
-        this.contains(_type.delegate))
+      (isDecorator(_type) && this.contains(_type.delegate))
     );
   }
 }
-export abstract class MotionDecorator extends DynamicEntityType {
+export abstract class MotionDecorator
+  extends DynamicEntityType
+  implements SpatialTypeDecorator
+{
   delegate: DynamicEntityType;
 
   constructor(line: number, column: number, delegate: DynamicEntityType) {
@@ -828,10 +812,6 @@ export abstract class MotionDecorator extends DynamicEntityType {
   }
 }
 export class MobileDecorator extends MotionDecorator {
-  constructor(line: number, column: number, delegate: DynamicEntityType) {
-    super(line, column, delegate);
-  }
-
   children(): ASTNode[] {
     return this.delegate.children();
   }
@@ -865,10 +845,6 @@ export class MobileDecorator extends MotionDecorator {
   }
 }
 export class StationaryDecorator extends MotionDecorator {
-  constructor(line: number, column: number, delegate: DynamicEntityType) {
-    super(line, column, delegate);
-  }
-
   children(): ASTNode[] {
     return this.delegate.children();
   }
