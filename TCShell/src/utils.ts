@@ -22,3 +22,20 @@ export function getValueOfExpression(
     value = value.array[value.index];
   return value;
 }
+
+export function isAnyType(_type: core.Type) {
+  return _type instanceof core.BaseType && _type.kind === core.BaseTypeKind.ANY;
+}
+
+export function isWildcard(matchCondition: core.Parameter | core.Expr) {
+  return (
+    matchCondition instanceof core.Parameter &&
+    isAnyType(matchCondition.stmtType)
+  );
+}
+
+export function isDecorator(
+  _type: core.Type,
+): _type is core.SpatialTypeDecorator {
+  return (_type as core.SpatialTypeDecorator).delegate !== undefined;
+}

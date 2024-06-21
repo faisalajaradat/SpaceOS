@@ -60,3 +60,5 @@ void(SpatialType[]) parseAndDescribeSpacialTypes = void (SpatialType[] listOfSpa
     }
   }
 }
+
+virtual mutable mobile SmartEntity car = new virtual mutable mobile SmartEntity();

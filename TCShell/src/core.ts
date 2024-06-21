@@ -1,5 +1,11 @@
 import { Scope } from "./semantics.js";
-import { popOutOfScopeVars, getValueOfExpression } from "./utils.js";
+import {
+  popOutOfScopeVars,
+  getValueOfExpression,
+  isAnyType,
+  isWildcard,
+  isDecorator,
+} from "./utils.js";
 
 //A map variable declaration and their stack of assigned values
 const varStacks = new Map<VarDeclaration | Parameter, unknown[]>();
@@ -59,20 +65,6 @@ astBaseTypeMap.set(BaseTypeKind.NUMBER, "number");
 astBaseTypeMap.set(BaseTypeKind.STRING, "string");
 astBaseTypeMap.set(BaseTypeKind.BOOL, "boolean");
 astBaseTypeMap.set(BaseTypeKind.VOID, "undefined");
-
-function isAnyType(_type: Type) {
-  return _type instanceof BaseType && _type.kind === BaseTypeKind.ANY;
-}
-
-function isWildcard(matchCondition: Parameter | Expr) {
-  return (
-    matchCondition instanceof Parameter && isAnyType(matchCondition.stmtType)
-  );
-}
-
-function isDecorator(_type: Type): _type is SpatialTypeDecorator {
-  return (_type as SpatialTypeDecorator).delegate !== undefined;
-}
 
 export abstract class Type implements ASTNode {
   line: number;
@@ -260,7 +252,7 @@ export class SpatialType extends CompositionType {
   }
 }
 
-interface SpatialTypeDecorator extends SpatialType {
+export interface SpatialTypeDecorator extends SpatialType {
   delegate: SpatialType;
 }
 

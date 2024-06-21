@@ -1,4 +1,6 @@
+import { error } from "console";
 import * as core from "./core.js";
+import { isDecorator } from "./utils.js";
 
 export default function analyze(astHead: core.Program): number {
   visitNameAnalyzer(astHead, null);
@@ -515,6 +517,40 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
           " called with argument not matching paramater type!",
       );
     });
+  } else if (node instanceof core.SpacialObjectInstantiationExpr) {
+    if (isDecorator(node.stmtType)) {
+      if (
+        node.stmtType.delegate instanceof core.PathType ||
+        (node.stmtType.delegate instanceof core.ControlDecorator &&
+          ((<core.ControlDecorator>node.stmtType.delegate).delegate instanceof
+            core.SpatialType ||
+            node.stmtType.delegate.delegate instanceof core.StaticEntityType ||
+            node.stmtType.delegate.delegate instanceof core.MotionDecorator))
+      ) {
+        let delegateType = node.stmtType.delegate;
+        while (isDecorator(delegateType)) delegateType = delegateType.delegate;
+        if (
+          !(
+            <core.SpatialType>delegateType instanceof core.PathType ||
+            delegateType instanceof core.AirPathType ||
+            delegateType instanceof core.LandPathType ||
+            delegateType instanceof core.OpenSpaceType ||
+            delegateType instanceof core.EnclosedSpaceType ||
+            delegateType instanceof core.StaticEntityType ||
+            delegateType instanceof core.SmartEntityType ||
+            delegateType instanceof core.AnimateEntityType
+          )
+        ) {
+          errors++;
+          console.log(node.getFilePos() + "Cannot instantiate abstract type!");
+        } else return node.stmtType;
+      }
+    }
+    errors++;
+    console.log(
+      node.getFilePos() +
+        "May only instantiate a fully described spatial type!",
+    );
   } else if (
     node instanceof core.StringLiteral ||
     node instanceof core.BoolLiteral ||
