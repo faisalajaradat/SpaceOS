@@ -1,4 +1,4 @@
-import { Entity, Schema, SchemaDefinition } from "redis-om";
+import { Entity, SchemaDefinition } from "redis-om";
 
 export abstract class SpatialType implements Entity {
   [index: string]: string | boolean;
