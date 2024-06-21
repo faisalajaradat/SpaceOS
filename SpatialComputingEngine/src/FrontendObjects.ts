@@ -1,6 +1,6 @@
 import { Entity, SchemaDefinition } from "redis-om";
 
-export abstract class SpatialType implements Entity {
+export abstract class SpatialTypeEntity implements Entity {
   [index: string]: string | boolean;
   locality: string;
 
@@ -13,7 +13,7 @@ export const spatialTypeSchemaDef: SchemaDefinition = {
   locality: { type: "string" },
 };
 
-export abstract class SpatialObject extends SpatialType {
+export abstract class SpatialObject extends SpatialTypeEntity {
   isControlled: boolean;
 
   constructor(locality: string, isControlled: boolean) {
@@ -51,7 +51,7 @@ export class AnimateEntity extends DynamicEntity {}
 
 export class SmartEntity extends DynamicEntity {}
 
-export class Path extends SpatialType {
+export class Path extends SpatialTypeEntity {
   constructor(locality: string) {
     super(locality);
   }
