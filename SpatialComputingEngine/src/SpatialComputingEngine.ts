@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { EntityId, Repository, Schema } from "redis-om";
-import { SpatialTypeEntity } from "./FrontendObjects.js";
+import * as engine from "./FrontendObjects.js";
 import { createClient } from "redis";
 
 const client = await createClient({ url: process.env.REDIS_URL })
@@ -15,7 +15,7 @@ async function connectAndGetRepo(schema: Schema): Promise<Repository> {
 
 export async function saveData(
   schema: Schema,
-  data: SpatialTypeEntity,
+  data: engine.SpatialTypeEntity,
 ): Promise<string> {
   const repo = await connectAndGetRepo(schema);
   return (await repo.save(data))[EntityId];
@@ -24,13 +24,7 @@ export async function saveData(
 export async function fetchData(
   schema: Schema,
   id: string,
-): Promise<SpatialTypeEntity> {
+): Promise<engine.SpatialTypeEntity> {
   const repo = await connectAndGetRepo(schema);
-  return (await repo.fetch(id)) as SpatialTypeEntity;
+  return (await repo.fetch(id)) as engine.SpatialTypeEntity;
 }
-
-/*const entity: SmartEntity = new SmartEntity("virtual", true, "mobile");
-
-console.log(entity);
-
-console.log(await saveData(entity));*/

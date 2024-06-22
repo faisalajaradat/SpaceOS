@@ -1489,16 +1489,76 @@ export class Match extends Stmt {
           data = await fetchData(schema, subject);
           if (Object.keys(data).length === 0) return false;
         }
-        if (properties.size === 0) return true;
-        const localityMatches = properties.get("locality") === data.locality;
-        if (properties.size === 1) return localityMatches;
-        const controllMatches =
-          properties.get("isControlled") ===
-          (<engine.SpatialObject>data).isControlled;
-        if (properties.size === 2) return localityMatches && controllMatches;
-        const motionMatches =
-          properties.get("motion") === (<engine.DynamicEntity>data).motion;
-        return localityMatches && controllMatches && motionMatches;
+        let constructedType = undefined;
+        switch (data._type) {
+          case "Path": {
+            constructedType = new PathType(-1, -1);
+            break;
+          }
+          case "AirPath": {
+            constructedType = new AirPathType(-1, -1);
+            break;
+          }
+          case "LandPath": {
+            constructedType = new LandPathType(-1, -1);
+            break;
+          }
+          case "OpenSpace": {
+            constructedType = new OpenSpaceType(-1, -1);
+            break;
+          }
+          case "EnclosedSpace": {
+            constructedType = new EnclosedSpaceType(-1, -1);
+            break;
+          }
+          case "StaticEntity": {
+            constructedType = new StaticEntityType(-1, -1);
+            break;
+          }
+          case "AnimateEntity": {
+            constructedType = new AnimateEntityType(-1, -1);
+            break;
+          }
+          case "SmartEntity": {
+            constructedType = new SmartEntityType(-1, -1);
+            break;
+          }
+        }
+        Array.from(properties.keys())
+          .reverse()
+          .forEach((property) => {
+            if (property === "motion")
+              constructedType =
+                (<engine.DynamicEntity>data).motion === "mobile"
+                  ? new MobileDecorator(
+                      -1,
+                      -1,
+                      <DynamicEntityType>constructedType,
+                    )
+                  : new StationaryDecorator(
+                      -1,
+                      -1,
+                      <DynamicEntityType>constructedType,
+                    );
+            if (property === "isControlled")
+              constructedType = (<engine.SpatialObject>data).isControlled
+                ? new ControlledDecorator(
+                    -1,
+                    -1,
+                    <SpatialObjectType>constructedType,
+                  )
+                : new NotControlledDecorator(
+                    -1,
+                    -1,
+                    <SpatialObjectType>constructedType,
+                  );
+            if (property === "locality")
+              constructedType =
+                data.locality === "physical"
+                  ? new PhysicalDecorator(-1, -1, constructedType)
+                  : new VirtualDecorator(-1, -1, constructedType);
+          });
+        return condition.stmtType.contains(constructedType);
       }
       return false;
     }
