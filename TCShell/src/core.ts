@@ -6,6 +6,8 @@ import {
   isWildcard,
   isDecorator,
 } from "./utils.js";
+import * as engine from "../../SpatialComputingEngine/src/FrontendObjects.js";
+import { saveData } from "../../SpatialComputingEngine/src/SpatialComputingEngine.js";
 
 //A map variable declaration and their stack of assigned values
 const varStacks = new Map<VarDeclaration | Parameter, unknown[]>();
@@ -129,7 +131,7 @@ export class BaseType extends Type {
     return typeNodeId;
   }
 
-  evaluate(): unknown {
+  evaluate(): string {
     return astBaseTypeMap.get(this.kind);
   }
 }
@@ -1057,10 +1059,9 @@ export class Program implements ASTNode {
     return dotString.concat("}");
   }
 
-  evaluate(): unknown {
+  evaluate(): undefined {
     this.children().forEach((stmt) => stmt.evaluate());
     popOutOfScopeVars(this, varStacks);
-    return undefined;
   }
 }
 export abstract class Stmt implements ASTNode {
@@ -1116,7 +1117,7 @@ export class Parameter extends Stmt {
     return paramNodeId;
   }
 
-  evaluate(): unknown {
+  evaluate(): undefined {
     return undefined;
   }
 }
@@ -1158,7 +1159,7 @@ export class VarDeclaration extends Stmt {
     return varDeclNodeId;
   }
 
-  evaluate(): unknown {
+  evaluate(): undefined {
     const value =
       this.value instanceof FunDeclaration
         ? this.value
@@ -1166,7 +1167,6 @@ export class VarDeclaration extends Stmt {
     const varStack = varStacks.get(this);
     if (varStack === undefined) varStacks.set(this, [value]);
     else varStack.push(value);
-    return undefined;
   }
 }
 export class UnionDeclaration extends Stmt {
@@ -1199,7 +1199,7 @@ export class UnionDeclaration extends Stmt {
     return unionDeclNodeId;
   }
 
-  evaluate(): unknown {
+  evaluate(): undefined {
     return undefined;
   }
 }
@@ -1226,7 +1226,7 @@ export class Return extends Stmt {
     return returnNodeId;
   }
 
-  evaluate(): unknown {
+  evaluate(): Return {
     return this;
   }
 }
@@ -1628,7 +1628,7 @@ export class UnaryExpr extends Expr {
     return opNodeId;
   }
 
-  evaluate(): unknown {
+  evaluate(): number | boolean {
     const expression = getValueOfExpression(this.expr.evaluate(), varStacks);
     switch (this.operator) {
       case "+":
@@ -1721,7 +1721,7 @@ export class ArrayAccess extends Expr {
     return arrayAccesseNodeId;
   }
 
-  evaluate(): unknown {
+  evaluate(): ArrayRepresentation {
     const indices = new Array<number>();
     let arrayBase = <ArrayAccess>this;
     while (true) {
@@ -1883,8 +1883,58 @@ export class SpacialObjectInstantiationExpr extends Expr {
     return spatialObjectInstantiationNodeId;
   }
 
-  evaluate(): unknown {
-    return undefined;
+  evaluate(): Promise<engine.SpatialTypeEntity> {
+    let delegateType: SpatialType = <SpatialType>this.stmtType;
+    const properties = new Map<string, string | boolean>();
+    while (isDecorator(delegateType)) {
+      if (delegateType instanceof PhysicalDecorator)
+        properties.set("locality", "physical");
+      if (delegateType instanceof VirtualDecorator)
+        properties.set("locality", "virtual");
+      if (delegateType instanceof ControlledDecorator)
+        properties.set("isControlled", true);
+      if (delegateType instanceof NotControlledDecorator)
+        properties.set("isControlled", false);
+      if (delegateType instanceof MobileDecorator)
+        properties.set("motion", "mobile");
+      if (delegateType instanceof StationaryDecorator)
+        properties.set("motion", "stationary");
+      delegateType = delegateType.delegate;
+    }
+    const newObject: engine.SpatialTypeEntity =
+      delegateType instanceof AirPathType
+        ? new engine.AirPath()
+        : delegateType instanceof LandPathType
+          ? new engine.LandPath()
+          : delegateType instanceof PathType
+            ? new engine.Path("virtual")
+            : delegateType instanceof OpenSpaceType
+              ? new engine.OpenSpace(
+                  properties.get("locality") as string,
+                  properties.get("isControlled") as boolean,
+                )
+              : delegateType instanceof EnclosedSpaceType
+                ? new engine.EnclosedSpace(
+                    properties.get("locality") as string,
+                    properties.get("isControlled") as boolean,
+                  )
+                : delegateType instanceof StaticEntityType
+                  ? new engine.StaticEntity(
+                      properties.get("locality") as string,
+                      properties.get("isControlled") as boolean,
+                    )
+                  : delegateType instanceof SmartEntityType
+                    ? new engine.SmartEntity(
+                        properties.get("locality") as string,
+                        properties.get("isControlled") as boolean,
+                        properties.get("motion") as string,
+                      )
+                    : new engine.AnimateEntity(
+                        properties.get("locality") as string,
+                        properties.get("isControlled") as boolean,
+                        properties.get("motion") as string,
+                      );
+    return saveData(newObject);
   }
 }
 
@@ -1908,7 +1958,7 @@ export class StringLiteral extends Expr {
     return stringLiteralNodeId;
   }
 
-  evaluate(): unknown {
+  evaluate(): string {
     return this.value;
   }
 }
@@ -1932,7 +1982,7 @@ export class BoolLiteral extends Expr {
     return boolLiteralNodeId;
   }
 
-  evaluate(): unknown {
+  evaluate(): boolean {
     return this.value;
   }
 }
@@ -1956,7 +2006,7 @@ export class NumberLiteral extends Expr {
     return numberLiteralNodeId;
   }
 
-  evaluate(): unknown {
+  evaluate(): number {
     return this.value;
   }
 }
@@ -1978,7 +2028,7 @@ export class NoneLiteral extends Expr {
     return noneLiteralNodeId;
   }
 
-  evaluate(): unknown {
+  evaluate(): undefined {
     return this.value;
   }
 }
@@ -2017,7 +2067,7 @@ export class ArrayLiteral extends Expr {
     return arrayNodeId;
   }
 
-  evaluate(): unknown {
+  evaluate(): unknown[] {
     return this.value.map((exp) =>
       getValueOfExpression(exp.evaluate(), varStacks),
     );
@@ -2043,7 +2093,7 @@ export class Identifier extends Expr {
     return identifierNodeId;
   }
 
-  evaluate(): unknown {
+  evaluate(): Identifier {
     return this;
   }
 }
@@ -2077,7 +2127,10 @@ libFunctions.set(
       new Block(-1, -1, []),
     ),
   ),
-  (...args) => console.log(args[0]),
+  (...args) =>
+    args[0] instanceof Promise
+      ? args[0].then((input) => console.log(input))
+      : console.log(args[0]),
 );
 libFunctions.set(
   new VarDeclaration(

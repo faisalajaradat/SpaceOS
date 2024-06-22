@@ -1,4 +1,3 @@
-import { error } from "console";
 import * as core from "./core.js";
 import { isDecorator } from "./utils.js";
 
