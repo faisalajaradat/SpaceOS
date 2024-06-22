@@ -5,10 +5,14 @@ import {
   isAnyType,
   isWildcard,
   isDecorator,
+  getSpatialTypeSchema,
+  parseSpatialTypeProperties,
 } from "./utils.js";
 import * as engine from "../../SpatialComputingEngine/src/FrontendObjects.js";
-import { saveData } from "../../SpatialComputingEngine/src/SpatialComputingEngine.js";
-
+import {
+  saveData,
+  fetchData,
+} from "../../SpatialComputingEngine/src/SpatialComputingEngine.js";
 //A map variable declaration and their stack of assigned values
 const varStacks = new Map<VarDeclaration | Parameter, unknown[]>();
 
@@ -50,7 +54,7 @@ export interface ASTNode {
   //Implement dot printer behaviour for node
   print(): string;
   //Implement tree walker behaviour for node
-  evaluate(): unknown;
+  evaluate(): Promise<unknown>;
 }
 
 export enum BaseTypeKind {
@@ -73,7 +77,7 @@ export abstract class Type implements ASTNode {
   column: number;
   abstract children(): ASTNode[];
   abstract print(): string;
-  abstract evaluate(): unknown;
+  abstract evaluate(): Promise<unknown>;
   abstract equals(_type: Type): boolean;
 
   constructor(line: number, column: number) {
@@ -131,7 +135,7 @@ export class BaseType extends Type {
     return typeNodeId;
   }
 
-  evaluate(): string {
+  async evaluate(): Promise<string> {
     return astBaseTypeMap.get(this.kind);
   }
 }
@@ -157,7 +161,7 @@ export class SpaceFactoryType extends FactoryType {
     return spaceFactoryTypeNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -182,7 +186,7 @@ export class EntityFactoryType extends FactoryType {
     return entityFactoryTypeNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -207,7 +211,7 @@ export class PathFactoryType extends FactoryType {
     return pathFactoryTypeNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -233,7 +237,7 @@ export class SpatialType extends CompositionType {
     return spatialTypeNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -284,7 +288,7 @@ export class PhysicalDecorator extends LocalityDecorator {
     return physicalNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -317,7 +321,7 @@ export class VirtualDecorator extends LocalityDecorator {
     return virtualNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -354,7 +358,7 @@ export class SpacePathGraphType extends SpatialType {
     return spacePathGraphTypeNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -384,7 +388,7 @@ export class PathType extends SpatialType {
     return pathNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -414,7 +418,7 @@ export class LandPathType extends PathType {
     return landPathNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -444,7 +448,7 @@ export class AirPathType extends PathType {
     return airPathNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -487,7 +491,7 @@ export class ControlledDecorator extends ControlDecorator {
     return controlledNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -524,7 +528,7 @@ export class NotControlledDecorator extends ControlDecorator {
     return notControlledNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -559,7 +563,7 @@ export class SpaceType extends SpatialObjectType {
     return spaceNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -589,7 +593,7 @@ export class OpenSpaceType extends SpaceType {
     return openSpaceNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -621,7 +625,7 @@ export class EnclosedSpaceType extends SpaceType {
     return enclosedSpaceNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -651,7 +655,7 @@ export class EntityType extends SpatialObjectType {
     return entityNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -683,7 +687,7 @@ export class StaticEntityType extends EntityType {
     return staticEntityNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -715,7 +719,7 @@ export class DynamicEntityType extends EntityType {
     return dynamicEntityNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -747,7 +751,7 @@ export class AnimateEntityType extends DynamicEntityType {
     return animateEntityNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -779,7 +783,7 @@ export class SmartEntityType extends DynamicEntityType {
     return smartEntityNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -818,7 +822,7 @@ export class MobileDecorator extends MotionDecorator {
     return mobileNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -855,7 +859,7 @@ export class StationaryDecorator extends MotionDecorator {
     return stationaryNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -918,7 +922,7 @@ export class UnionType extends CompositionType {
     return unionType;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 
@@ -987,7 +991,7 @@ export class FunctionType extends Type {
     return functionTypeNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 }
@@ -1020,7 +1024,7 @@ export class ArrayType extends Type {
     return arrayTypeNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 }
@@ -1059,15 +1063,15 @@ export class Program implements ASTNode {
     return dotString.concat("}");
   }
 
-  evaluate(): undefined {
-    this.children().forEach((stmt) => stmt.evaluate());
+  async evaluate(): Promise<void> {
+    for (const stmt of this.children()) await stmt.evaluate();
     popOutOfScopeVars(this, varStacks);
   }
 }
 export abstract class Stmt implements ASTNode {
   abstract children(): ASTNode[];
   abstract print(): string;
-  abstract evaluate(): unknown;
+  abstract evaluate(): Promise<unknown>;
   line: number;
   column: number;
   stmtType: Type;
@@ -1117,7 +1121,7 @@ export class Parameter extends Stmt {
     return paramNodeId;
   }
 
-  evaluate(): undefined {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 }
@@ -1159,11 +1163,11 @@ export class VarDeclaration extends Stmt {
     return varDeclNodeId;
   }
 
-  evaluate(): undefined {
+  async evaluate(): Promise<void> {
     const value =
       this.value instanceof FunDeclaration
         ? this.value
-        : getValueOfExpression(this.value.evaluate(), varStacks);
+        : getValueOfExpression(await this.value.evaluate(), varStacks);
     const varStack = varStacks.get(this);
     if (varStack === undefined) varStacks.set(this, [value]);
     else varStack.push(value);
@@ -1199,7 +1203,7 @@ export class UnionDeclaration extends Stmt {
     return unionDeclNodeId;
   }
 
-  evaluate(): undefined {
+  async evaluate(): Promise<void> {
     return undefined;
   }
 }
@@ -1226,7 +1230,7 @@ export class Return extends Stmt {
     return returnNodeId;
   }
 
-  evaluate(): Return {
+  async evaluate(): Promise<Return> {
     return this;
   }
 }
@@ -1277,11 +1281,13 @@ export class If extends Stmt {
     return ifNodeId;
   }
 
-  evaluate(): unknown {
-    if (<boolean>getValueOfExpression(this.condition.evaluate(), varStacks))
-      return this.ifStmt.evaluate();
+  async evaluate(): Promise<unknown> {
+    if (
+      <boolean>getValueOfExpression(await this.condition.evaluate(), varStacks)
+    )
+      return await this.ifStmt.evaluate();
     else if (this.possibleElseStmt !== null)
-      return this.possibleElseStmt.evaluate();
+      return await this.possibleElseStmt.evaluate();
   }
 }
 export class While extends Stmt {
@@ -1311,10 +1317,12 @@ export class While extends Stmt {
     return whileNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<unknown> {
     let returnValue = undefined;
-    while (<boolean>getValueOfExpression(this.condition.evaluate(), varStacks))
-      returnValue = this.whileStmt.evaluate();
+    while (
+      <boolean>getValueOfExpression(await this.condition.evaluate(), varStacks)
+    )
+      returnValue = await this.whileStmt.evaluate();
     return returnValue;
   }
 }
@@ -1345,15 +1353,15 @@ export class Block extends Stmt {
     return blockNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<unknown> {
     let returnNode = undefined;
     for (let i = 0; i < this.stmts.length; i++) {
-      returnNode = this.stmts[i].evaluate();
+      returnNode = await this.stmts[i].evaluate();
       if (returnNode instanceof Return) break;
     }
     if (returnNode instanceof Return && returnNode.possibleValue !== null)
       returnNode = getValueOfExpression(
-        returnNode.possibleValue.evaluate(),
+        await returnNode.possibleValue.evaluate(),
         varStacks,
       );
     popOutOfScopeVars(this, varStacks);
@@ -1401,11 +1409,11 @@ export class CaseStmt extends Stmt {
     return caseStmtNodeId;
   }
 
-  evaluate(): unknown {
-    let returnValue = this.stmt.evaluate();
+  async evaluate(): Promise<unknown> {
+    let returnValue = await this.stmt.evaluate();
     if (returnValue instanceof Return && returnValue.possibleValue !== null)
       returnValue = getValueOfExpression(
-        returnValue.possibleValue.evaluate(),
+        await returnValue.possibleValue.evaluate(),
         varStacks,
       );
     popOutOfScopeVars(this, varStacks);
@@ -1427,11 +1435,11 @@ export class Match extends Stmt {
     this.caseStmts = caseStmts;
   }
 
-  match(condition: Parameter | Expr, subject: unknown) {
+  async match(condition: Parameter | Expr, subject: unknown): Promise<boolean> {
     if (condition instanceof Parameter) {
       if (isAnyType(condition.stmtType)) return true;
       if (condition.stmtType instanceof BaseType)
-        return typeof subject === condition.stmtType.evaluate();
+        return typeof subject === (await condition.stmtType.evaluate());
       if (
         condition.stmtType instanceof ArrayType &&
         subject instanceof ArrayRepresentation
@@ -1445,11 +1453,41 @@ export class Match extends Stmt {
           conditionTypeBase = conditionTypeBase._type;
           subjectBase = subjectBase[0];
         }
-        return typeof subjectBase[0] === conditionTypeBase._type.evaluate();
+        return (
+          typeof subjectBase[0] === (await conditionTypeBase._type.evaluate())
+        );
+      }
+      if (
+        condition.stmtType instanceof SpatialType &&
+        typeof subject === "string"
+      ) {
+        if (condition.stmtType.equals(new SpatialType(-1, -1))) return true;
+        const [propertiesRaw, delegateTypeRaw] = parseSpatialTypeProperties(
+          <SpatialType>condition.stmtType,
+        );
+        const delegateType: SpatialType = delegateTypeRaw as SpatialType;
+        const properties: Map<string, string | boolean> = propertiesRaw as Map<
+          string,
+          string | boolean
+        >;
+        const schema = delegateType.contains(new SpaceType(-1, -1))
+          ? engine.SPACE_SCHEMA
+          : delegateType.contains(new EntityType(-1, -1))
+            ? engine.ENTITY_SCHEMA
+            : engine.PATH_SCHEMA;
+        const data = await fetchData(schema, subject);
+        if (Object.keys(data).length === 0) return false;
+        const localityMatches = properties.get("locality") === data.locality;
+        const controllMatches =
+          properties.get("isControlled") ===
+          (<engine.SpatialObject>data).isControlled;
+        const motionMatches =
+          properties.get("motion") === (<engine.DynamicEntity>data).motion;
+        return localityMatches && controllMatches && motionMatches;
       }
       return false;
     }
-    return subject === condition.evaluate();
+    return subject === (await condition.evaluate());
   }
 
   children(): ASTNode[] {
@@ -1473,29 +1511,32 @@ export class Match extends Stmt {
     return matchNodeId;
   }
 
-  evaluate(): unknown {
+  async evaluate(): Promise<unknown> {
     const subjectValue = getValueOfExpression(
-      this.subject.evaluate(),
+      await this.subject.evaluate(),
       varStacks,
     );
-    const matchedCases = this.caseStmts
-      .sort((a, b) => {
-        if (
-          (a.matchCondition instanceof Expr &&
-            b.matchCondition instanceof Parameter) ||
-          (isWildcard(b.matchCondition) && !isWildcard(a.matchCondition))
-        )
-          return -1;
-        if (
-          (a.matchCondition instanceof Parameter &&
-            b.matchCondition instanceof Expr) ||
-          isWildcard(a.matchCondition) ||
-          !isWildcard(b.matchCondition)
-        )
-          return 1;
-        return 0;
-      })
-      .filter((caseStmt) => this.match(caseStmt.matchCondition, subjectValue));
+    const sortedmatchCases = this.caseStmts.sort((a, b) => {
+      if (
+        (a.matchCondition instanceof Expr &&
+          b.matchCondition instanceof Parameter) ||
+        (isWildcard(b.matchCondition) && !isWildcard(a.matchCondition))
+      )
+        return -1;
+      if (
+        (a.matchCondition instanceof Parameter &&
+          b.matchCondition instanceof Expr) ||
+        isWildcard(a.matchCondition) ||
+        !isWildcard(b.matchCondition)
+      )
+        return 1;
+      return 0;
+    });
+    const matchedCases = new Array<CaseStmt>();
+    for (const caseStmt of sortedmatchCases) {
+      if (await this.match(caseStmt.matchCondition, subjectValue))
+        matchedCases.push(caseStmt);
+    }
     const matchedCase = matchedCases[0];
     if (
       matchedCase.matchCondition instanceof Parameter &&
@@ -1506,7 +1547,7 @@ export class Match extends Stmt {
         varStacks.set(matchedCase.matchCondition, [subjectValue]);
       else paramStack.push(subjectValue);
     }
-    return matchedCase.evaluate();
+    return await matchedCase.evaluate();
   }
 }
 export class BinaryExpr extends Expr {
@@ -1547,12 +1588,12 @@ export class BinaryExpr extends Expr {
     return opNodeId;
   }
 
-  evaluate(): unknown {
-    let leftHandExp = this.leftExpr.evaluate();
+  async evaluate(): Promise<unknown> {
+    let leftHandExp = await this.leftExpr.evaluate();
     const rightHandExp =
       this.rightExpr instanceof FunDeclaration
         ? this.rightExpr
-        : getValueOfExpression(this.rightExpr.evaluate(), varStacks);
+        : getValueOfExpression(await this.rightExpr.evaluate(), varStacks);
     if (this.operator === "=") {
       if (leftHandExp instanceof Identifier) {
         const varStack = varStacks.get(
@@ -1628,8 +1669,11 @@ export class UnaryExpr extends Expr {
     return opNodeId;
   }
 
-  evaluate(): number | boolean {
-    const expression = getValueOfExpression(this.expr.evaluate(), varStacks);
+  async evaluate(): Promise<number | boolean> {
+    const expression = getValueOfExpression(
+      await this.expr.evaluate(),
+      varStacks,
+    );
     switch (this.operator) {
       case "+":
         return +(<number>expression);
@@ -1679,11 +1723,11 @@ export class FunDeclaration extends Expr {
     return anonymousFunDeclNodeId;
   }
 
-  evaluate(): unknown {
-    let returnValue = this._body.evaluate();
+  async evaluate(): Promise<unknown> {
+    let returnValue = await this._body.evaluate();
     if (returnValue instanceof Return && returnValue.possibleValue !== null)
       returnValue = getValueOfExpression(
-        returnValue.possibleValue.evaluate(),
+        await returnValue.possibleValue.evaluate(),
         varStacks,
       );
     popOutOfScopeVars(this, varStacks);
@@ -1721,13 +1765,13 @@ export class ArrayAccess extends Expr {
     return arrayAccesseNodeId;
   }
 
-  evaluate(): ArrayRepresentation {
+  async evaluate(): Promise<ArrayRepresentation> {
     const indices = new Array<number>();
     let arrayBase = <ArrayAccess>this;
     while (true) {
       indices.push(
         <number>(
-          getValueOfExpression(arrayBase.accessExpr.evaluate(), varStacks)
+          getValueOfExpression(await arrayBase.accessExpr.evaluate(), varStacks)
         ),
       );
       if (!((<ArrayAccess>arrayBase).arrayExpr instanceof ArrayAccess)) break;
@@ -1782,8 +1826,8 @@ export class TypeCast extends Expr {
     return typeCastNodeId;
   }
 
-  evaluate(): unknown {
-    return this.castedExpr.evaluate();
+  async evaluate(): Promise<unknown> {
+    return await this.castedExpr.evaluate();
   }
 }
 
@@ -1826,29 +1870,27 @@ export class FunCall extends Expr {
     return funCallNodeId;
   }
 
-  evaluate(): unknown {
-    const identifier = this.identifier.evaluate();
+  async evaluate(): Promise<unknown> {
+    const identifier = await this.identifier.evaluate();
     if (
       identifier instanceof Identifier &&
       libFunctions.has(<VarDeclaration>identifier.declaration)
     ) {
-      return libFunctions.get(<VarDeclaration>identifier.declaration)(
-        ...this.args.map((arg) =>
-          getValueOfExpression(arg.evaluate(), varStacks),
-        ),
-      );
+      const args = new Array<unknown>();
+      for (const arg of this.args)
+        args.push(getValueOfExpression(await arg.evaluate(), varStacks));
+      return libFunctions.get(<VarDeclaration>identifier.declaration)(...args);
     }
-    const funDecl = <FunDeclaration>(
-      getValueOfExpression(this.identifier.evaluate(), varStacks)
-    );
-    this.args.forEach((arg, pos) => {
-      const value = getValueOfExpression(arg.evaluate(), varStacks);
+    const funDecl = <FunDeclaration>getValueOfExpression(identifier, varStacks);
+    for (let pos = 0; pos < this.args.length; pos++) {
+      const arg = this.args[pos];
+      const value = getValueOfExpression(await arg.evaluate(), varStacks);
       const paramStack = varStacks.get((<FunDeclaration>funDecl).params[pos]);
       if (paramStack === undefined)
         varStacks.set((<FunDeclaration>funDecl).params[pos], [value]);
       else paramStack.push(value);
-    });
-    return funDecl.evaluate();
+    }
+    return await funDecl.evaluate();
   }
 }
 
@@ -1883,24 +1925,14 @@ export class SpacialObjectInstantiationExpr extends Expr {
     return spatialObjectInstantiationNodeId;
   }
 
-  evaluate(): Promise<engine.SpatialTypeEntity> {
-    let delegateType: SpatialType = <SpatialType>this.stmtType;
-    const properties = new Map<string, string | boolean>();
-    while (isDecorator(delegateType)) {
-      if (delegateType instanceof PhysicalDecorator)
-        properties.set("locality", "physical");
-      if (delegateType instanceof VirtualDecorator)
-        properties.set("locality", "virtual");
-      if (delegateType instanceof ControlledDecorator)
-        properties.set("isControlled", true);
-      if (delegateType instanceof NotControlledDecorator)
-        properties.set("isControlled", false);
-      if (delegateType instanceof MobileDecorator)
-        properties.set("motion", "mobile");
-      if (delegateType instanceof StationaryDecorator)
-        properties.set("motion", "stationary");
-      delegateType = delegateType.delegate;
-    }
+  async evaluate(): Promise<string> {
+    const [propertiesRaw, delegateType] = parseSpatialTypeProperties(
+      <SpatialType>this.stmtType,
+    );
+    const properties: Map<string, string | boolean> = propertiesRaw as Map<
+      string,
+      string | boolean
+    >;
     const newObject: engine.SpatialTypeEntity =
       delegateType instanceof AirPathType
         ? new engine.AirPath()
@@ -1934,7 +1966,7 @@ export class SpacialObjectInstantiationExpr extends Expr {
                         properties.get("isControlled") as boolean,
                         properties.get("motion") as string,
                       );
-    return saveData(newObject);
+    return await saveData(getSpatialTypeSchema(newObject), newObject);
   }
 }
 
@@ -1958,7 +1990,7 @@ export class StringLiteral extends Expr {
     return stringLiteralNodeId;
   }
 
-  evaluate(): string {
+  async evaluate(): Promise<string> {
     return this.value;
   }
 }
@@ -1982,7 +2014,7 @@ export class BoolLiteral extends Expr {
     return boolLiteralNodeId;
   }
 
-  evaluate(): boolean {
+  async evaluate(): Promise<boolean> {
     return this.value;
   }
 }
@@ -2006,7 +2038,7 @@ export class NumberLiteral extends Expr {
     return numberLiteralNodeId;
   }
 
-  evaluate(): number {
+  async evaluate(): Promise<number> {
     return this.value;
   }
 }
@@ -2028,7 +2060,7 @@ export class NoneLiteral extends Expr {
     return noneLiteralNodeId;
   }
 
-  evaluate(): undefined {
+  async evaluate(): Promise<undefined> {
     return this.value;
   }
 }
@@ -2067,10 +2099,11 @@ export class ArrayLiteral extends Expr {
     return arrayNodeId;
   }
 
-  evaluate(): unknown[] {
-    return this.value.map((exp) =>
-      getValueOfExpression(exp.evaluate(), varStacks),
-    );
+  async evaluate(): Promise<unknown[]> {
+    const array = new Array<unknown>();
+    for (const exp of this.value)
+      array.push(getValueOfExpression(await exp.evaluate(), varStacks));
+    return array;
   }
 }
 export class Identifier extends Expr {
@@ -2093,7 +2126,7 @@ export class Identifier extends Expr {
     return identifierNodeId;
   }
 
-  evaluate(): Identifier {
+  async evaluate(): Promise<Identifier> {
     return this;
   }
 }

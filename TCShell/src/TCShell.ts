@@ -42,7 +42,7 @@ program
         console.error("Program has " + semanticsErrors + " error(s)!");
         return;
       }
-      astHead.evaluate();
+      Promise.resolve(astHead.evaluate());
     } catch (err) {
       console.error(err);
     }
