@@ -1,16 +1,14 @@
 import "dotenv/config";
-import { Client, EntityId, Repository, Schema } from "redis-om";
+import { EntityId, Repository, Schema } from "redis-om";
 import { SpatialTypeEntity } from "./FrontendObjects.js";
+import { createClient } from "redis";
 
-const client = new Client();
-
-async function connect(): Promise<Client> {
-  if (!client.isOpen()) return await client.open(process.env.REDIS_URL);
-}
+const client = await createClient({ url: process.env.REDIS_URL })
+  .on("error", (err) => console.log("Redis Client Error", err))
+  .connect();
 
 async function connectAndGetRepo(schema: Schema): Promise<Repository> {
-  const client = await connect();
-  const repo: Repository = client.fetchRepository(schema);
+  const repo: Repository = new Repository(schema, client);
   await repo.createIndex();
   return repo;
 }

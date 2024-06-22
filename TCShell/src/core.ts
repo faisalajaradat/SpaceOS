@@ -1461,7 +1461,6 @@ export class Match extends Stmt {
         condition.stmtType instanceof SpatialType &&
         typeof subject === "string"
       ) {
-        if (condition.stmtType.equals(new SpatialType(-1, -1))) return true;
         const [propertiesRaw, delegateTypeRaw] = parseSpatialTypeProperties(
           <SpatialType>condition.stmtType,
         );
@@ -1470,17 +1469,33 @@ export class Match extends Stmt {
           string,
           string | boolean
         >;
-        const schema = delegateType.contains(new SpaceType(-1, -1))
-          ? engine.SPACE_SCHEMA
-          : delegateType.contains(new EntityType(-1, -1))
-            ? engine.ENTITY_SCHEMA
-            : engine.PATH_SCHEMA;
-        const data = await fetchData(schema, subject);
-        if (Object.keys(data).length === 0) return false;
+        let data = undefined;
+        if (delegateType.equals(new SpatialType(-1, -1))) {
+          for (const schema of [
+            engine.ENTITY_SCHEMA,
+            engine.SPACE_SCHEMA,
+            engine.PATH_SCHEMA,
+          ]) {
+            const fetchedData = await fetchData(schema, subject);
+            if (Object.keys(fetchedData).length > 0) data = fetchedData;
+          }
+          if (data === undefined) return false;
+        } else {
+          const schema = new SpaceType(-1, -1).contains(delegateType)
+            ? engine.SPACE_SCHEMA
+            : new EntityType(-1, -1).contains(delegateType)
+              ? engine.ENTITY_SCHEMA
+              : engine.PATH_SCHEMA;
+          data = await fetchData(schema, subject);
+          if (Object.keys(data).length === 0) return false;
+        }
+        if (properties.size === 0) return true;
         const localityMatches = properties.get("locality") === data.locality;
+        if (properties.size === 1) return localityMatches;
         const controllMatches =
           properties.get("isControlled") ===
           (<engine.SpatialObject>data).isControlled;
+        if (properties.size === 2) return localityMatches && controllMatches;
         const motionMatches =
           properties.get("motion") === (<engine.DynamicEntity>data).motion;
         return localityMatches && controllMatches && motionMatches;

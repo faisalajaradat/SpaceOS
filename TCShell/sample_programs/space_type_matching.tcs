@@ -58,9 +58,16 @@ void(SpatialType[]) parseAndDescribeSpacialTypes = void (SpatialType[] listOfSpa
       physical SpatialType pst => handlePhysicalSpatialType(pst)
       virtual SpatialType vst => handleVirtualSpatialType(vst)
     }
+    iter = iter + 1
   }
 }
 
 virtual mutable mobile SmartEntity car = new virtual mutable mobile SmartEntity()
+physical mutable OpenSpace parkingLot = new physical mutable OpenSpace()
 
+SpatialType[] lotAndCars = { (SpatialType)car, (SpatialType)parkingLot }
+
+parseAndDescribeSpacialTypes(lotAndCars)
+
+print(parkingLot)
 print(car)
