@@ -4,10 +4,14 @@ import { grammar } from "../src/grammar.js";
 import { ast } from "../src/ast.js";
 import analyze from "../src/semantics.js";
 import * as test_cases from "./test_cases.js";
+import { disconnect } from "../../SpatialComputingEngine/src/SpatialComputingEngine.js";
 
 async function executeTestCase(testCase: string) {
   const program: core.Program = ast(grammar.match(testCase));
-  if (analyze(program) === 0) await program.evaluate();
+  if (analyze(program) === 0) {
+    await program.evaluate();
+    await disconnect();
+  }
 }
 
 test("newline as statement seperator", async () => {

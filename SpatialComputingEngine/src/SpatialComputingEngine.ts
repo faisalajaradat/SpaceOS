@@ -13,6 +13,10 @@ async function connectAndGetRepo(schema: Schema): Promise<Repository> {
   return repo;
 }
 
+export async function disconnect(): Promise<void> {
+  if (client.isOpen) return await client.disconnect();
+}
+
 export async function saveData(
   schema: Schema,
   data: engine.SpatialTypeEntity,

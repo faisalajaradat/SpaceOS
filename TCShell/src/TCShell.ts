@@ -5,6 +5,7 @@ import { ast } from "./ast.js";
 import { Command } from "commander";
 import { graphviz } from "node-graphviz";
 import analyze from "./semantics.js";
+import { disconnect } from "../../SpatialComputingEngine/src/SpatialComputingEngine.js";
 //Entrypoint and CLI for using TCShell interpreter
 
 const program = new Command();
@@ -19,7 +20,7 @@ program
   .description("interpret tcs files")
   .option("-t, --trace", "output match trace incase of syntax errors")
   .option("-d, --dot <path>", "save DOT representation of AST to path")
-  .action((path, options) => {
+  .action(async (path, options) => {
     try {
       const input = fs.readFileSync(path, "utf-8");
       const match = grammar.match(input);
@@ -42,7 +43,8 @@ program
         console.error("Program has " + semanticsErrors + " error(s)!");
         return;
       }
-      Promise.resolve(astHead.evaluate());
+      await astHead.evaluate();
+      await disconnect();
     } catch (err) {
       console.error(err);
     }
