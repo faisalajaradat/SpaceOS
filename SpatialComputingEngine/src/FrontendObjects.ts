@@ -90,7 +90,7 @@ export class AnimateEntity extends DynamicEntity {
 export class SmartEntity extends DynamicEntity {
   constructor(locality: string, isControlled: boolean, motion: string) {
     super(locality, isControlled, motion);
-    this._type = "AnimateEntity";
+    this._type = "SmartEntity";
   }
 }
 
