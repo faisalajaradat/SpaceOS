@@ -141,7 +141,7 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
   } else node.children().forEach((child) => visitNameAnalyzer(child, scope));
 }
 
-let returnFunction: core.FunDeclaration = null;
+let returnFunction: core.FunDeclaration = undefined;
 
 function assignArraySize(type1: core.ArrayType, type2: core.ArrayType) {
   while (
@@ -223,13 +223,17 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
     } else return node.stmtType;
   } else if (node instanceof core.Return) {
     if (node.possibleValue === null) {
-      if (!returnFunction.stmtType.equals(voidType)) {
+      if (
+        returnFunction !== undefined &&
+        !returnFunction.stmtType.equals(voidType)
+      ) {
         errors++;
         console.log(node.getFilePos() + "Function is not type void!");
       }
     } else {
       const returnType: core.Type = visitTypeAnalyzer(node.possibleValue);
       if (
+        returnFunction === undefined ||
         !returnType.equals(
           (<core.FunctionType>returnFunction.stmtType).returnType,
         )
@@ -238,6 +242,11 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
         console.log(node.getFilePos() + "Incorrect return type");
       }
     }
+  } else if (node instanceof core.DeferredDecorator) {
+    const oldFunDeclaration = returnFunction;
+    returnFunction = undefined;
+    node.children().forEach((child) => visitTypeAnalyzer(child));
+    returnFunction = oldFunDeclaration;
   } else if (node instanceof core.If) {
     if (conditionIsValidType(node)) {
       visitTypeAnalyzer(node.ifStmt);
