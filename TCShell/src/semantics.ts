@@ -115,6 +115,17 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
     const curScope = new Scope(scope);
     node.children().forEach((child) => visitNameAnalyzer(child, curScope));
     node.scope = curScope;
+  } else if (node instanceof core.DeferredDecorator) {
+    node.scopeArgs.forEach((arg) => visitNameAnalyzer(arg, scope));
+    node.scopeParams = node.scopeArgs.map(
+      (arg) =>
+        new core.Parameter(arg.line, arg.column, arg.declaration.stmtType, arg),
+    );
+    const newScope = new Scope(null);
+    core.libFunctions.forEach((value, key) => visitNameAnalyzer(key, newScope));
+    node.scopeParams.forEach((param) => visitNameAnalyzer(param, newScope));
+    visitNameAnalyzer(node.delegate, newScope);
+    node.scope = newScope;
   } else if (node instanceof core.Identifier) {
     const programSymbol = scope.lookup(node.value);
     if (programSymbol === null) {

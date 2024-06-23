@@ -4,7 +4,12 @@ import { VarSymbol } from "./semantics.js";
 import { Schema } from "redis-om";
 
 export function popOutOfScopeVars(
-  node: core.Program | core.FunDeclaration | core.Block | core.CaseStmt,
+  node:
+    | core.Program
+    | core.FunDeclaration
+    | core.Block
+    | core.CaseStmt
+    | core.DeferredDecorator,
   varStacks: Map<core.VarDeclaration | core.Parameter, unknown[]>,
 ) {
   node.scope.symbolTable.forEach((symbol) => {

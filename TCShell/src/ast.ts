@@ -65,6 +65,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     );
   },
   CompoundStmt_match(
+    possibleDeferDeclaration,
     _match,
     expression,
     _leftBracket,
@@ -72,12 +73,16 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     _rightBracket,
   ) {
     const lineAndColumn = this.source.getLineAndColumn();
-    return new core.Match(
+    const matchStmt = new core.Match(
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
       expression.ast(),
       caseStmts.ast(),
     );
+    const deferDeclaration = possibleDeferDeclaration.ast()[0];
+    if (deferDeclaration === undefined) return matchStmt;
+    (<core.DeferredDecorator>deferDeclaration).delegate = matchStmt;
+    return deferDeclaration;
   },
   CaseStmt(condition, _arrow, stmt) {
     const lineAndColumn = this.source.getLineAndColumn();
@@ -317,6 +322,19 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       lineAndColumn.colNum,
       unionType.ast(),
       listOfTypes.asIteration().ast(),
+    );
+  },
+  DeferDeclaration(
+    _defer,
+    _leftParenthesis,
+    listOfIdentifiers,
+    _rightParenthesis,
+  ) {
+    const lineAndColumn = this.source.getLineAndColumn();
+    return new core.DeferredDecorator(
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
+      listOfIdentifiers.asIteration().ast(),
     );
   },
   Parameter(type, identifier) {

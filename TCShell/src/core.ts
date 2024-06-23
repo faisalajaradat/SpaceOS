@@ -15,7 +15,7 @@ import {
 } from "../../SpatialComputingEngine/src/SpatialComputingEngine.js";
 //A map variable declaration and their stack of assigned values
 const varStacks = new Map<VarDeclaration | Parameter, unknown[]>();
-
+const unresolved = [];
 export class ArrayRepresentation {
   array: unknown[];
   index: number;
@@ -1064,8 +1064,12 @@ export class Program implements ASTNode {
   }
 
   async evaluate(): Promise<void> {
-    for (const stmt of this.children()) await stmt.evaluate();
+    for (const stmt of this.children()) {
+      if (stmt instanceof DeferredDecorator) unresolved.push(stmt.evaluate());
+      else await stmt.evaluate();
+    }
     popOutOfScopeVars(this, varStacks);
+    Promise.all(unresolved);
   }
 }
 export abstract class Stmt implements ASTNode {
@@ -1089,6 +1093,57 @@ export abstract class Stmt implements ASTNode {
 export abstract class Expr extends Stmt {
   constructor(line: number, column: number, type: Type) {
     super(line, column, type);
+  }
+}
+export class DeferredDecorator extends Stmt {
+  delegate: Stmt;
+  scopeArgs: Identifier[];
+  scopeParams: Parameter[];
+  scope: Scope;
+
+  constructor(line: number, column: number, scopeArgs: Identifier[]) {
+    super(line, column, new BaseType(line, column, BaseTypeKind.NONE));
+    this.scopeArgs = scopeArgs;
+  }
+
+  children(): ASTNode[] {
+    const children = new Array<ASTNode>();
+    children.push(...this.scopeArgs);
+    children.push(this.delegate);
+    return children;
+  }
+
+  print(): string {
+    const deferNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(deferNodeId + '[label=" defer "];\n');
+    const scopeArgsNodeId = "Node" + nodeCount++;
+    dotString = dotString.concat(scopeArgsNodeId + '[label=" scope args "];\n');
+    dotString = dotString.concat(deferNodeId + "->" + scopeArgsNodeId + ";\n");
+    this.scopeArgs
+      .map((exp) => exp.print())
+      .forEach(
+        (nodeId) =>
+          (dotString = dotString.concat(
+            scopeArgsNodeId + "->" + nodeId + ";\n",
+          )),
+      );
+    const delegateNodeId = this.delegate.print();
+    dotString = dotString.concat(deferNodeId + "->" + delegateNodeId + ";\n");
+    return deferNodeId;
+  }
+
+  async evaluate(): Promise<unknown> {
+    for (let pos = 0; pos < this.scopeArgs.length; pos++) {
+      const arg = this.scopeArgs[pos];
+      const value = getValueOfExpression(await arg.evaluate(), varStacks);
+      const paramStack = varStacks.get(this.scopeParams[pos]);
+      if (paramStack === undefined)
+        varStacks.set(this.scopeParams[pos], [value]);
+      else paramStack.push(value);
+    }
+    await this.delegate.evaluate();
+    popOutOfScopeVars(this, varStacks);
+    return undefined;
   }
 }
 export class Parameter extends Stmt {
@@ -1284,10 +1339,19 @@ export class If extends Stmt {
   async evaluate(): Promise<unknown> {
     if (
       <boolean>getValueOfExpression(await this.condition.evaluate(), varStacks)
-    )
+    ) {
+      if (this.ifStmt instanceof DeferredDecorator) {
+        unresolved.push(this.ifStmt.evaluate());
+        return undefined;
+      }
       return await this.ifStmt.evaluate();
-    else if (this.possibleElseStmt !== null)
+    } else if (this.possibleElseStmt !== null) {
+      if (this.possibleElseStmt instanceof DeferredDecorator) {
+        unresolved.push(this.possibleElseStmt.evaluate());
+        return undefined;
+      }
       return await this.possibleElseStmt.evaluate();
+    }
   }
 }
 export class While extends Stmt {
@@ -1321,8 +1385,12 @@ export class While extends Stmt {
     let returnValue = undefined;
     while (
       <boolean>getValueOfExpression(await this.condition.evaluate(), varStacks)
-    )
-      returnValue = await this.whileStmt.evaluate();
+    ) {
+      if (this.whileStmt instanceof DeferredDecorator) {
+        unresolved.push(this.whileStmt.evaluate());
+        returnValue = undefined;
+      } else returnValue = await this.whileStmt.evaluate();
+    }
     return returnValue;
   }
 }
@@ -1356,6 +1424,10 @@ export class Block extends Stmt {
   async evaluate(): Promise<unknown> {
     let returnNode = undefined;
     for (let i = 0; i < this.stmts.length; i++) {
+      if (this.stmts[i] instanceof DeferredDecorator) {
+        unresolved.push(this.stmts[i].evaluate());
+        continue;
+      }
       returnNode = await this.stmts[i].evaluate();
       if (returnNode instanceof Return) break;
     }
@@ -1410,12 +1482,17 @@ export class CaseStmt extends Stmt {
   }
 
   async evaluate(): Promise<unknown> {
-    let returnValue = await this.stmt.evaluate();
-    if (returnValue instanceof Return && returnValue.possibleValue !== null)
-      returnValue = getValueOfExpression(
-        await returnValue.possibleValue.evaluate(),
-        varStacks,
-      );
+    let returnValue = undefined;
+    if (this.stmt instanceof DeferredDecorator)
+      unresolved.push(this.stmt.evaluate());
+    else {
+      returnValue = await this.stmt.evaluate();
+      if (returnValue instanceof Return && returnValue.possibleValue !== null)
+        returnValue = getValueOfExpression(
+          await returnValue.possibleValue.evaluate(),
+          varStacks,
+        );
+    }
     popOutOfScopeVars(this, varStacks);
     return returnValue;
   }
@@ -1799,12 +1876,17 @@ export class FunDeclaration extends Expr {
   }
 
   async evaluate(): Promise<unknown> {
-    let returnValue = await this._body.evaluate();
-    if (returnValue instanceof Return && returnValue.possibleValue !== null)
-      returnValue = getValueOfExpression(
-        await returnValue.possibleValue.evaluate(),
-        varStacks,
-      );
+    let returnValue = undefined;
+    if (this._body instanceof DeferredDecorator)
+      unresolved.push(this._body.evaluate());
+    else {
+      returnValue = await this._body.evaluate();
+      if (returnValue instanceof Return && returnValue.possibleValue !== null)
+        returnValue = getValueOfExpression(
+          await returnValue.possibleValue.evaluate(),
+          varStacks,
+        );
+    }
     popOutOfScopeVars(this, varStacks);
     return returnValue;
   }
@@ -2235,10 +2317,7 @@ libFunctions.set(
       new Block(-1, -1, []),
     ),
   ),
-  (...args) =>
-    args[0] instanceof Promise
-      ? args[0].then((input) => console.log(input))
-      : console.log(args[0]),
+  (...args) => console.log(args[0]),
 );
 libFunctions.set(
   new VarDeclaration(

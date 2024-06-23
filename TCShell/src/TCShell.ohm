@@ -21,7 +21,7 @@ TCShell {
 
     CompoundStmt = Block    --block
     		  				| if Exp Stmt (else Stmt)?	--if
-                  | match Exp "{" CaseStmt+ "}"    --match
+                  | DeferDeclaration? match Exp "{" CaseStmt+ "}"    --match
           				| while Exp Stmt	--while
 
      CaseStmt = (Parameter | Exp | wildcard) "=>" Stmt
@@ -62,6 +62,7 @@ TCShell {
 
     VarDeclaration = Parameter "=" Exp
     UnionDeclaration = UnionType "=" NonemptyListOf<Type, "|">
+    DeferDeclaration = defer "(" ListOf<identifier, ","> ")"
 
     Parameter = Type identifier
 
@@ -123,6 +124,7 @@ TCShell {
             | pathFactory
             | spacePathGraph
             | new
+            | defer
 
     union = "union" ~identPart
     while = "while" ~identPart
@@ -154,6 +156,7 @@ TCShell {
     pathFactory = "PathFactory" ~identPart
     spacePathGraph = "SpacePathGraph" ~identPart
     new = "new" ~identPart
+    defer = "defer" ~identPart
 
 
     identStart      = letter | "_"
