@@ -2,15 +2,27 @@ number iter = 0
 
 defer (iter) match iter {
   _ => {
-    while iter < 100 {
-      print("match loop!")
+    while iter < 10 {
+      print("match 1 loop!")
       print(iter)
       iter = iter + 1
     }
   }
 }
 
-while iter < 100 {
+iter = 1
+defer (iter) match iter {
+  _ => {
+    while iter < 10 {
+      print("match 2 loop!")
+      print(iter)
+      iter = iter + 1
+    }
+  }
+}
+
+iter = 2
+while iter < 10 {
   print("outer loop!")
   print(iter)
   iter = iter + 1
