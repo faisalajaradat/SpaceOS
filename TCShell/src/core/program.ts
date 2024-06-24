@@ -2,9 +2,10 @@ import {Scope} from "../semantics.js";
 import {popOutOfScopeVars,} from "../utils.js";
 import {
   DeferredDecorator,
-  Parameter,
+  Parameter, Stmt,
   VarDeclaration
 } from "./stmts.js";
+import {Exprs} from "./exprs.js";
 //A map variable declaration and their stack of assigned values
 export const varStacks = new Map<VarDeclaration | Parameter, unknown[]>();
 export const unresolved = [];
@@ -24,6 +25,10 @@ let nodeCount = 0;
 export const newNodeId = () => "Node" + nodeCount++;
 
 export type SymbolDeclaration = VarDeclaration | Parameter;
+
+export type ExprStmt = Stmt | Exprs;
+
+export type MatchCondition = Parameter | Exprs;
 
 //Define all AST nodes
 export interface ASTNode {

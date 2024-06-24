@@ -31,31 +31,28 @@ import {
     VirtualDecorator
 } from "./core/types.js";
 import {
-    ArrayAccess,
-    ArrayLiteral,
-    BinaryExpr,
     Block,
-    BoolLiteral,
     CaseStmt,
     DeferredDecorator,
-    FunCall,
-    FunDeclaration,
-    Identifier,
     If,
     libFunctions,
     Match,
-    NoneLiteral,
-    NumberLiteral,
     Parameter,
     Return,
-    SpacialObjectInstantiationExpr,
-    StringLiteral,
-    TypeCast,
-    UnaryExpr,
     UnionDeclaration,
     VarDeclaration,
     While
 } from "./core/stmts.js";
+import {
+    ArrayAccess,
+    ArrayLiteral, BinaryExpr,
+    BoolLiteral, FunCall, FunDeclaration,
+    Identifier,
+    NoneLiteral,
+    NumberLiteral,
+    SpacialObjectInstantiationExpr,
+    StringLiteral, TypeCast, UnaryExpr
+} from "./core/exprs.js";
 
 export function ast(match) {
     return astBuilder(match).ast();
@@ -367,7 +364,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
         return new VarDeclaration(
             lineAndColumn.lineNum,
             lineAndColumn.colNum,
-            typeAndIdentifier.stmtType,
+            typeAndIdentifier._type,
             typeAndIdentifier.identifier,
             expression.ast(),
         );
