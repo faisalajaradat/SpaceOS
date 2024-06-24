@@ -17,36 +17,34 @@ import {Expr} from "./core/expr/Expr.js";
 import {
   AirPathType,
   AnimateEntityType,
+  ArrayAccess,
+  ArrayLiteral,
   ArrayType,
   BaseType,
   BaseTypeKind,
+  BinaryExpr,
+  BoolLiteral,
   CompositionType,
   ControlDecorator,
   EnclosedSpaceType,
   FunctionType,
+  FunDeclaration,
+  Identifier,
   LandPathType,
   MotionDecorator,
+  NoneLiteral,
+  NumberLiteral,
   OpenSpaceType,
   PathType,
   SmartEntityType,
+  SpacialObjectInstantiationExpr,
   SpatialType,
   StaticEntityType,
-  Type,
-  UnionType
-} from "./core/type/index.js";
-import {
-  ArrayAccess,
-  ArrayLiteral,
-  BinaryExpr,
-  BoolLiteral,
-  FunDeclaration,
-  Identifier,
-  NoneLiteral,
-  NumberLiteral,
-  SpacialObjectInstantiationExpr,
   StringLiteral,
-  UnaryExpr
-} from "./core/expr/index.js";
+  Type,
+  UnaryExpr,
+  UnionType
+} from "./core/index.js";
 import {TypeCast} from "./core/expr/TypeCast.js";
 import {FunCall} from "./core/expr/FunCall.js";
 

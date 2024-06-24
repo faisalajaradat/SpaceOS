@@ -15,18 +15,26 @@ import {
 import {
     AirPathType,
     AnimateEntityType,
+    ArrayAccess,
+    ArrayLiteral,
     ArrayType,
     BaseType,
     BaseTypeKind,
+    BinaryExpr,
+    BoolLiteral,
     ControlledDecorator,
     DynamicEntityType,
     EnclosedSpaceType,
     EntityFactoryType,
     EntityType,
     FunctionType,
+    FunDeclaration,
+    Identifier,
     LandPathType,
     MobileDecorator,
+    NoneLiteral,
     NotControlledDecorator,
+    NumberLiteral,
     OpenSpaceType,
     PathFactoryType,
     PathType,
@@ -35,27 +43,17 @@ import {
     SpaceFactoryType,
     SpacePathGraphType,
     SpaceType,
+    SpacialObjectInstantiationExpr,
     SpatialObjectType,
     SpatialType,
     StaticEntityType,
     StationaryDecorator,
+    StringLiteral,
+    UnaryExpr,
     UnionType,
     VirtualDecorator
-} from "./core/type/index.js";
+} from "./core/index.js";
 import {Program} from "./core/program.js";
-import {
-    ArrayAccess,
-    ArrayLiteral,
-    BinaryExpr,
-    BoolLiteral,
-    FunDeclaration,
-    Identifier,
-    NoneLiteral,
-    NumberLiteral,
-    SpacialObjectInstantiationExpr,
-    StringLiteral,
-    UnaryExpr
-} from "./core/expr/index.js";
 import {TypeCast} from "./core/expr/TypeCast.js";
 import {FunCall} from "./core/expr/FunCall.js";
 

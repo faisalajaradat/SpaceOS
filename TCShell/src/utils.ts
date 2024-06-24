@@ -8,6 +8,8 @@ import {
   BaseType,
   BaseTypeKind,
   ControlledDecorator,
+  FunDeclaration,
+  Identifier,
   MobileDecorator,
   NotControlledDecorator,
   PhysicalDecorator,
@@ -16,8 +18,7 @@ import {
   StationaryDecorator,
   Type,
   VirtualDecorator
-} from "./core/type/index.js";
-import {FunDeclaration, Identifier} from "./core/expr/index.js";
+} from "./core/index.js";
 
 export function popOutOfScopeVars(
     node: Program | FunDeclaration | Block | CaseStmt | DeferredDecorator,
