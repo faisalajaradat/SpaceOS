@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { EntityId, Repository, Schema } from "redis-om";
-import * as engine from "./FrontendObjects.js";
+import * as engine from "./frontend-objects.js";
 import { createClient } from "redis";
 
 const client = await createClient({ url: process.env.REDIS_URL })

@@ -8,11 +8,11 @@ import {
   getSpatialTypeSchema,
   parseSpatialTypeProperties,
 } from "./utils.js";
-import * as engine from "../../SpatialComputingEngine/src/FrontendObjects.js";
+import * as engine from "../../SpatialComputingEngine/src/frontend-objects.js";
 import {
   saveData,
   fetchData,
-} from "../../SpatialComputingEngine/src/SpatialComputingEngine.js";
+} from "../../SpatialComputingEngine/src/spatial-computing-engine.js";
 //A map variable declaration and their stack of assigned values
 const varStacks = new Map<VarDeclaration | Parameter, unknown[]>();
 const unresolved = [];
@@ -26,10 +26,10 @@ export class ArrayRepresentation {
   }
 }
 
-let dotString = "";
+export const dotString = new Array<string>();
 let nodeCount = 0;
 
-const newNodeId = () => "Node" + nodeCount++;
+export const newNodeId = () => "Node" + nodeCount++;
 
 //Define all AST nodes
 export interface ASTNode {
@@ -117,7 +117,7 @@ export class BaseType extends Type {
       case BaseTypeKind.NONE:
         break;
     }
-    dotString = dotString.concat(typeNodeId + '[label=" ' + label + ' "];\n');
+    dotString.push(typeNodeId + '[label=" ' + label + ' "];\n');
     return typeNodeId;
   }
 
@@ -126,7 +126,7 @@ export class BaseType extends Type {
   }
 }
 export abstract class FactoryType extends Type {
-  constructor(line: number, column: number) {
+  protected constructor(line: number, column: number) {
     super(line, column);
   }
 }
@@ -141,7 +141,7 @@ export class SpaceFactoryType extends FactoryType {
 
   print(): string {
     const spaceFactoryTypeNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       spaceFactoryTypeNodeId + '[label=" Space Factory Type "];\n',
     );
     return spaceFactoryTypeNodeId;
@@ -166,7 +166,7 @@ export class EntityFactoryType extends FactoryType {
 
   print(): string {
     const entityFactoryTypeNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       entityFactoryTypeNodeId + '[label=" Entity Factory Type "];\n',
     );
     return entityFactoryTypeNodeId;
@@ -191,7 +191,7 @@ export class PathFactoryType extends FactoryType {
 
   print(): string {
     const pathFactoryTypeNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       pathFactoryTypeNodeId + '[label=" Path Factory Type "];\n',
     );
     return pathFactoryTypeNodeId;
@@ -217,7 +217,7 @@ export class SpatialType extends CompositionType {
 
   print(): string {
     const spatialTypeNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       spatialTypeNodeId + '[label=" Spatial Type "];\n',
     );
     return spatialTypeNodeId;
@@ -266,9 +266,9 @@ export class PhysicalDecorator extends LocalityDecorator {
 
   print(): string {
     const physicalNodeId = newNodeId();
-    dotString = dotString.concat(physicalNodeId + '[label=" Physical "];\n');
+    dotString.push(physicalNodeId + '[label=" Physical "];\n');
     const delegateNodeId = this.delegate.print();
-    dotString = dotString.concat(
+    dotString.push(
       physicalNodeId + "->" + delegateNodeId + ";\n",
     );
     return physicalNodeId;
@@ -301,9 +301,9 @@ export class VirtualDecorator extends LocalityDecorator {
 
   print(): string {
     const virtualNodeId = newNodeId();
-    dotString = dotString.concat(virtualNodeId + '[label=" Virtual "];\n');
+    dotString.push(virtualNodeId + '[label=" Virtual "];\n');
     const delegateNodeId = this.delegate.print();
-    dotString = dotString.concat(virtualNodeId + "->" + delegateNodeId + ";\n");
+    dotString.push(virtualNodeId + "->" + delegateNodeId + ";\n");
     return virtualNodeId;
   }
 
@@ -338,7 +338,7 @@ export class SpacePathGraphType extends SpatialType {
 
   print(): string {
     const spacePathGraphTypeNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       spacePathGraphTypeNodeId + '[label=" Space Path Graph Type "];\n',
     );
     return spacePathGraphTypeNodeId;
@@ -370,7 +370,7 @@ export class PathType extends SpatialType {
 
   print(): string {
     const pathNodeId = newNodeId();
-    dotString = dotString.concat(pathNodeId + '[label=" Path "];\n');
+    dotString.push(pathNodeId + '[label=" Path "];\n');
     return pathNodeId;
   }
 
@@ -400,7 +400,7 @@ export class LandPathType extends PathType {
 
   print(): string {
     const landPathNodeId = newNodeId();
-    dotString = dotString.concat(landPathNodeId + '[label=" Land Path "];\n');
+    dotString.push(landPathNodeId + '[label=" Land Path "];\n');
     return landPathNodeId;
   }
 
@@ -430,7 +430,7 @@ export class AirPathType extends PathType {
 
   print(): string {
     const airPathNodeId = newNodeId();
-    dotString = dotString.concat(airPathNodeId + '[label=" Air Path "];\n');
+    dotString.push(airPathNodeId + '[label=" Air Path "];\n');
     return airPathNodeId;
   }
 
@@ -467,11 +467,11 @@ export class ControlledDecorator extends ControlDecorator {
 
   print(): string {
     const controlledNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       controlledNodeId + '[label=" Controlled "];\n',
     );
     const delegateNodeId = this.delegate.print();
-    dotString = dotString.concat(
+    dotString.push(
       controlledNodeId + "->" + delegateNodeId + ";\n",
     );
     return controlledNodeId;
@@ -504,11 +504,11 @@ export class NotControlledDecorator extends ControlDecorator {
 
   print(): string {
     const notControlledNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       notControlledNodeId + '[label=" Not Controlled "];\n',
     );
     const delegateNodeId = this.delegate.print();
-    dotString = dotString.concat(
+    dotString.push(
       notControlledNodeId + "->" + delegateNodeId + ";\n",
     );
     return notControlledNodeId;
@@ -545,7 +545,7 @@ export class SpaceType extends SpatialObjectType {
 
   print(): string {
     const spaceNodeId = newNodeId();
-    dotString = dotString.concat(spaceNodeId + '[label=" Space "];\n');
+    dotString.push(spaceNodeId + '[label=" Space "];\n');
     return spaceNodeId;
   }
 
@@ -575,7 +575,7 @@ export class OpenSpaceType extends SpaceType {
 
   print(): string {
     const openSpaceNodeId = newNodeId();
-    dotString = dotString.concat(openSpaceNodeId + '[label=" Open Space "];\n');
+    dotString.push(openSpaceNodeId + '[label=" Open Space "];\n');
     return openSpaceNodeId;
   }
 
@@ -605,7 +605,7 @@ export class EnclosedSpaceType extends SpaceType {
 
   print(): string {
     const enclosedSpaceNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       enclosedSpaceNodeId + '[label=" Enclosed Space "];\n',
     );
     return enclosedSpaceNodeId;
@@ -637,7 +637,7 @@ export class EntityType extends SpatialObjectType {
 
   print(): string {
     const entityNodeId = newNodeId();
-    dotString = dotString.concat(entityNodeId + '[label=" Entity "];\n');
+    dotString.push(entityNodeId + '[label=" Entity "];\n');
     return entityNodeId;
   }
 
@@ -667,7 +667,7 @@ export class StaticEntityType extends EntityType {
 
   print(): string {
     const staticEntityNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       staticEntityNodeId + '[label=" Static Entity "];\n',
     );
     return staticEntityNodeId;
@@ -699,7 +699,7 @@ export class DynamicEntityType extends EntityType {
 
   print(): string {
     const dynamicEntityNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       dynamicEntityNodeId + '[label=" Dynamic Entity "];\n',
     );
     return dynamicEntityNodeId;
@@ -731,7 +731,7 @@ export class AnimateEntityType extends DynamicEntityType {
 
   print(): string {
     const animateEntityNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       animateEntityNodeId + '[label=" Animate Entity "];\n',
     );
     return animateEntityNodeId;
@@ -763,7 +763,7 @@ export class SmartEntityType extends DynamicEntityType {
 
   print(): string {
     const smartEntityNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       smartEntityNodeId + '[label=" Smart Entity "];\n',
     );
     return smartEntityNodeId;
@@ -802,9 +802,9 @@ export class MobileDecorator extends MotionDecorator {
 
   print(): string {
     const mobileNodeId = newNodeId();
-    dotString = dotString.concat(mobileNodeId + '[label=" Mobile "];\n');
+    dotString.push(mobileNodeId + '[label=" Mobile "];\n');
     const delegateNodeId = this.delegate.print();
-    dotString = dotString.concat(mobileNodeId + "->" + delegateNodeId + ";\n");
+    dotString.push(mobileNodeId + "->" + delegateNodeId + ";\n");
     return mobileNodeId;
   }
 
@@ -835,11 +835,11 @@ export class StationaryDecorator extends MotionDecorator {
 
   print(): string {
     const stationaryNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       stationaryNodeId + '[label=" Stationary "];\n',
     );
     const delegateNodeId = this.delegate.print();
-    dotString = dotString.concat(
+    dotString.push(
       stationaryNodeId + "->" + delegateNodeId + ";\n",
     );
     return stationaryNodeId;
@@ -902,9 +902,9 @@ export class UnionType extends CompositionType {
 
   print(): string {
     const unionType = newNodeId();
-    dotString = dotString.concat(unionType + '[label=" UnionType "];\n');
+    dotString.push(unionType + '[label=" UnionType "];\n');
     const identifierNodeId = this.identifier.print();
-    dotString = dotString.concat(unionType + "->" + identifierNodeId + ";\n");
+    dotString.push(unionType + "->" + identifierNodeId + ";\n");
     return unionType;
   }
 
@@ -959,18 +959,18 @@ export class FunctionType extends Type {
 
   print(): string {
     const functionTypeNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       functionTypeNodeId + '[label=" Function "];\n',
     );
     const typeNodeId = this.returnType.print();
-    dotString = dotString.concat(
+    dotString.push(
       functionTypeNodeId + "->" + typeNodeId + ";\n",
     );
     this.paramTypes
       .map((paramType) => paramType.print())
       .forEach(
         (nodeId) =>
-          (dotString = dotString.concat(
+          (dotString.push(
             functionTypeNodeId + "->" + nodeId + ";\n",
           )),
       );
@@ -1004,9 +1004,9 @@ export class ArrayType extends Type {
 
   print(): string {
     const arrayTypeNodeId = newNodeId();
-    dotString = dotString.concat(arrayTypeNodeId + '[label=" Array Of "];\n');
+    dotString.push(arrayTypeNodeId + '[label=" Array Of "];\n');
     const typeNodeId = this._type;
-    dotString = dotString.concat(arrayTypeNodeId + "->" + typeNodeId + ";\n");
+    dotString.push(arrayTypeNodeId + "->" + typeNodeId + ";\n");
     return arrayTypeNodeId;
   }
 
@@ -1037,16 +1037,17 @@ export class Program implements ASTNode {
   }
 
   print(): string {
-    dotString = dotString.concat("digraph ast {\n");
+    dotString.push("digraph ast {\n");
     const programNodeId = newNodeId();
-    dotString = dotString.concat(programNodeId + '[label=" Program "];\n');
+    dotString.push(programNodeId + '[label=" Program "];\n');
     const declsNodeIds = new Array<string>();
     this.children().forEach((child) => declsNodeIds.push(child.print()));
     declsNodeIds.forEach(
       (nodeId) =>
-        (dotString = dotString.concat(programNodeId + "->" + nodeId + ";\n")),
+        (dotString.push(programNodeId + "->" + nodeId + ";\n")),
     );
-    return dotString.concat("}");
+    dotString.concat("}");
+    return programNodeId;
   }
 
   async evaluate(): Promise<void> {
@@ -1055,7 +1056,7 @@ export class Program implements ASTNode {
       else await stmt.evaluate();
     }
     popOutOfScopeVars(this, varStacks);
-    Promise.all(unresolved);
+    await Promise.all(unresolved);
   }
 }
 export abstract class Stmt implements ASTNode {
@@ -1066,7 +1067,7 @@ export abstract class Stmt implements ASTNode {
   column: number;
   stmtType: Type;
 
-  constructor(line: number, column: number, type: Type) {
+  protected constructor(line: number, column: number, type: Type) {
     this.line = line;
     this.column = column;
     this.stmtType = type;
@@ -1077,7 +1078,7 @@ export abstract class Stmt implements ASTNode {
   }
 }
 export abstract class Expr extends Stmt {
-  constructor(line: number, column: number, type: Type) {
+  protected constructor(line: number, column: number, type: Type) {
     super(line, column, type);
   }
 }
@@ -1101,20 +1102,20 @@ export class DeferredDecorator extends Stmt {
 
   print(): string {
     const deferNodeId = newNodeId();
-    dotString = dotString.concat(deferNodeId + '[label=" defer "];\n');
+    dotString.push(deferNodeId + '[label=" defer "];\n');
     const scopeArgsNodeId = newNodeId();
-    dotString = dotString.concat(scopeArgsNodeId + '[label=" scope args "];\n');
-    dotString = dotString.concat(deferNodeId + "->" + scopeArgsNodeId + ";\n");
+    dotString.push(scopeArgsNodeId + '[label=" scope args "];\n');
+    dotString.push(deferNodeId + "->" + scopeArgsNodeId + ";\n");
     this.scopeArgs
       .map((exp) => exp.print())
       .forEach(
         (nodeId) =>
-          (dotString = dotString.concat(
+          (dotString.push(
             scopeArgsNodeId + "->" + nodeId + ";\n",
           )),
       );
     const delegateNodeId = this.delegate.print();
-    dotString = dotString.concat(deferNodeId + "->" + delegateNodeId + ";\n");
+    dotString.push(deferNodeId + "->" + delegateNodeId + ";\n");
     return deferNodeId;
   }
 
@@ -1154,11 +1155,11 @@ export class Parameter extends Stmt {
 
   print(): string {
     const paramNodeId = newNodeId();
-    dotString = dotString.concat(paramNodeId + '[label=" Param "];\n');
+    dotString.push(paramNodeId + '[label=" Param "];\n');
     const typeNodeId = this.stmtType.print();
     const identifierNodeId = this.identifier.print();
-    dotString = dotString.concat(paramNodeId + "->" + typeNodeId + ";\n");
-    dotString = dotString.concat(paramNodeId + "->" + identifierNodeId + ";\n");
+    dotString.push(paramNodeId + "->" + typeNodeId + ";\n");
+    dotString.push(paramNodeId + "->" + identifierNodeId + ";\n");
     return paramNodeId;
   }
 
@@ -1192,15 +1193,15 @@ export class VarDeclaration extends Stmt {
 
   print(): string {
     const varDeclNodeId = newNodeId();
-    dotString = dotString.concat(varDeclNodeId + '[label=" = "];\n');
+    dotString.push(varDeclNodeId + '[label=" = "];\n');
     const typeNodeId = this.stmtType.print();
     const identifierNodeId = this.identifier.print();
     const valueNodeId = this.value.print();
-    dotString = dotString.concat(varDeclNodeId + "->" + typeNodeId + ";\n");
-    dotString = dotString.concat(
+    dotString.push(varDeclNodeId + "->" + typeNodeId + ";\n");
+    dotString.push(
       varDeclNodeId + "->" + identifierNodeId + ";\n",
     );
-    dotString = dotString.concat(varDeclNodeId + "->" + valueNodeId + ";\n");
+    dotString.push(varDeclNodeId + "->" + valueNodeId + ";\n");
     return varDeclNodeId;
   }
 
@@ -1228,16 +1229,16 @@ export class UnionDeclaration extends Stmt {
 
   print(): string {
     const unionDeclNodeId = newNodeId();
-    dotString = dotString.concat(unionDeclNodeId + '[label= "Union"];\n');
+    dotString.push(unionDeclNodeId + '[label= "Union"];\n');
     const unionTypeNodeId = this.stmtType.print();
-    dotString = dotString.concat(
+    dotString.push(
       unionDeclNodeId + "->" + unionTypeNodeId + ";\n",
     );
     this.options
       .map((option) => option.print())
       .forEach(
         (nodeId) =>
-          (dotString = dotString.concat(
+          (dotString.push(
             unionDeclNodeId + "->" + nodeId + ";\n",
           )),
       );
@@ -1264,10 +1265,10 @@ export class Return extends Stmt {
 
   print(): string {
     const returnNodeId = newNodeId();
-    dotString = dotString.concat(returnNodeId + '[label=" return "];\n');
+    dotString.push(returnNodeId + '[label=" return "];\n');
     if (this.possibleValue === null) return returnNodeId;
     const valueNodeId = this.possibleValue.print();
-    dotString = dotString.concat(returnNodeId + "->" + valueNodeId + ";\n");
+    dotString.push(returnNodeId + "->" + valueNodeId + ";\n");
     return returnNodeId;
   }
 
@@ -1303,21 +1304,21 @@ export class If extends Stmt {
 
   print(): string {
     const ifNodeId = newNodeId();
-    dotString = dotString.concat(ifNodeId + '[label=" if "];\n');
+    dotString.push(ifNodeId + '[label=" if "];\n');
     let elseStmtNodeId = "";
     let elseNodeId = "";
     const conditionNodeId = this.condition.print();
     const stmtNodeId = this.ifStmt.print();
     if (this.possibleElseStmt !== null) {
       elseNodeId = newNodeId();
-      dotString = dotString.concat(elseNodeId + '[label=" else "];\n');
+      dotString.push(elseNodeId + '[label=" else "];\n');
       elseStmtNodeId = this.possibleElseStmt.print();
     }
-    dotString = dotString.concat(ifNodeId + "->" + conditionNodeId + ";\n");
-    dotString = dotString.concat(ifNodeId + "->" + stmtNodeId + ";\n");
+    dotString.push(ifNodeId + "->" + conditionNodeId + ";\n");
+    dotString.push(ifNodeId + "->" + stmtNodeId + ";\n");
     if (elseNodeId !== "") {
-      dotString = dotString.concat(ifNodeId + "->" + elseNodeId + ";\n");
-      dotString = dotString.concat(elseNodeId + "->" + elseStmtNodeId + ";\n");
+      dotString.push(ifNodeId + "->" + elseNodeId + ";\n");
+      dotString.push(elseNodeId + "->" + elseStmtNodeId + ";\n");
     }
     return ifNodeId;
   }
@@ -1359,11 +1360,11 @@ export class While extends Stmt {
 
   print(): string {
     const whileNodeId = newNodeId();
-    dotString = dotString.concat(whileNodeId + '[label=" while "];\n');
+    dotString.push(whileNodeId + '[label=" while "];\n');
     const conditionNodeId = this.condition.print();
     const stmtNodeId = this.whileStmt.print();
-    dotString = dotString.concat(whileNodeId + "->" + conditionNodeId + ";\n");
-    dotString = dotString.concat(whileNodeId + "->" + stmtNodeId + ";\n");
+    dotString.push(whileNodeId + "->" + conditionNodeId + ";\n");
+    dotString.push(whileNodeId + "->" + stmtNodeId + ";\n");
     return whileNodeId;
   }
 
@@ -1397,12 +1398,12 @@ export class Block extends Stmt {
 
   print(): string {
     const blockNodeId = newNodeId();
-    dotString = dotString.concat(blockNodeId + '[label=" Block "];\n');
+    dotString.push(blockNodeId + '[label=" Block "];\n');
     const stmtIds = new Array<string>();
     this.stmts.forEach((stmt) => stmtIds.push(stmt.print()));
     stmtIds.forEach(
       (nodeId) =>
-        (dotString = dotString.concat(blockNodeId + "->" + nodeId + ";\n")),
+        (dotString.push(blockNodeId + "->" + nodeId + ";\n")),
     );
     return blockNodeId;
   }
@@ -1457,13 +1458,13 @@ export class CaseStmt extends Stmt {
 
   print(): string {
     const caseStmtNodeId = newNodeId();
-    dotString = dotString.concat(caseStmtNodeId + '[label=" Case "];\n');
+    dotString.push(caseStmtNodeId + '[label=" Case "];\n');
     const matchConditionNodeId = this.matchCondition.print();
     const stmtNodeId = this.stmt.print();
-    dotString = dotString.concat(
+    dotString.push(
       caseStmtNodeId + "->" + matchConditionNodeId + ";\n",
     );
-    dotString = dotString.concat(caseStmtNodeId + "->" + stmtNodeId + ";\n");
+    dotString.push(caseStmtNodeId + "->" + stmtNodeId + ";\n");
     return caseStmtNodeId;
   }
 
@@ -1637,14 +1638,14 @@ export class Match extends Stmt {
 
   print(): string {
     const matchNodeId = newNodeId();
-    dotString = dotString.concat(matchNodeId + '[label=" Match "];\n');
+    dotString.push(matchNodeId + '[label=" Match "];\n');
     const subjectNodeId = this.subject.print();
-    dotString = dotString.concat(matchNodeId + "->" + subjectNodeId + ";\n");
+    dotString.push(matchNodeId + "->" + subjectNodeId + ";\n");
     this.caseStmts
       .map((caseStmt) => caseStmt.print())
       .forEach(
         (nodeId) =>
-          (dotString = dotString.concat(matchNodeId + "->" + nodeId + ";\n")),
+          (dotString.push(matchNodeId + "->" + nodeId + ";\n")),
       );
     return matchNodeId;
   }
@@ -1654,7 +1655,7 @@ export class Match extends Stmt {
       await this.subject.evaluate(),
       varStacks,
     );
-    const sortedmatchCases = this.caseStmts.sort((a, b) => {
+    const sortedMatchCases = this.caseStmts.sort((a, b) => {
       if (
         (a.matchCondition instanceof Expr &&
           b.matchCondition instanceof Parameter) ||
@@ -1671,7 +1672,7 @@ export class Match extends Stmt {
       return 0;
     });
     const matchedCases = new Array<CaseStmt>();
-    for (const caseStmt of sortedmatchCases) {
+    for (const caseStmt of sortedMatchCases) {
       if (await this.match(caseStmt.matchCondition, subjectValue))
         matchedCases.push(caseStmt);
     }
@@ -1716,13 +1717,13 @@ export class BinaryExpr extends Expr {
 
   print(): string {
     const opNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       opNodeId + '[label=" ' + this.operator + ' "];\n',
     );
     const leftExprId = this.leftExpr.print();
     const rightExprId = this.rightExpr.print();
-    dotString = dotString.concat(opNodeId + "->" + leftExprId + ";\n");
-    dotString = dotString.concat(opNodeId + "->" + rightExprId + ";\n");
+    dotString.push(opNodeId + "->" + leftExprId + ";\n");
+    dotString.push(opNodeId + "->" + rightExprId + ";\n");
     return opNodeId;
   }
 
@@ -1799,11 +1800,11 @@ export class UnaryExpr extends Expr {
 
   print(): string {
     const opNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       opNodeId + '[label" ' + this.operator + ' "];\n',
     );
     const rightExprId = this.expr.print();
-    dotString = dotString.concat(opNodeId + "->" + rightExprId + ";\n");
+    dotString.push(opNodeId + "->" + rightExprId + ";\n");
     return opNodeId;
   }
 
@@ -1854,19 +1855,19 @@ export class FunDeclaration extends Expr {
 
   print(): string {
     const funDeclNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       funDeclNodeId + '[label=" AnonFunDecl "];\n',
     );
     const typeNodeId = this.stmtType.print();
     const paramNodeIds = new Array<string>();
     this.params.forEach((child) => paramNodeIds.push(child.print()));
     const blockNodeId = this._body.print();
-    dotString = dotString.concat(funDeclNodeId + "->" + typeNodeId + ";\n");
+    dotString.push(funDeclNodeId + "->" + typeNodeId + ";\n");
     paramNodeIds.forEach(
         (nodeId) =>
-            (dotString = dotString.concat(funDeclNodeId + "->" + nodeId + ";\n")),
+            (dotString.push(funDeclNodeId + "->" + nodeId + ";\n")),
     );
-    dotString = dotString.concat(funDeclNodeId + "->" + blockNodeId + ";\n");
+    dotString.push(funDeclNodeId + "->" + blockNodeId + ";\n");
     return funDeclNodeId;
   }
 
@@ -1905,13 +1906,13 @@ export class ArrayAccess extends Expr {
 
   print(): string {
     const arrayAccessNodeId = newNodeId();
-    dotString = dotString.concat(arrayAccessNodeId + '[label=" at "];\n');
+    dotString.push(arrayAccessNodeId + '[label=" at "];\n');
     const arrayExprId = this.arrayExpr.print();
     const accessExprId = this.accessExpr.print();
-    dotString = dotString.concat(
+    dotString.push(
       arrayAccessNodeId + "->" + arrayExprId + ";\n",
     );
-    dotString = dotString.concat(
+    dotString.push(
       arrayAccessNodeId + "->" + accessExprId + ";\n",
     );
     return arrayAccessNodeId;
@@ -1966,13 +1967,13 @@ export class TypeCast extends Expr {
 
   print(): string {
     const typeCastNodeId = newNodeId();
-    dotString = dotString.concat(typeCastNodeId + '[label=" TypeCast "];\n');
+    dotString.push(typeCastNodeId + '[label=" TypeCast "];\n');
     const desiredTypeNodeId = this.stmtType.print();
     const castedExprNodeId = this.castedExpr.print();
-    dotString = dotString.concat(
+    dotString.push(
       typeCastNodeId + "->" + desiredTypeNodeId + ";\n",
     );
-    dotString = dotString.concat(
+    dotString.push(
       typeCastNodeId + "->" + castedExprNodeId + ";\n",
     );
     return typeCastNodeId;
@@ -2008,16 +2009,16 @@ export class FunCall extends Expr {
 
   print(): string {
     const funCallNodeId = newNodeId();
-    dotString = dotString.concat(funCallNodeId + '[label=" FunCall "];\n');
+    dotString.push(funCallNodeId + '[label=" FunCall "];\n');
     const identifierNodeId = this.identifier.print();
     const argNodeIds = new Array<string>();
     this.args.forEach((arg) => argNodeIds.push(arg.print()));
-    dotString = dotString.concat(
+    dotString.push(
       funCallNodeId + "->" + identifierNodeId + ";\n",
     );
     argNodeIds.forEach(
       (nodeId) =>
-        (dotString = dotString.concat(funCallNodeId + "->" + nodeId + ";\n")),
+        (dotString.push(funCallNodeId + "->" + nodeId + ";\n")),
     );
     return funCallNodeId;
   }
@@ -2067,11 +2068,11 @@ export class SpacialObjectInstantiationExpr extends Expr {
 
   print(): string {
     const spatialObjectInstantiationNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       spatialObjectInstantiationNodeId + '[label=" new "];\n',
     );
     const spatialTypeNodeId = this.stmtType.print();
-    dotString = dotString.concat(
+    dotString.push(
       spatialObjectInstantiationNodeId + "->" + spatialTypeNodeId + ";\n",
     );
     return spatialObjectInstantiationNodeId;
@@ -2136,7 +2137,7 @@ export class StringLiteral extends Expr {
 
   print(): string {
     const stringLiteralNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       stringLiteralNodeId + '[label=" ' + this.value + ' "];\n',
     );
     return stringLiteralNodeId;
@@ -2160,7 +2161,7 @@ export class BoolLiteral extends Expr {
 
   print(): string {
     const boolLiteralNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       boolLiteralNodeId + '[label=" ' + this.value + ' "];\n',
     );
     return boolLiteralNodeId;
@@ -2184,7 +2185,7 @@ export class NumberLiteral extends Expr {
 
   print(): string {
     const numberLiteralNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       numberLiteralNodeId + '[label=" ' + this.value + ' "];\n',
     );
     return numberLiteralNodeId;
@@ -2208,7 +2209,7 @@ export class NoneLiteral extends Expr {
 
   print(): string {
     const noneLiteralNodeId = newNodeId();
-    dotString = dotString.concat(noneLiteralNodeId + '[label= " None " ];\n');
+    dotString.push(noneLiteralNodeId + '[label= " None " ];\n');
     return noneLiteralNodeId;
   }
 
@@ -2241,12 +2242,12 @@ export class ArrayLiteral extends Expr {
 
   print(): string {
     const arrayNodeId = newNodeId();
-    dotString = dotString.concat(arrayNodeId + '[label=" Array "];\n');
+    dotString.push(arrayNodeId + '[label=" Array "];\n');
     this.children()
       .map((child) => child.print())
       .forEach(
         (nodeId) =>
-          (dotString = dotString.concat(arrayNodeId + "->" + nodeId + ";\n")),
+          (dotString.push(arrayNodeId + "->" + nodeId + ";\n")),
       );
     return arrayNodeId;
   }
@@ -2272,7 +2273,7 @@ export class Identifier extends Expr {
 
   print(): string {
     const identifierNodeId = newNodeId();
-    dotString = dotString.concat(
+    dotString.push(
       identifierNodeId + '[label=" ' + this.value + ' "];\n',
     );
     return identifierNodeId;

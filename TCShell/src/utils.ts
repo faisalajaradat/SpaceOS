@@ -1,5 +1,5 @@
 import * as core from "./core.js";
-import * as engine from "../../SpatialComputingEngine/src/FrontendObjects.js";
+import * as engine from "../../SpatialComputingEngine/src/frontend-objects.js";
 import { VarSymbol } from "./semantics.js";
 import { Schema } from "redis-om";
 

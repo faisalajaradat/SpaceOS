@@ -5,7 +5,7 @@ import { ast } from "./ast.js";
 import { Command } from "commander";
 import { graphviz } from "node-graphviz";
 import analyze from "./semantics.js";
-import { disconnect } from "../../SpatialComputingEngine/src/SpatialComputingEngine.js";
+import { disconnect } from "../../SpatialComputingEngine/src/spatial-computing-engine.js";
 //Entrypoint and CLI for using TCShell interpreter
 
 const program = new Command();
@@ -33,9 +33,9 @@ program
       }
       const astHead: core.Program = ast(match);
       if (options.dot != undefined) {
-        const dotString = astHead.print();
+        astHead.print();
         graphviz
-          .dot(dotString, "svg")
+          .dot(core.dotString.join(""), "svg")
           .then((svg) => fs.writeFileSync(options.dot, svg));
       }
       const semanticsErrors = analyze(astHead);
