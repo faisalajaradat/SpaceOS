@@ -16,7 +16,7 @@ import {
   StationaryDecorator,
   Type,
   VirtualDecorator
-} from "./core/type/types.js";
+} from "./core/types.js";
 import {Expr, Identifier, Parameter, VarDeclaration} from "./core/stmts.js";
 
 export function popOutOfScopeVars(

@@ -1,6 +1,6 @@
-import {isAnyType, isDecorator} from "../../utils.js";
-import {ASTNode, dotString, newNodeId} from "../program.js";
-import {Identifier, UnionDeclaration} from "../stmts.js";
+import {isAnyType, isDecorator} from "../utils.js";
+import {ASTNode, dotString, newNodeId} from "./program.js";
+import {Identifier, UnionDeclaration} from "./stmts.js";
 
 export abstract class Type implements ASTNode {
     line: number;

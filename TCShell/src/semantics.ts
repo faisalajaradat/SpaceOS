@@ -19,7 +19,7 @@ import {
   StaticEntityType,
   Type,
   UnionType
-} from "./core/type/types.js";
+} from "./core/types.js";
 import {
   ArrayAccess,
   ArrayLiteral,

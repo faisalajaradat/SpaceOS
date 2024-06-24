@@ -23,7 +23,7 @@ import {
     StationaryDecorator,
     Type,
     VirtualDecorator
-} from "./type/types.js";
+} from "./types.js";
 import {Scope} from "../semantics.js";
 import {
     getSpatialTypeSchema,
@@ -35,7 +35,15 @@ import {
 } from "../utils.js";
 import * as engine from "../../../SpatialComputingEngine/src/frontend-objects.js";
 import {fetchData, saveData} from "../../../SpatialComputingEngine/src/spatial-computing-engine.js";
-import {ArrayRepresentation, ASTNode, dotString, newNodeId, unresolved, varStacks} from "./program.js";
+import {
+    ArrayRepresentation,
+    ASTNode,
+    dotString,
+    newNodeId,
+    SymbolDeclaration,
+    unresolved,
+    varStacks
+} from "./program.js";
 
 export abstract class Stmt implements ASTNode {
     abstract children(): ASTNode[];
@@ -719,7 +727,7 @@ export class BinaryExpr extends Expr {
         if (this.operator === "=") {
             if (leftHandExp instanceof Identifier) {
                 const varStack = varStacks.get(
-                    <VarDeclaration | Parameter>(<Identifier>leftHandExp).declaration,
+                    <SymbolDeclaration>(<Identifier>leftHandExp).declaration,
                 );
                 varStack[varStack.length - 1] = rightHandExp;
             } else if (leftHandExp instanceof ArrayRepresentation)
@@ -913,7 +921,7 @@ export class ArrayAccess extends Expr {
         let returnArray = <unknown[]>(
             varStacks
                 .get(
-                    <VarDeclaration | Parameter>(
+                    <SymbolDeclaration>(
                         (<Identifier>arrayBase.arrayExpr).declaration
                     ),
                 )
@@ -1247,7 +1255,7 @@ export class ArrayLiteral extends Expr {
 
 export class Identifier extends Expr {
     value: string;
-    declaration: VarDeclaration | Parameter | UnionDeclaration;
+    declaration: SymbolDeclaration | UnionDeclaration;
 
     constructor(line: number, column: number, value: string) {
         super(line, column, new BaseType(-1, -1, BaseTypeKind.NONE));

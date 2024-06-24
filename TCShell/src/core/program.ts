@@ -23,6 +23,8 @@ let nodeCount = 0;
 
 export const newNodeId = () => "Node" + nodeCount++;
 
+export type SymbolDeclaration = VarDeclaration | Parameter;
+
 //Define all AST nodes
 export interface ASTNode {
   line: number;

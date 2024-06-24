@@ -29,7 +29,7 @@ import {
     StationaryDecorator,
     UnionType,
     VirtualDecorator
-} from "./core/type/types.js";
+} from "./core/types.js";
 import {
     ArrayAccess,
     ArrayLiteral,
