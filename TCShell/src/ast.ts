@@ -13,21 +13,6 @@ import {
     While
 } from "./core/stmts.js";
 import {
-    ArrayAccess,
-    ArrayLiteral,
-    BinaryExpr,
-    BoolLiteral,
-    FunCall,
-    FunDeclaration,
-    Identifier,
-    NoneLiteral,
-    NumberLiteral,
-    SpacialObjectInstantiationExpr,
-    StringLiteral,
-    TypeCast,
-    UnaryExpr
-} from "./core/exprs.js";
-import {
     AirPathType,
     AnimateEntityType,
     ArrayType,
@@ -58,6 +43,21 @@ import {
     VirtualDecorator
 } from "./core/type/index.js";
 import {Program} from "./core/program.js";
+import {
+    ArrayAccess,
+    ArrayLiteral,
+    BinaryExpr,
+    BoolLiteral,
+    FunDeclaration,
+    Identifier,
+    NoneLiteral,
+    NumberLiteral,
+    SpacialObjectInstantiationExpr,
+    StringLiteral,
+    UnaryExpr
+} from "./core/expr/index.js";
+import {TypeCast} from "./core/expr/TypeCast.js";
+import {FunCall} from "./core/expr/FunCall.js";
 
 export function ast(match) {
     return astBuilder(match).ast();

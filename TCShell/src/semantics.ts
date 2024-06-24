@@ -13,22 +13,7 @@ import {
   VarDeclaration,
   While
 } from "./core/stmts.js";
-import {
-  ArrayAccess,
-  ArrayLiteral,
-  BinaryExpr,
-  BoolLiteral,
-  Expr,
-  FunCall,
-  FunDeclaration,
-  Identifier,
-  NoneLiteral,
-  NumberLiteral,
-  SpacialObjectInstantiationExpr,
-  StringLiteral,
-  TypeCast,
-  UnaryExpr
-} from "./core/exprs.js";
+import {Expr} from "./core/expr/Expr.js";
 import {
   AirPathType,
   AnimateEntityType,
@@ -49,6 +34,21 @@ import {
   Type,
   UnionType
 } from "./core/type/index.js";
+import {
+  ArrayAccess,
+  ArrayLiteral,
+  BinaryExpr,
+  BoolLiteral,
+  FunDeclaration,
+  Identifier,
+  NoneLiteral,
+  NumberLiteral,
+  SpacialObjectInstantiationExpr,
+  StringLiteral,
+  UnaryExpr
+} from "./core/expr/index.js";
+import {TypeCast} from "./core/expr/TypeCast.js";
+import {FunCall} from "./core/expr/FunCall.js";
 
 export default function analyze(astHead: Program): number {
   visitNameAnalyzer(astHead, null);

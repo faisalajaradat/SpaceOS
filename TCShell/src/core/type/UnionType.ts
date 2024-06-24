@@ -1,8 +1,8 @@
 import {CompositionType, Type} from "./primitive-types.js";
-import {Identifier} from "../exprs.js";
 import {ASTNode, dotString, newNodeId} from "../program.js";
 import {isAnyType} from "../../utils.js";
 import {UnionDeclaration} from "../stmts.js";
+import {Identifier} from "../expr/index.js";
 
 export class UnionType extends CompositionType {
     identifier: Identifier;

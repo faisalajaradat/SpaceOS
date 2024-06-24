@@ -12,7 +12,7 @@ import {
     unresolved,
     varStacks
 } from "./program.js";
-import {Expr, FunDeclaration, Identifier} from "./exprs.js";
+import {Expr} from "./expr/Expr.js";
 import {
     AirPathType,
     AnimateEntityType,
@@ -39,6 +39,7 @@ import {
     Type,
     VirtualDecorator
 } from "./type/index.js";
+import {FunDeclaration, Identifier} from "./expr/index.js";
 
 export abstract class Stmt implements ASTNode {
     abstract children(): ASTNode[];

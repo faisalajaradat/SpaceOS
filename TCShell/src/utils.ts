@@ -1,18 +1,23 @@
 import * as core from "./core/program.js";
 import {MatchCondition, Program, varStacks} from "./core/program.js";
-import {Block, CaseStmt, DeferredDecorator} from "./core/stmts.js";
+import {Block, CaseStmt, DeferredDecorator, Parameter, VarDeclaration} from "./core/stmts.js";
 import * as engine from "../../SpatialComputingEngine/src/frontend-objects.js";
 import {VarSymbol} from "./semantics.js";
 import {Schema} from "redis-om";
-import {Parameter, VarDeclaration} from "./core/stmts.js";
-import {FunDeclaration, Identifier} from "./core/exprs.js";
-import {BaseType, BaseTypeKind, Type} from "./core/type/primitive-types.js";
 import {
+  BaseType,
+  BaseTypeKind,
   ControlledDecorator,
   MobileDecorator,
-  NotControlledDecorator, PhysicalDecorator, SpatialType, SpatialTypeDecorator,
-  StationaryDecorator, VirtualDecorator
-} from "./core/type/spatial-types.js";
+  NotControlledDecorator,
+  PhysicalDecorator,
+  SpatialType,
+  SpatialTypeDecorator,
+  StationaryDecorator,
+  Type,
+  VirtualDecorator
+} from "./core/type/index.js";
+import {FunDeclaration, Identifier} from "./core/expr/index.js";
 
 export function popOutOfScopeVars(
     node: Program | FunDeclaration | Block | CaseStmt | DeferredDecorator,

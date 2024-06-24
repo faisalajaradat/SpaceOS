@@ -1,7 +1,7 @@
 import {Scope} from "../semantics.js";
 import {popOutOfScopeVars,} from "../utils.js";
 import {DeferredDecorator, Parameter, Stmt, VarDeclaration} from "./stmts.js";
-import {Expr} from "./exprs.js";
+import {Expr} from "./expr/Expr.js";
 //A map variable declaration and their stack of assigned values
 export const varStacks = new Map<VarDeclaration | Parameter, unknown[]>();
 export const unresolved = [];
