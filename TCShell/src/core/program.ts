@@ -4,7 +4,7 @@ import {
   DeferredDecorator,
   Parameter,
   VarDeclaration
-} from "./stmt.js";
+} from "./stmts.js";
 //A map variable declaration and their stack of assigned values
 export const varStacks = new Map<VarDeclaration | Parameter, unknown[]>();
 export const unresolved = [];

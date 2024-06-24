@@ -1,4 +1,4 @@
-import * as core from "./core/core.js";
+import * as core from "./core/program.js";
 import {isDecorator} from "./utils.js";
 import {
   AirPathType,
@@ -19,7 +19,7 @@ import {
   StaticEntityType,
   Type,
   UnionType
-} from "./core/type.js";
+} from "./core/type/types.js";
 import {
   ArrayAccess,
   ArrayLiteral,
@@ -46,7 +46,7 @@ import {
   UnionDeclaration,
   VarDeclaration,
   While
-} from "./core/stmt.js";
+} from "./core/stmts.js";
 
 export default function analyze(astHead: core.Program): number {
   visitNameAnalyzer(astHead, null);

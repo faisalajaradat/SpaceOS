@@ -23,7 +23,7 @@ import {
     StationaryDecorator,
     Type,
     VirtualDecorator
-} from "./type.js";
+} from "./type/types.js";
 import {Scope} from "../semantics.js";
 import {
     getSpatialTypeSchema,
@@ -35,7 +35,7 @@ import {
 } from "../utils.js";
 import * as engine from "../../../SpatialComputingEngine/src/frontend-objects.js";
 import {fetchData, saveData} from "../../../SpatialComputingEngine/src/spatial-computing-engine.js";
-import {ArrayRepresentation, ASTNode, dotString, newNodeId, unresolved, varStacks} from "./core.js";
+import {ArrayRepresentation, ASTNode, dotString, newNodeId, unresolved, varStacks} from "./program.js";
 
 export abstract class Stmt implements ASTNode {
     abstract children(): ASTNode[];

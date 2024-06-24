@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import * as core from "../src/core/core.js";
+import * as core from "../src/core/program.js";
 import { grammar } from "../src/grammar.js";
 import { ast } from "../src/ast.js";
 import analyze from "../src/semantics.js";

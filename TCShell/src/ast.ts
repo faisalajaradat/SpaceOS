@@ -1,5 +1,5 @@
 import {grammar} from "./grammar.js";
-import * as core from "./core/core.js";
+import * as core from "./core/program.js";
 import {
     AirPathType,
     AnimateEntityType,
@@ -29,7 +29,7 @@ import {
     StationaryDecorator,
     UnionType,
     VirtualDecorator
-} from "./core/type.js";
+} from "./core/type/types.js";
 import {
     ArrayAccess,
     ArrayLiteral,
@@ -55,7 +55,7 @@ import {
     UnionDeclaration,
     VarDeclaration,
     While
-} from "./core/stmt.js";
+} from "./core/stmts.js";
 
 export function ast(match) {
     return astBuilder(match).ast();

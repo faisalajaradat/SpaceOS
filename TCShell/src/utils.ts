@@ -1,6 +1,6 @@
-import * as core from "./core/core.js";
-import { Program, varStacks} from "./core/core.js";
-import { Block, CaseStmt, DeferredDecorator, FunDeclaration } from "./core/stmt.js";
+import * as core from "./core/program.js";
+import { Program, varStacks} from "./core/program.js";
+import { Block, CaseStmt, DeferredDecorator, FunDeclaration } from "./core/stmts.js";
 import * as engine from "../../SpatialComputingEngine/src/frontend-objects.js";
 import {VarSymbol} from "./semantics.js";
 import {Schema} from "redis-om";
@@ -16,8 +16,8 @@ import {
   StationaryDecorator,
   Type,
   VirtualDecorator
-} from "./core/type.js";
-import {Expr, Identifier, Parameter, VarDeclaration} from "./core/stmt.js";
+} from "./core/type/types.js";
+import {Expr, Identifier, Parameter, VarDeclaration} from "./core/stmts.js";
 
 export function popOutOfScopeVars(
     node: Program | FunDeclaration | Block | CaseStmt | DeferredDecorator,
