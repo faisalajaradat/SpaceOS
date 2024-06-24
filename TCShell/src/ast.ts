@@ -9,18 +9,15 @@ import {
     ControlledDecorator,
     DynamicEntityType,
     EnclosedSpaceType,
-    EntityFactoryType,
     EntityType,
     FunctionType,
     LandPathType,
     MobileDecorator,
     NotControlledDecorator,
     OpenSpaceType,
-    PathFactoryType,
     PathType,
     PhysicalDecorator,
     SmartEntityType,
-    SpaceFactoryType,
     SpacePathGraphType,
     SpaceType,
     SpatialObjectType,
@@ -53,6 +50,7 @@ import {
     SpacialObjectInstantiationExpr,
     StringLiteral, TypeCast, UnaryExpr
 } from "./core/exprs.js";
+import {EntityFactoryType, PathFactoryType, SpaceFactoryType} from "./core/factory-types.js";
 
 export function ast(match) {
     return astBuilder(match).ast();
