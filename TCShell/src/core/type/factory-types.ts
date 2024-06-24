@@ -1,6 +1,7 @@
-import {ASTNode, dotString, newNodeId} from "./program.js";
-import {isAnyType} from "../utils.js";
-import {Type} from "./types.js";
+import {ASTNode, dotString, newNodeId} from "../program.js";
+import {isAnyType} from "../../utils.js";
+
+import {Type} from "./primitive-types.js";
 
 export abstract class FactoryType extends Type {
     protected constructor(line: number, column: number) {

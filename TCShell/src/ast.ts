@@ -1,33 +1,6 @@
 import {grammar} from "./grammar.js";
 import * as core from "./core/program.js";
 import {
-    AirPathType,
-    AnimateEntityType,
-    ArrayType,
-    BaseType,
-    BaseTypeKind,
-    ControlledDecorator,
-    DynamicEntityType,
-    EnclosedSpaceType,
-    EntityType,
-    FunctionType,
-    LandPathType,
-    MobileDecorator,
-    NotControlledDecorator,
-    OpenSpaceType,
-    PathType,
-    PhysicalDecorator,
-    SmartEntityType,
-    SpacePathGraphType,
-    SpaceType,
-    SpatialObjectType,
-    SpatialType,
-    StaticEntityType,
-    StationaryDecorator,
-    UnionType,
-    VirtualDecorator
-} from "./core/types.js";
-import {
     Block,
     CaseStmt,
     DeferredDecorator,
@@ -50,7 +23,17 @@ import {
     SpacialObjectInstantiationExpr,
     StringLiteral, TypeCast, UnaryExpr
 } from "./core/exprs.js";
-import {EntityFactoryType, PathFactoryType, SpaceFactoryType} from "./core/factory-types.js";
+import {EntityFactoryType, PathFactoryType, SpaceFactoryType} from "./core/type/factory-types.js";
+import {ArrayType, BaseType, BaseTypeKind, FunctionType} from "./core/type/primitive-types.js";
+import {
+    AirPathType,
+    AnimateEntityType, ControlledDecorator,
+    DynamicEntityType, EnclosedSpaceType, EntityType, LandPathType,
+    MobileDecorator, NotControlledDecorator, OpenSpaceType, PathType, PhysicalDecorator,
+    SmartEntityType, SpacePathGraphType, SpaceType, SpatialObjectType, SpatialType, StaticEntityType,
+    StationaryDecorator, VirtualDecorator
+} from "./core/type/spatial-types.js";
+import {UnionType} from "./core/type/union-type.js";
 
 export function ast(match) {
     return astBuilder(match).ast();

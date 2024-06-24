@@ -1,29 +1,3 @@
-import {
-    AirPathType,
-    AnimateEntityType,
-    ArrayType,
-    BaseType,
-    BaseTypeKind,
-    ControlledDecorator,
-    DynamicEntityType,
-    EnclosedSpaceType,
-    EntityType,
-    FunctionType,
-    LandPathType,
-    MobileDecorator,
-    NotControlledDecorator,
-    OpenSpaceType,
-    PathType,
-    PhysicalDecorator,
-    SmartEntityType,
-    SpaceType,
-    SpatialObjectType,
-    SpatialType,
-    StaticEntityType,
-    StationaryDecorator,
-    Type,
-    VirtualDecorator
-} from "./types.js";
 import {Scope} from "../semantics.js";
 import {getValueOfExpression, isAnyType, isWildcard, parseSpatialTypeProperties, popOutOfScopeVars} from "../utils.js";
 import * as engine from "../../../SpatialComputingEngine/src/frontend-objects.js";
@@ -39,6 +13,15 @@ import {
     varStacks
 } from "./program.js";
 import {Exprs, FunDeclaration, Identifier} from "./exprs.js";
+import {ArrayType, BaseType, BaseTypeKind, FunctionType, Type} from "./type/primitive-types.js";
+import {
+    AirPathType,
+    AnimateEntityType, ControlledDecorator,
+    DynamicEntityType, EnclosedSpaceType, EntityType, LandPathType,
+    MobileDecorator, NotControlledDecorator, OpenSpaceType, PathType, PhysicalDecorator,
+    SmartEntityType, SpaceType, SpatialObjectType, SpatialType, StaticEntityType,
+    StationaryDecorator, VirtualDecorator
+} from "./type/spatial-types.js";
 
 export abstract class Stmt implements ASTNode {
     abstract children(): ASTNode[];

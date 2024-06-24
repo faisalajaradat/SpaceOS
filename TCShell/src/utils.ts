@@ -4,21 +4,15 @@ import {Block, CaseStmt, DeferredDecorator} from "./core/stmts.js";
 import * as engine from "../../SpatialComputingEngine/src/frontend-objects.js";
 import {VarSymbol} from "./semantics.js";
 import {Schema} from "redis-om";
-import {
-  BaseType,
-  BaseTypeKind,
-  ControlledDecorator,
-  MobileDecorator,
-  NotControlledDecorator,
-  PhysicalDecorator,
-  SpatialType,
-  SpatialTypeDecorator,
-  StationaryDecorator,
-  Type,
-  VirtualDecorator
-} from "./core/types.js";
 import {Parameter, VarDeclaration} from "./core/stmts.js";
 import {FunDeclaration, Identifier} from "./core/exprs.js";
+import {BaseType, BaseTypeKind, Type} from "./core/type/primitive-types.js";
+import {
+  ControlledDecorator,
+  MobileDecorator,
+  NotControlledDecorator, PhysicalDecorator, SpatialType, SpatialTypeDecorator,
+  StationaryDecorator, VirtualDecorator
+} from "./core/type/spatial-types.js";
 
 export function popOutOfScopeVars(
     node: Program | FunDeclaration | Block | CaseStmt | DeferredDecorator,

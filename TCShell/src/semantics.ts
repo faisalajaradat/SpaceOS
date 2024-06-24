@@ -1,26 +1,6 @@
 import * as core from "./core/program.js";
 import {isDecorator} from "./utils.js";
 import {
-  AirPathType,
-  AnimateEntityType,
-  ArrayType,
-  BaseType,
-  BaseTypeKind,
-  CompositionType,
-  ControlDecorator,
-  EnclosedSpaceType,
-  FunctionType,
-  LandPathType,
-  MotionDecorator,
-  OpenSpaceType,
-  PathType,
-  SmartEntityType,
-  SpatialType,
-  StaticEntityType,
-  Type,
-  UnionType
-} from "./core/types.js";
-import {
   Block,
   CaseStmt,
   DeferredDecorator, If,
@@ -43,6 +23,16 @@ import {
   StringLiteral, TypeCast, UnaryExpr
 } from "./core/exprs.js";
 import {SymbolDeclaration} from "./core/program.js";
+import {ArrayType, BaseType, BaseTypeKind, CompositionType, FunctionType, Type} from "./core/type/primitive-types.js";
+import {
+  AirPathType,
+  AnimateEntityType, ControlDecorator,
+  EnclosedSpaceType, LandPathType,
+  MotionDecorator, OpenSpaceType, PathType,
+  SmartEntityType, SpatialType,
+  StaticEntityType
+} from "./core/type/spatial-types.js";
+import {UnionType} from "./core/type/union-type.js";
 
 export default function analyze(astHead: core.Program): number {
   visitNameAnalyzer(astHead, null);

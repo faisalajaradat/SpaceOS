@@ -1,19 +1,4 @@
 import {
-    AirPathType,
-    ArrayType,
-    BaseType,
-    BaseTypeKind,
-    EnclosedSpaceType,
-    FunctionType,
-    LandPathType,
-    OpenSpaceType,
-    PathType,
-    SmartEntityType,
-    SpatialType,
-    StaticEntityType,
-    Type
-} from "./types.js";
-import {
     ArrayRepresentation,
     ASTNode,
     dotString, ExprStmt,
@@ -27,6 +12,14 @@ import * as engine from "../../../SpatialComputingEngine/src/frontend-objects.js
 import {saveData} from "../../../SpatialComputingEngine/src/spatial-computing-engine.js";
 import {Scope} from "../semantics.js";
 import {DeferredDecorator, libFunctions, Parameter, Return, UnionDeclaration, VarDeclaration} from "./stmts.js";
+import {ArrayType, BaseType, BaseTypeKind, FunctionType, Type} from "./type/primitive-types.js";
+import {
+    AirPathType,
+    EnclosedSpaceType, LandPathType,
+    OpenSpaceType, PathType,
+    SmartEntityType, SpatialType,
+    StaticEntityType
+} from "./type/spatial-types.js";
 
 export abstract class Exprs implements ASTNode {
     column: number;
