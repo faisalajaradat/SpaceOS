@@ -1,5 +1,4 @@
 import {grammar} from "./grammar.js";
-import * as core from "./core/program.js";
 import {
     Block,
     CaseStmt,
@@ -15,25 +14,50 @@ import {
 } from "./core/stmts.js";
 import {
     ArrayAccess,
-    ArrayLiteral, BinaryExpr,
-    BoolLiteral, FunCall, FunDeclaration,
+    ArrayLiteral,
+    BinaryExpr,
+    BoolLiteral,
+    FunCall,
+    FunDeclaration,
     Identifier,
     NoneLiteral,
     NumberLiteral,
     SpacialObjectInstantiationExpr,
-    StringLiteral, TypeCast, UnaryExpr
+    StringLiteral,
+    TypeCast,
+    UnaryExpr
 } from "./core/exprs.js";
-import {EntityFactoryType, PathFactoryType, SpaceFactoryType} from "./core/type/factory-types.js";
-import {ArrayType, BaseType, BaseTypeKind, FunctionType} from "./core/type/primitive-types.js";
 import {
     AirPathType,
-    AnimateEntityType, ControlledDecorator,
-    DynamicEntityType, EnclosedSpaceType, EntityType, LandPathType,
-    MobileDecorator, NotControlledDecorator, OpenSpaceType, PathType, PhysicalDecorator,
-    SmartEntityType, SpacePathGraphType, SpaceType, SpatialObjectType, SpatialType, StaticEntityType,
-    StationaryDecorator, VirtualDecorator
-} from "./core/type/spatial-types.js";
-import {UnionType} from "./core/type/union-type.js";
+    AnimateEntityType,
+    ArrayType,
+    BaseType,
+    BaseTypeKind,
+    ControlledDecorator,
+    DynamicEntityType,
+    EnclosedSpaceType,
+    EntityFactoryType,
+    EntityType,
+    FunctionType,
+    LandPathType,
+    MobileDecorator,
+    NotControlledDecorator,
+    OpenSpaceType,
+    PathFactoryType,
+    PathType,
+    PhysicalDecorator,
+    SmartEntityType,
+    SpaceFactoryType,
+    SpacePathGraphType,
+    SpaceType,
+    SpatialObjectType,
+    SpatialType,
+    StaticEntityType,
+    StationaryDecorator,
+    UnionType,
+    VirtualDecorator
+} from "./core/type/index.js";
+import {Program} from "./core/program.js";
 
 export function ast(match) {
     return astBuilder(match).ast();
@@ -43,7 +67,7 @@ export function ast(match) {
 const astBuilder = grammar.createSemantics().addOperation("ast", {
     Program(stmts) {
         const lineAndColumn = this.source.getLineAndColumn();
-        const _program = new core.Program(
+        const _program = new Program(
             lineAndColumn.lineNum,
             lineAndColumn.colNum,
             stmts.ast(),

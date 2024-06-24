@@ -1,7 +1,8 @@
 import {
     ArrayRepresentation,
     ASTNode,
-    dotString, ExprStmt,
+    dotString,
+    ExprStmt,
     newNodeId,
     SymbolDeclaration,
     unresolved,
@@ -12,16 +13,23 @@ import * as engine from "../../../SpatialComputingEngine/src/frontend-objects.js
 import {saveData} from "../../../SpatialComputingEngine/src/spatial-computing-engine.js";
 import {Scope} from "../semantics.js";
 import {DeferredDecorator, libFunctions, Parameter, Return, UnionDeclaration, VarDeclaration} from "./stmts.js";
-import {ArrayType, BaseType, BaseTypeKind, FunctionType, Type} from "./type/primitive-types.js";
 import {
     AirPathType,
-    EnclosedSpaceType, LandPathType,
-    OpenSpaceType, PathType,
-    SmartEntityType, SpatialType,
-    StaticEntityType
-} from "./type/spatial-types.js";
+    ArrayType,
+    BaseType,
+    BaseTypeKind,
+    EnclosedSpaceType,
+    FunctionType,
+    LandPathType,
+    OpenSpaceType,
+    PathType,
+    SmartEntityType,
+    SpatialType,
+    StaticEntityType,
+    Type
+} from "./type/index.js";
 
-export abstract class Exprs implements ASTNode {
+export abstract class Expr implements ASTNode {
     column: number;
     line: number;
     _type: Type;
@@ -44,18 +52,18 @@ export abstract class Exprs implements ASTNode {
 
 }
 
-export class BinaryExpr extends Exprs {
-    leftExpr: Exprs;
+export class BinaryExpr extends Expr {
+    leftExpr: Expr;
     operator: string;
-    rightExpr: Exprs;
+    rightExpr: Expr;
 
     constructor(
         line: number,
         column: number,
         type: Type,
         operator: string,
-        leftExpr: Exprs,
-        rightExpr: Exprs,
+        leftExpr: Expr,
+        rightExpr: Expr,
     ) {
         super(line, column, type);
         this.leftExpr = leftExpr;
@@ -132,16 +140,16 @@ export class BinaryExpr extends Exprs {
     }
 }
 
-export class UnaryExpr extends Exprs {
+export class UnaryExpr extends Expr {
     operator: string;
-    expr: Exprs;
+    expr: Expr;
 
     constructor(
         line: number,
         column: number,
         type: Type,
         operator: string,
-        expr: Exprs,
+        expr: Expr,
     ) {
         super(line, column, type);
         this.operator = operator;
@@ -177,7 +185,7 @@ export class UnaryExpr extends Exprs {
     }
 }
 
-export class FunDeclaration extends Exprs {
+export class FunDeclaration extends Expr {
     params: Parameter[];
     _body: ExprStmt;
     scope: Scope;
@@ -239,11 +247,11 @@ export class FunDeclaration extends Exprs {
     }
 }
 
-export class ArrayAccess extends Exprs {
-    arrayExpr: Exprs;
-    accessExpr: Exprs;
+export class ArrayAccess extends Expr {
+    arrayExpr: Expr;
+    accessExpr: Expr;
 
-    constructor(line: number, column: number, arrayExpr: Exprs, accessExpr: Exprs) {
+    constructor(line: number, column: number, arrayExpr: Expr, accessExpr: Expr) {
         super(line, column, null);
         this.arrayExpr = arrayExpr;
         this.accessExpr = accessExpr;
@@ -298,14 +306,14 @@ export class ArrayAccess extends Exprs {
     }
 }
 
-export class TypeCast extends Exprs {
-    castedExpr: Exprs;
+export class TypeCast extends Expr {
+    castedExpr: Expr;
 
     constructor(
         line: number,
         column: number,
         desiredType: Type,
-        castedExpr: Exprs,
+        castedExpr: Expr,
     ) {
         super(line, column, desiredType);
         this.castedExpr = castedExpr;
@@ -337,16 +345,16 @@ export class TypeCast extends Exprs {
     }
 }
 
-export class FunCall extends Exprs {
-    identifier: Exprs;
-    args: Exprs[];
+export class FunCall extends Expr {
+    identifier: Expr;
+    args: Expr[];
 
     constructor(
         line: number,
         column: number,
         type: Type,
-        identifier: Exprs,
-        args: Exprs[],
+        identifier: Expr,
+        args: Expr[],
     ) {
         super(line, column, type);
         this.identifier = identifier;
@@ -400,14 +408,14 @@ export class FunCall extends Exprs {
     }
 }
 
-export class SpacialObjectInstantiationExpr extends Exprs {
-    args: Exprs[];
+export class SpacialObjectInstantiationExpr extends Expr {
+    args: Expr[];
 
     constructor(
         line: number,
         column: number,
         spatialType: SpatialType,
-        args: Exprs[],
+        args: Expr[],
     ) {
         super(line, column, spatialType);
         this.args = args;
@@ -476,7 +484,7 @@ export class SpacialObjectInstantiationExpr extends Exprs {
     }
 }
 
-export class StringLiteral extends Exprs {
+export class StringLiteral extends Expr {
     value: string;
 
     constructor(line: number, column: number, value: string) {
@@ -501,7 +509,7 @@ export class StringLiteral extends Exprs {
     }
 }
 
-export class BoolLiteral extends Exprs {
+export class BoolLiteral extends Expr {
     value: boolean;
 
     constructor(line: number, column: number, value: boolean) {
@@ -526,7 +534,7 @@ export class BoolLiteral extends Exprs {
     }
 }
 
-export class NumberLiteral extends Exprs {
+export class NumberLiteral extends Expr {
     value: number;
 
     constructor(line: number, column: number, value: number) {
@@ -551,7 +559,7 @@ export class NumberLiteral extends Exprs {
     }
 }
 
-export class NoneLiteral extends Exprs {
+export class NoneLiteral extends Expr {
     value: undefined;
 
     constructor(line: number, column: number) {
@@ -574,10 +582,10 @@ export class NoneLiteral extends Exprs {
     }
 }
 
-export class ArrayLiteral extends Exprs {
-    value: Exprs[];
+export class ArrayLiteral extends Expr {
+    value: Expr[];
 
-    constructor(line: number, column: number, value: Exprs[]) {
+    constructor(line: number, column: number, value: Expr[]) {
         super(
             line,
             column,
@@ -617,7 +625,7 @@ export class ArrayLiteral extends Exprs {
     }
 }
 
-export class Identifier extends Exprs {
+export class Identifier extends Expr {
     value: string;
     declaration: SymbolDeclaration | UnionDeclaration;
 

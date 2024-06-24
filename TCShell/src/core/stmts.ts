@@ -12,16 +12,33 @@ import {
     unresolved,
     varStacks
 } from "./program.js";
-import {Exprs, FunDeclaration, Identifier} from "./exprs.js";
-import {ArrayType, BaseType, BaseTypeKind, FunctionType, Type} from "./type/primitive-types.js";
+import {Expr, FunDeclaration, Identifier} from "./exprs.js";
 import {
     AirPathType,
-    AnimateEntityType, ControlledDecorator,
-    DynamicEntityType, EnclosedSpaceType, EntityType, LandPathType,
-    MobileDecorator, NotControlledDecorator, OpenSpaceType, PathType, PhysicalDecorator,
-    SmartEntityType, SpaceType, SpatialObjectType, SpatialType, StaticEntityType,
-    StationaryDecorator, VirtualDecorator
-} from "./type/spatial-types.js";
+    AnimateEntityType,
+    ArrayType,
+    BaseType,
+    BaseTypeKind,
+    ControlledDecorator,
+    DynamicEntityType,
+    EnclosedSpaceType,
+    EntityType,
+    FunctionType,
+    LandPathType,
+    MobileDecorator,
+    NotControlledDecorator,
+    OpenSpaceType,
+    PathType,
+    PhysicalDecorator,
+    SmartEntityType,
+    SpaceType,
+    SpatialObjectType,
+    SpatialType,
+    StaticEntityType,
+    StationaryDecorator,
+    Type,
+    VirtualDecorator
+} from "./type/index.js";
 
 export abstract class Stmt implements ASTNode {
     abstract children(): ASTNode[];
@@ -134,14 +151,14 @@ export class Parameter extends Stmt {
 
 export class VarDeclaration extends Stmt {
     identifier: Identifier;
-    value: Exprs;
+    value: Expr;
 
     constructor(
         line: number,
         column: number,
         type: Type,
         identifier: Identifier,
-        value: Exprs,
+        value: Expr,
     ) {
         super(line, column, type);
         this.identifier = identifier;
@@ -216,9 +233,9 @@ export class UnionDeclaration extends Stmt {
 }
 
 export class Return extends Stmt {
-    possibleValue: Exprs;
+    possibleValue: Expr;
 
-    constructor(line: number, column: number, possibleValue: Exprs) {
+    constructor(line: number, column: number, possibleValue: Expr) {
         super(line, column, new BaseType(-1, -1, BaseTypeKind.NONE));
         this.possibleValue = possibleValue;
     }
@@ -244,14 +261,14 @@ export class Return extends Stmt {
 }
 
 export class If extends Stmt {
-    condition: Exprs;
+    condition: Expr;
     ifStmt: ExprStmt;
     possibleElseStmt: ExprStmt;
 
     constructor(
         line: number,
         column: number,
-        condition: Exprs,
+        condition: Expr,
         ifStmt: ExprStmt,
         possibleElseStmt: ExprStmt,
     ) {
@@ -310,10 +327,10 @@ export class If extends Stmt {
 }
 
 export class While extends Stmt {
-    condition: Exprs;
+    condition: Expr;
     whileStmt: ExprStmt;
 
-    constructor(line: number, column: number, condition: Exprs, whileStmt: ExprStmt) {
+    constructor(line: number, column: number, condition: Expr, whileStmt: ExprStmt) {
         super(line, column, new BaseType(-1, -1, BaseTypeKind.NONE));
         this.condition = condition;
         this.whileStmt = whileStmt;
@@ -450,13 +467,13 @@ export class CaseStmt extends Stmt {
 }
 
 export class Match extends Stmt {
-    subject: Exprs;
+    subject: Expr;
     caseStmts: CaseStmt[];
 
     constructor(
         line: number,
         column: number,
-        subject: Exprs,
+        subject: Expr,
         caseStmts: CaseStmt[],
     ) {
         super(line, column, new BaseType(-1, -1, BaseTypeKind.NONE));
@@ -619,14 +636,14 @@ export class Match extends Stmt {
         const subjectValue = getValueOfExpression(await this.subject.evaluate());
         const sortedMatchCases = this.caseStmts.sort((a, b) => {
             if (
-                (a.matchCondition instanceof Exprs &&
+                (a.matchCondition instanceof Expr &&
                     b.matchCondition instanceof Parameter) ||
                 (isWildcard(b.matchCondition) && !isWildcard(a.matchCondition))
             )
                 return -1;
             if (
                 (a.matchCondition instanceof Parameter &&
-                    b.matchCondition instanceof Exprs) ||
+                    b.matchCondition instanceof Expr) ||
                 isWildcard(a.matchCondition) ||
                 !isWildcard(b.matchCondition)
             )

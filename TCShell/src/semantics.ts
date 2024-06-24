@@ -1,9 +1,10 @@
-import * as core from "./core/program.js";
+import {ASTNode, Program, SymbolDeclaration} from "./core/program.js";
 import {isDecorator} from "./utils.js";
 import {
   Block,
   CaseStmt,
-  DeferredDecorator, If,
+  DeferredDecorator,
+  If,
   libFunctions,
   Match,
   Parameter,
@@ -14,27 +15,42 @@ import {
 } from "./core/stmts.js";
 import {
   ArrayAccess,
-  ArrayLiteral, BinaryExpr,
-  BoolLiteral, Exprs, FunCall, FunDeclaration,
+  ArrayLiteral,
+  BinaryExpr,
+  BoolLiteral,
+  Expr,
+  FunCall,
+  FunDeclaration,
   Identifier,
   NoneLiteral,
   NumberLiteral,
   SpacialObjectInstantiationExpr,
-  StringLiteral, TypeCast, UnaryExpr
+  StringLiteral,
+  TypeCast,
+  UnaryExpr
 } from "./core/exprs.js";
-import {SymbolDeclaration} from "./core/program.js";
-import {ArrayType, BaseType, BaseTypeKind, CompositionType, FunctionType, Type} from "./core/type/primitive-types.js";
 import {
   AirPathType,
-  AnimateEntityType, ControlDecorator,
-  EnclosedSpaceType, LandPathType,
-  MotionDecorator, OpenSpaceType, PathType,
-  SmartEntityType, SpatialType,
-  StaticEntityType
-} from "./core/type/spatial-types.js";
-import {UnionType} from "./core/type/union-type.js";
+  AnimateEntityType,
+  ArrayType,
+  BaseType,
+  BaseTypeKind,
+  CompositionType,
+  ControlDecorator,
+  EnclosedSpaceType,
+  FunctionType,
+  LandPathType,
+  MotionDecorator,
+  OpenSpaceType,
+  PathType,
+  SmartEntityType,
+  SpatialType,
+  StaticEntityType,
+  Type,
+  UnionType
+} from "./core/type/index.js";
 
-export default function analyze(astHead: core.Program): number {
+export default function analyze(astHead: Program): number {
   visitNameAnalyzer(astHead, null);
   visitTypeAnalyzer(astHead);
   return errors;
@@ -96,8 +112,8 @@ export class Scope {
 let errors = 0;
 
 //Performs name analysis to enforce scope rules
-function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
-  if (node instanceof core.Program) {
+function visitNameAnalyzer(node: ASTNode, scope: Scope) {
+  if (node instanceof Program) {
     const curScope = new Scope(scope);
     node.children().forEach((child) => visitNameAnalyzer(child, curScope));
     node.scope = curScope;
@@ -202,7 +218,7 @@ function conditionIsValidType(node: If | While): boolean {
 }
 
 //Performs type analysis to enforce typing rules
-function visitTypeAnalyzer(node: core.ASTNode): Type {
+function visitTypeAnalyzer(node: ASTNode): Type {
   const voidType = new BaseType(-1, -1, BaseTypeKind.VOID);
   const numberType = new BaseType(-1, -1, BaseTypeKind.NUMBER);
   const boolType = new BaseType(-1, -1, BaseTypeKind.BOOL);
@@ -328,7 +344,7 @@ function visitTypeAnalyzer(node: core.ASTNode): Type {
   } else if (node instanceof CaseStmt) {
     visitTypeAnalyzer(node.stmt);
     node.matchCondition._type =
-      node.matchCondition instanceof Exprs
+      node.matchCondition instanceof Expr
         ? visitTypeAnalyzer(node.matchCondition)
         : node.matchCondition._type;
     node._type = node.matchCondition._type;
