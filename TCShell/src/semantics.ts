@@ -20,6 +20,33 @@ import {
   Type,
   UnionType
 } from "./core/type.js";
+import {
+  ArrayAccess,
+  ArrayLiteral,
+  BinaryExpr,
+  Block,
+  BoolLiteral,
+  CaseStmt,
+  DeferredDecorator,
+  Expr,
+  FunCall,
+  FunDeclaration,
+  Identifier,
+  If,
+  libFunctions,
+  Match,
+  NoneLiteral,
+  NumberLiteral,
+  Parameter,
+  Return,
+  SpacialObjectInstantiationExpr,
+  StringLiteral,
+  TypeCast,
+  UnaryExpr,
+  UnionDeclaration,
+  VarDeclaration,
+  While
+} from "./core/stmt.js";
 
 export default function analyze(astHead: core.Program): number {
   visitNameAnalyzer(astHead, null);
@@ -36,18 +63,18 @@ export abstract class ProgramSymbol {
 }
 
 export class VarSymbol extends ProgramSymbol {
-  varDeclaration: core.VarDeclaration | core.Parameter;
+  varDeclaration: VarDeclaration | Parameter;
 
-  constructor(varDeclaration: core.VarDeclaration | core.Parameter) {
+  constructor(varDeclaration: VarDeclaration | Parameter) {
     super(varDeclaration.identifier.value);
     this.varDeclaration = varDeclaration;
   }
 }
 
 export class UnionSymbol extends ProgramSymbol {
-  unionDeclaration: core.UnionDeclaration;
+  unionDeclaration: UnionDeclaration;
 
-  constructor(unionDeclaration: core.UnionDeclaration) {
+  constructor(unionDeclaration: UnionDeclaration) {
     super((<UnionType>unionDeclaration.stmtType).identifier.value);
     this.unionDeclaration = unionDeclaration;
   }
@@ -88,7 +115,7 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
     const curScope = new Scope(scope);
     node.children().forEach((child) => visitNameAnalyzer(child, curScope));
     node.scope = curScope;
-  } else if (node instanceof core.FunDeclaration) {
+  } else if (node instanceof FunDeclaration) {
     visitNameAnalyzer(node.stmtType, scope);
     let curScope = scope;
     while (curScope.outer !== null) curScope = curScope.outer;
@@ -97,8 +124,8 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
     visitNameAnalyzer(node._body, curScope);
     node.scope = curScope;
   } else if (
-    node instanceof core.VarDeclaration ||
-    node instanceof core.Parameter
+    node instanceof VarDeclaration ||
+    node instanceof Parameter
   ) {
     visitNameAnalyzer(node.stmtType, scope);
     const paramSymbol = scope.lookupCurrent(node.identifier.value);
@@ -111,9 +138,9 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
           " already defined within scope!",
       );
     } else scope.put(new VarSymbol(node));
-    if (node instanceof core.VarDeclaration)
+    if (node instanceof VarDeclaration)
       visitNameAnalyzer(node.value, scope);
-  } else if (node instanceof core.UnionDeclaration) {
+  } else if (node instanceof UnionDeclaration) {
     node.options.forEach((option) => visitNameAnalyzer(option, scope));
     const unionSymbol = scope.lookupCurrent(
       (<UnionType>node.stmtType).identifier.value,
@@ -127,26 +154,26 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
           " already defined within scope!",
       );
     } else scope.put(new UnionSymbol(node));
-  } else if (node instanceof core.Block) {
+  } else if (node instanceof Block) {
     const curScope = new Scope(scope);
     node.children().forEach((child) => visitNameAnalyzer(child, curScope));
     node.scope = curScope;
-  } else if (node instanceof core.CaseStmt) {
+  } else if (node instanceof CaseStmt) {
     const curScope = new Scope(scope);
     node.children().forEach((child) => visitNameAnalyzer(child, curScope));
     node.scope = curScope;
-  } else if (node instanceof core.DeferredDecorator) {
+  } else if (node instanceof DeferredDecorator) {
     node.scopeArgs.forEach((arg) => visitNameAnalyzer(arg, scope));
     node.scopeParams = node.scopeArgs.map(
       (arg) =>
-        new core.Parameter(arg.line, arg.column, arg.declaration.stmtType, arg),
+        new Parameter(arg.line, arg.column, arg.declaration.stmtType, arg),
     );
     const newScope = new Scope(null);
-    core.libFunctions.forEach((value, key) => visitNameAnalyzer(key, newScope));
+    libFunctions.forEach((value, key) => visitNameAnalyzer(key, newScope));
     node.scopeParams.forEach((param) => visitNameAnalyzer(param, newScope));
     visitNameAnalyzer(node.delegate, newScope);
     node.scope = newScope;
-  } else if (node instanceof core.Identifier) {
+  } else if (node instanceof Identifier) {
     const programSymbol = scope.lookup(node.value);
     if (programSymbol === null) {
       errors++;
@@ -161,7 +188,7 @@ function visitNameAnalyzer(node: core.ASTNode, scope: Scope) {
   } else node.children().forEach((child) => visitNameAnalyzer(child, scope));
 }
 
-let returnFunction: core.FunDeclaration = undefined;
+let returnFunction: FunDeclaration = undefined;
 
 function assignArraySize(type1: ArrayType, type2: ArrayType) {
   while (
@@ -175,7 +202,7 @@ function assignArraySize(type1: ArrayType, type2: ArrayType) {
   type1._size = type2._size;
 }
 
-function conditionIsValidType(node: core.If | core.While): boolean {
+function conditionIsValidType(node: If | While): boolean {
   const boolType = new BaseType(-1, -1, BaseTypeKind.BOOL);
   const conditionType = visitTypeAnalyzer(node.condition);
   if (!conditionType.equals(boolType)) {
@@ -192,7 +219,7 @@ function visitTypeAnalyzer(node: core.ASTNode): Type {
   const numberType = new BaseType(-1, -1, BaseTypeKind.NUMBER);
   const boolType = new BaseType(-1, -1, BaseTypeKind.BOOL);
   const stringType = new BaseType(-1, -1, BaseTypeKind.STRING);
-  if (node instanceof core.FunDeclaration) {
+  if (node instanceof FunDeclaration) {
     const oldFunDeclaration = returnFunction;
     returnFunction = node;
     visitTypeAnalyzer(node._body);
@@ -200,8 +227,8 @@ function visitTypeAnalyzer(node: core.ASTNode): Type {
     node.params.forEach((param) => visitTypeAnalyzer(param));
     return node.stmtType;
   } else if (
-    node instanceof core.VarDeclaration ||
-    node instanceof core.Parameter
+    node instanceof VarDeclaration ||
+    node instanceof Parameter
   ) {
     if (
       !(node.stmtType instanceof UnionType) &&
@@ -218,12 +245,12 @@ function visitTypeAnalyzer(node: core.ASTNode): Type {
           node.identifier.value +
           " cannot be type void!",
       );
-    } else if (node instanceof core.VarDeclaration) {
+    } else if (node instanceof VarDeclaration) {
       const valueType = visitTypeAnalyzer(node.value);
       if (
         !node.stmtType.equals(valueType) &&
         !(
-          node.value instanceof core.ArrayLiteral &&
+          node.value instanceof ArrayLiteral &&
           valueType instanceof BaseType &&
           valueType.kind === BaseTypeKind.NONE
         )
@@ -241,7 +268,7 @@ function visitTypeAnalyzer(node: core.ASTNode): Type {
         node.value.stmtType = node.stmtType;
       }
     } else return node.stmtType;
-  } else if (node instanceof core.Return) {
+  } else if (node instanceof Return) {
     if (node.possibleValue === null) {
       if (
         returnFunction !== undefined &&
@@ -262,20 +289,20 @@ function visitTypeAnalyzer(node: core.ASTNode): Type {
         console.log(node.getFilePos() + "Incorrect return type");
       }
     }
-  } else if (node instanceof core.DeferredDecorator) {
+  } else if (node instanceof DeferredDecorator) {
     const oldFunDeclaration = returnFunction;
     returnFunction = undefined;
     node.children().forEach((child) => visitTypeAnalyzer(child));
     returnFunction = oldFunDeclaration;
-  } else if (node instanceof core.If) {
+  } else if (node instanceof If) {
     if (conditionIsValidType(node)) {
       visitTypeAnalyzer(node.ifStmt);
       if (node.possibleElseStmt !== null)
         visitTypeAnalyzer(node.possibleElseStmt);
     }
-  } else if (node instanceof core.While) {
+  } else if (node instanceof While) {
     if (conditionIsValidType(node)) visitTypeAnalyzer(node.whileStmt);
-  } else if (node instanceof core.Match) {
+  } else if (node instanceof Match) {
     const subjectType = visitTypeAnalyzer(node.subject);
     const caseTypes = node.caseStmts.map((caseStmt) =>
       visitTypeAnalyzer(caseStmt),
@@ -297,11 +324,11 @@ function visitTypeAnalyzer(node: core.ASTNode): Type {
       subjectType instanceof UnionType &&
       caseTypes.filter(
         (caseType) =>
-          (<core.UnionDeclaration>(
+          (<UnionDeclaration>(
             subjectType.identifier.declaration
           )).options.filter((option) => option.equals(caseType)).length > 0,
       ).length <
-        (<core.UnionDeclaration>subjectType.identifier.declaration).options
+        (<UnionDeclaration>subjectType.identifier.declaration).options
           .length
     ) {
       errors++;
@@ -310,15 +337,15 @@ function visitTypeAnalyzer(node: core.ASTNode): Type {
           "Need to cover each possible type the subject could be!",
       );
     }
-  } else if (node instanceof core.CaseStmt) {
+  } else if (node instanceof CaseStmt) {
     visitTypeAnalyzer(node.stmt);
     node.matchCondition.stmtType =
-      node.matchCondition instanceof core.Expr
+      node.matchCondition instanceof Expr
         ? visitTypeAnalyzer(node.matchCondition)
         : node.matchCondition.stmtType;
     node.stmtType = node.matchCondition.stmtType;
     return node.stmtType;
-  } else if (node instanceof core.BinaryExpr) {
+  } else if (node instanceof BinaryExpr) {
     const leftHandType = visitTypeAnalyzer(node.leftExpr);
     const rightHandType = visitTypeAnalyzer(node.rightExpr);
     switch (node.operator) {
@@ -410,8 +437,8 @@ function visitTypeAnalyzer(node: core.ASTNode): Type {
         break;
       case "=":
         if (
-          !(node.leftExpr instanceof core.Identifier) &&
-          !(node.leftExpr instanceof core.ArrayAccess)
+          !(node.leftExpr instanceof Identifier) &&
+          !(node.leftExpr instanceof ArrayAccess)
         ) {
           errors++;
           console.log(
@@ -422,7 +449,7 @@ function visitTypeAnalyzer(node: core.ASTNode): Type {
         } else if (
           !leftHandType.equals(rightHandType) &&
           !(
-            node.rightExpr instanceof core.ArrayLiteral &&
+            node.rightExpr instanceof ArrayLiteral &&
             rightHandType instanceof BaseType &&
             rightHandType.kind === BaseTypeKind.NONE
           )
@@ -449,7 +476,7 @@ function visitTypeAnalyzer(node: core.ASTNode): Type {
           return node.stmtType;
         }
     }
-  } else if (node instanceof core.UnaryExpr) {
+  } else if (node instanceof UnaryExpr) {
     const expType = visitTypeAnalyzer(node.expr);
     if (
       (node.operator === "+" || node.operator === "-") &&
@@ -474,7 +501,7 @@ function visitTypeAnalyzer(node: core.ASTNode): Type {
           : new BaseType(node.line, node.column, BaseTypeKind.NUMBER);
       return node.stmtType;
     }
-  } else if (node instanceof core.ArrayAccess) {
+  } else if (node instanceof ArrayAccess) {
     const indexType = visitTypeAnalyzer(node.accessExpr);
     if (!indexType.equals(numberType)) {
       errors++;
@@ -490,7 +517,7 @@ function visitTypeAnalyzer(node: core.ASTNode): Type {
         node.getFilePos() + "Cannot access type that is not an array!",
       );
     }
-  } else if (node instanceof core.TypeCast) {
+  } else if (node instanceof TypeCast) {
     const desiredType = visitTypeAnalyzer(node.stmtType);
     if (desiredType instanceof CompositionType) {
       const castedExpressionType = visitTypeAnalyzer(node.castedExpr);
@@ -511,7 +538,7 @@ function visitTypeAnalyzer(node: core.ASTNode): Type {
           "Cannot cast an expression to any type other than a composition type containing the original type!",
       );
     }
-  } else if (node instanceof core.FunCall) {
+  } else if (node instanceof FunCall) {
     const funType = visitTypeAnalyzer(node.identifier);
     if (!(funType instanceof FunctionType)) {
       errors++;
@@ -534,7 +561,7 @@ function visitTypeAnalyzer(node: core.ASTNode): Type {
       (arg, pos) => !visitTypeAnalyzer(arg).equals(funType.paramTypes[pos]),
     );
     if (
-      node.identifier instanceof core.Identifier &&
+      node.identifier instanceof Identifier &&
       node.identifier.value === "push"
     )
       if (
@@ -556,7 +583,7 @@ function visitTypeAnalyzer(node: core.ASTNode): Type {
           " called with argument not matching parameter type!",
       );
     });
-  } else if (node instanceof core.SpacialObjectInstantiationExpr) {
+  } else if (node instanceof SpacialObjectInstantiationExpr) {
     if (isDecorator(node.stmtType)) {
       if (
         node.stmtType.delegate instanceof PathType ||
@@ -591,13 +618,13 @@ function visitTypeAnalyzer(node: core.ASTNode): Type {
         "May only instantiate a fully described spatial type!",
     );
   } else if (
-    node instanceof core.StringLiteral ||
-    node instanceof core.BoolLiteral ||
-    node instanceof core.NumberLiteral ||
-    node instanceof core.NoneLiteral
+    node instanceof StringLiteral ||
+    node instanceof BoolLiteral ||
+    node instanceof NumberLiteral ||
+    node instanceof NoneLiteral
   )
     return node.stmtType;
-  else if (node instanceof core.ArrayLiteral) {
+  else if (node instanceof ArrayLiteral) {
     if ((<ArrayType>node.stmtType)._size === 0) return node.stmtType;
     node.stmtType = new ArrayType(
       node.stmtType.line,
@@ -614,7 +641,7 @@ function visitTypeAnalyzer(node: core.ASTNode): Type {
       errors++;
       console.log(exp.getFilePos() + "Array literal has item of invalid type!");
     });
-  } else if (node instanceof core.Identifier) {
+  } else if (node instanceof Identifier) {
     node.stmtType = node.declaration.stmtType;
     return node.stmtType;
   } else if (node instanceof Type) return node;

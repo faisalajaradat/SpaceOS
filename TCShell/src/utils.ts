@@ -1,4 +1,6 @@
 import * as core from "./core/core.js";
+import { Program, varStacks} from "./core/core.js";
+import { Block, CaseStmt, DeferredDecorator, FunDeclaration } from "./core/stmt.js";
 import * as engine from "../../SpatialComputingEngine/src/frontend-objects.js";
 import {VarSymbol} from "./semantics.js";
 import {Schema} from "redis-om";
@@ -15,7 +17,7 @@ import {
   Type,
   VirtualDecorator
 } from "./core/type.js";
-import {Block, CaseStmt, DeferredDecorator, FunDeclaration, Program, varStacks} from "./core/core.js";
+import {Expr, Identifier, Parameter, VarDeclaration} from "./core/stmt.js";
 
 export function popOutOfScopeVars(
     node: Program | FunDeclaration | Block | CaseStmt | DeferredDecorator,
@@ -28,9 +30,9 @@ export function popOutOfScopeVars(
 export function getValueOfExpression(
     value: unknown,
 ): unknown {
-  if (value instanceof core.Identifier) {
+  if (value instanceof Identifier) {
     value = varStacks
-      .get(<core.VarDeclaration | core.Parameter>value.declaration)
+      .get(<VarDeclaration | Parameter>value.declaration)
       .at(-1);
   } else if (value instanceof core.ArrayRepresentation)
     value = value.array[value.index];
@@ -41,9 +43,9 @@ export function isAnyType(_type: Type) {
   return _type instanceof BaseType && _type.kind === BaseTypeKind.ANY;
 }
 
-export function isWildcard(matchCondition: core.Parameter | core.Expr) {
+export function isWildcard(matchCondition: Parameter | Expr) {
   return (
-    matchCondition instanceof core.Parameter &&
+    matchCondition instanceof Parameter &&
     isAnyType(matchCondition.stmtType)
   );
 }
