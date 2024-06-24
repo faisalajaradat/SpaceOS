@@ -504,7 +504,7 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
       errors++;
       console.log(
         node.getFilePos() +
-          "Funtion " +
+          "Function " +
           node.identifier +
           " called with incorrect number of arguments!",
       );
@@ -533,7 +533,7 @@ function visitTypeAnalyzer(node: core.ASTNode): core.Type {
         arg.getFilePos() +
           "Function " +
           node.identifier +
-          " called with argument not matching paramater type!",
+          " called with argument not matching parameter type!",
       );
     });
   } else if (node instanceof core.SpacialObjectInstantiationExpr) {

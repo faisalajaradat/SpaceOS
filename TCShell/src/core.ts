@@ -29,21 +29,7 @@ export class ArrayRepresentation {
 let dotString = "";
 let nodeCount = 0;
 
-function writeFunDeclarationDot(
-  node: FunDeclaration,
-  funDeclNodeId: string,
-): void {
-  const typeNodeId = node.stmtType.print();
-  const paramNodeIds = new Array<string>();
-  node.params.forEach((child) => paramNodeIds.push(child.print()));
-  const blockNodeId = node._body.print();
-  dotString = dotString.concat(funDeclNodeId + "->" + typeNodeId + ";\n");
-  paramNodeIds.forEach(
-    (nodeId) =>
-      (dotString = dotString.concat(funDeclNodeId + "->" + nodeId + ";\n")),
-  );
-  dotString = dotString.concat(funDeclNodeId + "->" + blockNodeId + ";\n");
-}
+const newNodeId = () => "Node" + nodeCount++;
 
 //Define all AST nodes
 export interface ASTNode {
@@ -113,7 +99,7 @@ export class BaseType extends Type {
   }
 
   print(): string {
-    const typeNodeId = "Node" + nodeCount++;
+    const typeNodeId = newNodeId();
     let label = "";
     switch (this.kind) {
       case BaseTypeKind.NUMBER:
@@ -154,7 +140,7 @@ export class SpaceFactoryType extends FactoryType {
   }
 
   print(): string {
-    const spaceFactoryTypeNodeId = "Node" + nodeCount++;
+    const spaceFactoryTypeNodeId = newNodeId();
     dotString = dotString.concat(
       spaceFactoryTypeNodeId + '[label=" Space Factory Type "];\n',
     );
@@ -179,7 +165,7 @@ export class EntityFactoryType extends FactoryType {
   }
 
   print(): string {
-    const entityFactoryTypeNodeId = "Node" + nodeCount++;
+    const entityFactoryTypeNodeId = newNodeId();
     dotString = dotString.concat(
       entityFactoryTypeNodeId + '[label=" Entity Factory Type "];\n',
     );
@@ -204,7 +190,7 @@ export class PathFactoryType extends FactoryType {
   }
 
   print(): string {
-    const pathFactoryTypeNodeId = "Node" + nodeCount++;
+    const pathFactoryTypeNodeId = newNodeId();
     dotString = dotString.concat(
       pathFactoryTypeNodeId + '[label=" Path Factory Type "];\n',
     );
@@ -230,7 +216,7 @@ export class SpatialType extends CompositionType {
   }
 
   print(): string {
-    const spatialTypeNodeId = "Node" + nodeCount++;
+    const spatialTypeNodeId = newNodeId();
     dotString = dotString.concat(
       spatialTypeNodeId + '[label=" Spatial Type "];\n',
     );
@@ -279,7 +265,7 @@ export class PhysicalDecorator extends LocalityDecorator {
   }
 
   print(): string {
-    const physicalNodeId = "Node" + nodeCount++;
+    const physicalNodeId = newNodeId();
     dotString = dotString.concat(physicalNodeId + '[label=" Physical "];\n');
     const delegateNodeId = this.delegate.print();
     dotString = dotString.concat(
@@ -314,7 +300,7 @@ export class VirtualDecorator extends LocalityDecorator {
   }
 
   print(): string {
-    const virtualNodeId = "Node" + nodeCount++;
+    const virtualNodeId = newNodeId();
     dotString = dotString.concat(virtualNodeId + '[label=" Virtual "];\n');
     const delegateNodeId = this.delegate.print();
     dotString = dotString.concat(virtualNodeId + "->" + delegateNodeId + ";\n");
@@ -351,7 +337,7 @@ export class SpacePathGraphType extends SpatialType {
   }
 
   print(): string {
-    const spacePathGraphTypeNodeId = "Node" + nodeCount++;
+    const spacePathGraphTypeNodeId = newNodeId();
     dotString = dotString.concat(
       spacePathGraphTypeNodeId + '[label=" Space Path Graph Type "];\n',
     );
@@ -383,7 +369,7 @@ export class PathType extends SpatialType {
   }
 
   print(): string {
-    const pathNodeId = "Node" + nodeCount++;
+    const pathNodeId = newNodeId();
     dotString = dotString.concat(pathNodeId + '[label=" Path "];\n');
     return pathNodeId;
   }
@@ -413,7 +399,7 @@ export class LandPathType extends PathType {
   }
 
   print(): string {
-    const landPathNodeId = "Node" + nodeCount++;
+    const landPathNodeId = newNodeId();
     dotString = dotString.concat(landPathNodeId + '[label=" Land Path "];\n');
     return landPathNodeId;
   }
@@ -443,7 +429,7 @@ export class AirPathType extends PathType {
   }
 
   print(): string {
-    const airPathNodeId = "Node" + nodeCount++;
+    const airPathNodeId = newNodeId();
     dotString = dotString.concat(airPathNodeId + '[label=" Air Path "];\n');
     return airPathNodeId;
   }
@@ -480,7 +466,7 @@ export class ControlledDecorator extends ControlDecorator {
   }
 
   print(): string {
-    const controlledNodeId = "Node" + nodeCount++;
+    const controlledNodeId = newNodeId();
     dotString = dotString.concat(
       controlledNodeId + '[label=" Controlled "];\n',
     );
@@ -517,7 +503,7 @@ export class NotControlledDecorator extends ControlDecorator {
   }
 
   print(): string {
-    const notControlledNodeId = "Node" + nodeCount++;
+    const notControlledNodeId = newNodeId();
     dotString = dotString.concat(
       notControlledNodeId + '[label=" Not Controlled "];\n',
     );
@@ -558,7 +544,7 @@ export class SpaceType extends SpatialObjectType {
   }
 
   print(): string {
-    const spaceNodeId = "Node" + nodeCount++;
+    const spaceNodeId = newNodeId();
     dotString = dotString.concat(spaceNodeId + '[label=" Space "];\n');
     return spaceNodeId;
   }
@@ -588,7 +574,7 @@ export class OpenSpaceType extends SpaceType {
   }
 
   print(): string {
-    const openSpaceNodeId = "Node" + nodeCount++;
+    const openSpaceNodeId = newNodeId();
     dotString = dotString.concat(openSpaceNodeId + '[label=" Open Space "];\n');
     return openSpaceNodeId;
   }
@@ -618,7 +604,7 @@ export class EnclosedSpaceType extends SpaceType {
   }
 
   print(): string {
-    const enclosedSpaceNodeId = "Node" + nodeCount++;
+    const enclosedSpaceNodeId = newNodeId();
     dotString = dotString.concat(
       enclosedSpaceNodeId + '[label=" Enclosed Space "];\n',
     );
@@ -650,7 +636,7 @@ export class EntityType extends SpatialObjectType {
   }
 
   print(): string {
-    const entityNodeId = "Node" + nodeCount++;
+    const entityNodeId = newNodeId();
     dotString = dotString.concat(entityNodeId + '[label=" Entity "];\n');
     return entityNodeId;
   }
@@ -680,7 +666,7 @@ export class StaticEntityType extends EntityType {
   }
 
   print(): string {
-    const staticEntityNodeId = "Node" + nodeCount++;
+    const staticEntityNodeId = newNodeId();
     dotString = dotString.concat(
       staticEntityNodeId + '[label=" Static Entity "];\n',
     );
@@ -712,7 +698,7 @@ export class DynamicEntityType extends EntityType {
   }
 
   print(): string {
-    const dynamicEntityNodeId = "Node" + nodeCount++;
+    const dynamicEntityNodeId = newNodeId();
     dotString = dotString.concat(
       dynamicEntityNodeId + '[label=" Dynamic Entity "];\n',
     );
@@ -744,7 +730,7 @@ export class AnimateEntityType extends DynamicEntityType {
   }
 
   print(): string {
-    const animateEntityNodeId = "Node" + nodeCount++;
+    const animateEntityNodeId = newNodeId();
     dotString = dotString.concat(
       animateEntityNodeId + '[label=" Animate Entity "];\n',
     );
@@ -776,7 +762,7 @@ export class SmartEntityType extends DynamicEntityType {
   }
 
   print(): string {
-    const smartEntityNodeId = "Node" + nodeCount++;
+    const smartEntityNodeId = newNodeId();
     dotString = dotString.concat(
       smartEntityNodeId + '[label=" Smart Entity "];\n',
     );
@@ -815,7 +801,7 @@ export class MobileDecorator extends MotionDecorator {
   }
 
   print(): string {
-    const mobileNodeId = "Node" + nodeCount++;
+    const mobileNodeId = newNodeId();
     dotString = dotString.concat(mobileNodeId + '[label=" Mobile "];\n');
     const delegateNodeId = this.delegate.print();
     dotString = dotString.concat(mobileNodeId + "->" + delegateNodeId + ";\n");
@@ -848,7 +834,7 @@ export class StationaryDecorator extends MotionDecorator {
   }
 
   print(): string {
-    const stationaryNodeId = "Node" + nodeCount++;
+    const stationaryNodeId = newNodeId();
     dotString = dotString.concat(
       stationaryNodeId + '[label=" Stationary "];\n',
     );
@@ -915,7 +901,7 @@ export class UnionType extends CompositionType {
   }
 
   print(): string {
-    const unionType = "Node" + nodeCount++;
+    const unionType = newNodeId();
     dotString = dotString.concat(unionType + '[label=" UnionType "];\n');
     const identifierNodeId = this.identifier.print();
     dotString = dotString.concat(unionType + "->" + identifierNodeId + ";\n");
@@ -972,7 +958,7 @@ export class FunctionType extends Type {
   }
 
   print(): string {
-    const functionTypeNodeId = "Node" + nodeCount++;
+    const functionTypeNodeId = newNodeId();
     dotString = dotString.concat(
       functionTypeNodeId + '[label=" Function "];\n',
     );
@@ -1017,7 +1003,7 @@ export class ArrayType extends Type {
   }
 
   print(): string {
-    const arrayTypeNodeId = "Node" + nodeCount++;
+    const arrayTypeNodeId = newNodeId();
     dotString = dotString.concat(arrayTypeNodeId + '[label=" Array Of "];\n');
     const typeNodeId = this._type;
     dotString = dotString.concat(arrayTypeNodeId + "->" + typeNodeId + ";\n");
@@ -1052,7 +1038,7 @@ export class Program implements ASTNode {
 
   print(): string {
     dotString = dotString.concat("digraph ast {\n");
-    const programNodeId = "Node" + nodeCount++;
+    const programNodeId = newNodeId();
     dotString = dotString.concat(programNodeId + '[label=" Program "];\n');
     const declsNodeIds = new Array<string>();
     this.children().forEach((child) => declsNodeIds.push(child.print()));
@@ -1114,9 +1100,9 @@ export class DeferredDecorator extends Stmt {
   }
 
   print(): string {
-    const deferNodeId = "Node" + nodeCount++;
+    const deferNodeId = newNodeId();
     dotString = dotString.concat(deferNodeId + '[label=" defer "];\n');
-    const scopeArgsNodeId = "Node" + nodeCount++;
+    const scopeArgsNodeId = newNodeId();
     dotString = dotString.concat(scopeArgsNodeId + '[label=" scope args "];\n');
     dotString = dotString.concat(deferNodeId + "->" + scopeArgsNodeId + ";\n");
     this.scopeArgs
@@ -1167,7 +1153,7 @@ export class Parameter extends Stmt {
   }
 
   print(): string {
-    const paramNodeId = "Node" + nodeCount++;
+    const paramNodeId = newNodeId();
     dotString = dotString.concat(paramNodeId + '[label=" Param "];\n');
     const typeNodeId = this.stmtType.print();
     const identifierNodeId = this.identifier.print();
@@ -1205,7 +1191,7 @@ export class VarDeclaration extends Stmt {
   }
 
   print(): string {
-    const varDeclNodeId = "Node" + nodeCount++;
+    const varDeclNodeId = newNodeId();
     dotString = dotString.concat(varDeclNodeId + '[label=" = "];\n');
     const typeNodeId = this.stmtType.print();
     const identifierNodeId = this.identifier.print();
@@ -1241,7 +1227,7 @@ export class UnionDeclaration extends Stmt {
   }
 
   print(): string {
-    const unionDeclNodeId = "Node" + nodeCount++;
+    const unionDeclNodeId = newNodeId();
     dotString = dotString.concat(unionDeclNodeId + '[label= "Union"];\n');
     const unionTypeNodeId = this.stmtType.print();
     dotString = dotString.concat(
@@ -1277,7 +1263,7 @@ export class Return extends Stmt {
   }
 
   print(): string {
-    const returnNodeId = "Node" + nodeCount++;
+    const returnNodeId = newNodeId();
     dotString = dotString.concat(returnNodeId + '[label=" return "];\n');
     if (this.possibleValue === null) return returnNodeId;
     const valueNodeId = this.possibleValue.print();
@@ -1316,14 +1302,14 @@ export class If extends Stmt {
   }
 
   print(): string {
-    const ifNodeId = "Node" + nodeCount++;
+    const ifNodeId = newNodeId();
     dotString = dotString.concat(ifNodeId + '[label=" if "];\n');
     let elseStmtNodeId = "";
     let elseNodeId = "";
     const conditionNodeId = this.condition.print();
     const stmtNodeId = this.ifStmt.print();
     if (this.possibleElseStmt !== null) {
-      elseNodeId = "Node" + nodeCount++;
+      elseNodeId = newNodeId();
       dotString = dotString.concat(elseNodeId + '[label=" else "];\n');
       elseStmtNodeId = this.possibleElseStmt.print();
     }
@@ -1372,7 +1358,7 @@ export class While extends Stmt {
   }
 
   print(): string {
-    const whileNodeId = "Node" + nodeCount++;
+    const whileNodeId = newNodeId();
     dotString = dotString.concat(whileNodeId + '[label=" while "];\n');
     const conditionNodeId = this.condition.print();
     const stmtNodeId = this.whileStmt.print();
@@ -1410,7 +1396,7 @@ export class Block extends Stmt {
   }
 
   print(): string {
-    const blockNodeId = "Node" + nodeCount++;
+    const blockNodeId = newNodeId();
     dotString = dotString.concat(blockNodeId + '[label=" Block "];\n');
     const stmtIds = new Array<string>();
     this.stmts.forEach((stmt) => stmtIds.push(stmt.print()));
@@ -1470,7 +1456,7 @@ export class CaseStmt extends Stmt {
   }
 
   print(): string {
-    const caseStmtNodeId = "Node" + nodeCount++;
+    const caseStmtNodeId = newNodeId();
     dotString = dotString.concat(caseStmtNodeId + '[label=" Case "];\n');
     const matchConditionNodeId = this.matchCondition.print();
     const stmtNodeId = this.stmt.print();
@@ -1650,7 +1636,7 @@ export class Match extends Stmt {
   }
 
   print(): string {
-    const matchNodeId = "Node" + nodeCount++;
+    const matchNodeId = newNodeId();
     dotString = dotString.concat(matchNodeId + '[label=" Match "];\n');
     const subjectNodeId = this.subject.print();
     dotString = dotString.concat(matchNodeId + "->" + subjectNodeId + ";\n");
@@ -1729,7 +1715,7 @@ export class BinaryExpr extends Expr {
   }
 
   print(): string {
-    const opNodeId = "Node" + nodeCount++;
+    const opNodeId = newNodeId();
     dotString = dotString.concat(
       opNodeId + '[label=" ' + this.operator + ' "];\n',
     );
@@ -1812,7 +1798,7 @@ export class UnaryExpr extends Expr {
   }
 
   print(): string {
-    const opNodeId = "Node" + nodeCount++;
+    const opNodeId = newNodeId();
     dotString = dotString.concat(
       opNodeId + '[label" ' + this.operator + ' "];\n',
     );
@@ -1867,12 +1853,21 @@ export class FunDeclaration extends Expr {
   }
 
   print(): string {
-    const anonymousFunDeclNodeId = "Node" + nodeCount++;
+    const funDeclNodeId = newNodeId();
     dotString = dotString.concat(
-      anonymousFunDeclNodeId + '[label=" AnonFunDecl "];\n',
+      funDeclNodeId + '[label=" AnonFunDecl "];\n',
     );
-    writeFunDeclarationDot(this, anonymousFunDeclNodeId);
-    return anonymousFunDeclNodeId;
+    const typeNodeId = this.stmtType.print();
+    const paramNodeIds = new Array<string>();
+    this.params.forEach((child) => paramNodeIds.push(child.print()));
+    const blockNodeId = this._body.print();
+    dotString = dotString.concat(funDeclNodeId + "->" + typeNodeId + ";\n");
+    paramNodeIds.forEach(
+        (nodeId) =>
+            (dotString = dotString.concat(funDeclNodeId + "->" + nodeId + ";\n")),
+    );
+    dotString = dotString.concat(funDeclNodeId + "->" + blockNodeId + ";\n");
+    return funDeclNodeId;
   }
 
   async evaluate(): Promise<unknown> {
@@ -1909,17 +1904,17 @@ export class ArrayAccess extends Expr {
   }
 
   print(): string {
-    const arrayAccesseNodeId = "Node" + nodeCount++;
-    dotString = dotString.concat(arrayAccesseNodeId + '[label=" at "];\n');
+    const arrayAccessNodeId = newNodeId();
+    dotString = dotString.concat(arrayAccessNodeId + '[label=" at "];\n');
     const arrayExprId = this.arrayExpr.print();
     const accessExprId = this.accessExpr.print();
     dotString = dotString.concat(
-      arrayAccesseNodeId + "->" + arrayExprId + ";\n",
+      arrayAccessNodeId + "->" + arrayExprId + ";\n",
     );
     dotString = dotString.concat(
-      arrayAccesseNodeId + "->" + accessExprId + ";\n",
+      arrayAccessNodeId + "->" + accessExprId + ";\n",
     );
-    return arrayAccesseNodeId;
+    return arrayAccessNodeId;
   }
 
   async evaluate(): Promise<ArrayRepresentation> {
@@ -1970,7 +1965,7 @@ export class TypeCast extends Expr {
   }
 
   print(): string {
-    const typeCastNodeId = "Node" + nodeCount++;
+    const typeCastNodeId = newNodeId();
     dotString = dotString.concat(typeCastNodeId + '[label=" TypeCast "];\n');
     const desiredTypeNodeId = this.stmtType.print();
     const castedExprNodeId = this.castedExpr.print();
@@ -2012,7 +2007,7 @@ export class FunCall extends Expr {
   }
 
   print(): string {
-    const funCallNodeId = "Node" + nodeCount++;
+    const funCallNodeId = newNodeId();
     dotString = dotString.concat(funCallNodeId + '[label=" FunCall "];\n');
     const identifierNodeId = this.identifier.print();
     const argNodeIds = new Array<string>();
@@ -2071,7 +2066,7 @@ export class SpacialObjectInstantiationExpr extends Expr {
   }
 
   print(): string {
-    const spatialObjectInstantiationNodeId = "Node" + nodeCount++;
+    const spatialObjectInstantiationNodeId = newNodeId();
     dotString = dotString.concat(
       spatialObjectInstantiationNodeId + '[label=" new "];\n',
     );
@@ -2140,7 +2135,7 @@ export class StringLiteral extends Expr {
   }
 
   print(): string {
-    const stringLiteralNodeId = "Node" + nodeCount++;
+    const stringLiteralNodeId = newNodeId();
     dotString = dotString.concat(
       stringLiteralNodeId + '[label=" ' + this.value + ' "];\n',
     );
@@ -2164,7 +2159,7 @@ export class BoolLiteral extends Expr {
   }
 
   print(): string {
-    const boolLiteralNodeId = "Node" + nodeCount++;
+    const boolLiteralNodeId = newNodeId();
     dotString = dotString.concat(
       boolLiteralNodeId + '[label=" ' + this.value + ' "];\n',
     );
@@ -2188,7 +2183,7 @@ export class NumberLiteral extends Expr {
   }
 
   print(): string {
-    const numberLiteralNodeId = "Node" + nodeCount++;
+    const numberLiteralNodeId = newNodeId();
     dotString = dotString.concat(
       numberLiteralNodeId + '[label=" ' + this.value + ' "];\n',
     );
@@ -2212,7 +2207,7 @@ export class NoneLiteral extends Expr {
   }
 
   print(): string {
-    const noneLiteralNodeId = "Node" + nodeCount++;
+    const noneLiteralNodeId = newNodeId();
     dotString = dotString.concat(noneLiteralNodeId + '[label= " None " ];\n');
     return noneLiteralNodeId;
   }
@@ -2245,7 +2240,7 @@ export class ArrayLiteral extends Expr {
   }
 
   print(): string {
-    const arrayNodeId = "Node" + nodeCount++;
+    const arrayNodeId = newNodeId();
     dotString = dotString.concat(arrayNodeId + '[label=" Array "];\n');
     this.children()
       .map((child) => child.print())
@@ -2276,7 +2271,7 @@ export class Identifier extends Expr {
   }
 
   print(): string {
-    const identifierNodeId = "Node" + nodeCount++;
+    const identifierNodeId = newNodeId();
     dotString = dotString.concat(
       identifierNodeId + '[label=" ' + this.value + ' "];\n',
     );

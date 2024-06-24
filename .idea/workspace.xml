@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="3ca96637-c0cc-4056-90a5-aecfcb04fec3" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/TCShell/src/TCShell.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/TCShell.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/ast.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/ast.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/semantics.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/semantics.ts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="TypeScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
+  <component name="ProjectId" id="2iL9mWMMZueXZPauCzI9rBcXVvS" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "TCShell",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/home/coldstuff1/work/space_os",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "run.code.analysis.last.selected.profile": "pProject Default",
+    "settings.editor.selected.configurable": "reference.settings.ide.settings.uml",
+    "ts.external.directory.path": "/home/coldstuff1/work/space_os/spaceOS/node_modules/typescript/lib",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="es6.move.members.recent.items">
+      <recent name="$PROJECT_DIR$/TCShell/src/ASTNode.ts" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration default="true" type="JetRunConfigurationType">
+      <module name="spaceOS" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
+      <module name="spaceOS" />
+      <option name="filePath" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="3ca96637-c0cc-4056-90a5-aecfcb04fec3" name="Changes" comment="" />
+      <created>1719259150764</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1719259150764</updated>
+      <workItem from="1719259151690" duration="350000" />
+      <workItem from="1719260116719" duration="1565000" />
+      <workItem from="1719261953641" duration="64000" />
+      <workItem from="1719262018793" duration="1064000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+</project>

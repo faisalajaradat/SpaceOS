@@ -18,7 +18,7 @@ program
 program
   .command("interpret <path>")
   .description("interpret tcs files")
-  .option("-t, --trace", "output match trace incase of syntax errors")
+  .option("-t, --trace", "output match trace in case of syntax errors")
   .option("-d, --dot <path>", "save DOT representation of AST to path")
   .action(async (path, options) => {
     try {
