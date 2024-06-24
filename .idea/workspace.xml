@@ -5,11 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3ca96637-c0cc-4056-90a5-aecfcb04fec3" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/TCShell/src/core/type.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SpatialComputingEngine/src/FrontendObjects.ts" beforeDir="false" afterPath="$PROJECT_DIR$/SpatialComputingEngine/src/frontend-objects.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SpatialComputingEngine/src/SpatialComputingEngine.ts" beforeDir="false" afterPath="$PROJECT_DIR$/SpatialComputingEngine/src/spatial-computing-engine.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TCShell/src/TCShell.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/TCShell.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TCShell/src/core.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/ast.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/ast.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/core.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/semantics.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/semantics.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TCShell/src/utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/utils.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TCShell/tests/interpreter.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/tests/interpreter.test.ts" afterDir="false" />
     </list>
@@ -35,6 +36,9 @@
   &quot;associatedIndex&quot;: 7
 }</component>
   <component name="ProjectId" id="2iL9mWMMZueXZPauCzI9rBcXVvS" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -44,7 +48,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "TCShell",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/home/coldstuff1/work/space_os",
+    "last_opened_file_path": "/home/coldstuff1/work/space_os/spaceOS/TCShell/src/core/spatial-type.ts",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -58,7 +62,14 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="es6.move.members.recent.items">
-      <recent name="$PROJECT_DIR$/TCShell/src/ASTNode.ts" />
+      <recent name="$PROJECT_DIR$/TCShell/src/core/stmt.ts" />
+      <recent name="$PROJECT_DIR$/TCShell/src/core/type.ts" />
+      <recent name="$PROJECT_DIR$/TCShell/src/type.ts" />
+      <recent name="$PROJECT_DIR$/TCShell/src/core/spatial-type.ts" />
+      <recent name="$PROJECT_DIR$/TCShell/src/factory-type.ts" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/TCShell/src/core" />
     </key>
   </component>
   <component name="RunManager">
@@ -87,7 +98,7 @@
       <workItem from="1719259151690" duration="350000" />
       <workItem from="1719260116719" duration="1565000" />
       <workItem from="1719261953641" duration="64000" />
-      <workItem from="1719262018793" duration="1470000" />
+      <workItem from="1719262018793" duration="2795000" />
     </task>
     <servers />
   </component>

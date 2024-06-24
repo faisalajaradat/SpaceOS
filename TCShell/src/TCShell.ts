@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import * as core from "./core.js";
+import * as core from "./core/core.js";
 import { grammar } from "./grammar.js";
 import { ast } from "./ast.js";
 import { Command } from "commander";

@@ -1,5 +1,35 @@
 import {grammar} from "./grammar.js";
-import * as core from "./core.js";
+import * as core from "./core/core.js";
+import {
+    AirPathType,
+    AnimateEntityType,
+    ArrayType,
+    BaseType,
+    BaseTypeKind,
+    ControlledDecorator,
+    DynamicEntityType,
+    EnclosedSpaceType,
+    EntityFactoryType,
+    EntityType,
+    FunctionType,
+    LandPathType,
+    MobileDecorator,
+    NotControlledDecorator,
+    OpenSpaceType,
+    PathFactoryType,
+    PathType,
+    PhysicalDecorator,
+    SmartEntityType,
+    SpaceFactoryType,
+    SpacePathGraphType,
+    SpaceType,
+    SpatialObjectType,
+    SpatialType,
+    StaticEntityType,
+    StationaryDecorator,
+    UnionType,
+    VirtualDecorator
+} from "./core/type.js";
 
 export function ast(match) {
     return astBuilder(match).ast();
@@ -349,16 +379,16 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     },
     Type(baseTypeDef, typeSpecifiers) {
         const baseType = baseTypeDef.ast();
-        const numOfSpecifiers = <(core.ArrayType | core.FunctionType)[]>(
+        const numOfSpecifiers = <(ArrayType | FunctionType)[]>(
             typeSpecifiers.ast()
         );
         let fullType = baseType;
         numOfSpecifiers.forEach((specifier) => {
-            if (specifier instanceof core.ArrayType) {
-                (<core.ArrayType>specifier)._type = fullType;
+            if (specifier instanceof ArrayType) {
+                (<ArrayType>specifier)._type = fullType;
                 fullType = specifier;
-            } else if (specifier instanceof core.FunctionType) {
-                (<core.FunctionType>specifier).returnType = fullType;
+            } else if (specifier instanceof FunctionType) {
+                (<FunctionType>specifier).returnType = fullType;
                 fullType = specifier;
             }
         });
@@ -366,22 +396,22 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     },
     baseTypeKeyword(keyword) {
         const lineAndColumn = this.source.getLineAndColumn();
-        let baseTypeKind = core.BaseTypeKind.NONE;
+        let baseTypeKind = BaseTypeKind.NONE;
         switch (keyword.sourceString) {
             case "number":
-                baseTypeKind = core.BaseTypeKind.NUMBER;
+                baseTypeKind = BaseTypeKind.NUMBER;
                 break;
             case "string":
-                baseTypeKind = core.BaseTypeKind.STRING;
+                baseTypeKind = BaseTypeKind.STRING;
                 break;
             case "bool":
-                baseTypeKind = core.BaseTypeKind.BOOL;
+                baseTypeKind = BaseTypeKind.BOOL;
                 break;
             case "void":
-                baseTypeKind = core.BaseTypeKind.VOID;
+                baseTypeKind = BaseTypeKind.VOID;
                 break;
         }
-        return new core.BaseType(
+        return new BaseType(
             lineAndColumn.lineNum,
             lineAndColumn.colNum,
             baseTypeKind,
@@ -389,7 +419,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     },
     UnionType(_union, identifier) {
         const lineAndColumn = this.source.getLineAndColumn();
-        return new core.UnionType(
+        return new UnionType(
             lineAndColumn.lineNum,
             lineAndColumn.colNum,
             identifier.ast(),
@@ -397,7 +427,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     },
     TypeSpecifier_array(specifier) {
         const lineAndColumn = this.source.getLineAndColumn();
-        return new core.ArrayType(
+        return new ArrayType(
             lineAndColumn.lineNum,
             lineAndColumn.colNum,
             null,
@@ -406,7 +436,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     },
     TypeSpecifier_function(_leftParenthesis, listOfTypes, _rightParenthesis) {
         const lineAndColumn = this.source.getLineAndColumn();
-        return new core.FunctionType(
+        return new FunctionType(
             lineAndColumn.lineNum,
             lineAndColumn.colNum,
             null,
@@ -417,57 +447,57 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
         return spatialType.ast();
     },
     MaybeVirtualSpatialType(possibleVirtualOrPhysical, spatialType) {
-        const maybeVirtualSpatialType: core.SpatialType = spatialType.ast();
+        const maybeVirtualSpatialType: SpatialType = spatialType.ast();
         const localityDescriptor = possibleVirtualOrPhysical.ast()[0];
         const localityLineAndColumn =
             possibleVirtualOrPhysical.source.getLineAndColumn();
         return localityDescriptor === undefined
             ? maybeVirtualSpatialType
             : localityDescriptor === "physical"
-                ? new core.PhysicalDecorator(
+                ? new PhysicalDecorator(
                     localityLineAndColumn.lineNum,
                     localityLineAndColumn.colNum,
                     maybeVirtualSpatialType,
                 )
-                : new core.VirtualDecorator(
+                : new VirtualDecorator(
                     localityLineAndColumn.lineNum,
                     localityLineAndColumn.colNum,
                     maybeVirtualSpatialType,
                 );
     },
     MaybeImmutableSpatialType(possibleImmutableOrMutable, spatialType) {
-        const maybeImmutableSpatialType: core.SpatialObjectType = spatialType.ast();
+        const maybeImmutableSpatialType: SpatialObjectType = spatialType.ast();
         const controllDescriptor = possibleImmutableOrMutable.ast()[0];
         const controllLineAndColumn =
             possibleImmutableOrMutable.source.getLineAndColumn();
         return controllDescriptor === undefined
             ? maybeImmutableSpatialType
             : controllDescriptor === "mutable"
-                ? new core.ControlledDecorator(
+                ? new ControlledDecorator(
                     controllLineAndColumn.lineNum,
                     controllLineAndColumn.colNum,
                     maybeImmutableSpatialType,
                 )
-                : new core.NotControlledDecorator(
+                : new NotControlledDecorator(
                     controllLineAndColumn.lineNum,
                     controllLineAndColumn.colNum,
                     maybeImmutableSpatialType,
                 );
     },
     MaybeMobileSpatialType(possibleMobileOrStationary, spatialType) {
-        const maybeMobileSpatialType: core.DynamicEntityType = spatialType.ast();
+        const maybeMobileSpatialType: DynamicEntityType = spatialType.ast();
         const motionDescriptor = possibleMobileOrStationary.ast()[0];
         const motionLineAndColumn =
             possibleMobileOrStationary.source.getLineAndColumn();
         return motionDescriptor === undefined
             ? maybeMobileSpatialType
             : motionDescriptor === "stationary"
-                ? new core.StationaryDecorator(
+                ? new StationaryDecorator(
                     motionLineAndColumn.lineNum,
                     motionLineAndColumn.colNum,
                     maybeMobileSpatialType,
                 )
-                : new core.MobileDecorator(
+                : new MobileDecorator(
                     motionLineAndColumn.lineNum,
                     motionLineAndColumn.colNum,
                     maybeMobileSpatialType,
@@ -493,99 +523,99 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     },
     spatialTypeKeyword(_spatialType) {
         const lineAndColumn = this.source.getLineAndColumn();
-        return new core.SpatialType(lineAndColumn.lineNum, lineAndColumn.colNum);
+        return new SpatialType(lineAndColumn.lineNum, lineAndColumn.colNum);
     },
     landPath(_landPath) {
         const lineAndColumn = this.source.getLineAndColumn();
-        return new core.PhysicalDecorator(
+        return new PhysicalDecorator(
             lineAndColumn.lineNum,
             lineAndColumn.colNum,
-            new core.LandPathType(lineAndColumn.lineNum, lineAndColumn.colNum),
+            new LandPathType(lineAndColumn.lineNum, lineAndColumn.colNum),
         );
     },
     airPath(_airPath) {
         const lineAndColumn = this.source.getLineAndColumn();
-        return new core.PhysicalDecorator(
+        return new PhysicalDecorator(
             lineAndColumn.lineNum,
             lineAndColumn.colNum,
-            new core.AirPathType(lineAndColumn.lineNum, lineAndColumn.colNum),
+            new AirPathType(lineAndColumn.lineNum, lineAndColumn.colNum),
         );
     },
     spaceFactory(_spaceFactory) {
         const lineAndColumn = this.source.getLineAndColumn();
-        return new core.SpaceFactoryType(
+        return new SpaceFactoryType(
             lineAndColumn.lineNum,
             lineAndColumn.colNum,
         );
     },
     entityFactory(_entityFactory) {
         const lineAndColumn = this.source.getLineAndColumn();
-        return new core.EntityFactoryType(
+        return new EntityFactoryType(
             lineAndColumn.lineNum,
             lineAndColumn.colNum,
         );
     },
     pathFactory(_pathFactory) {
         const lineAndColumn = this.source.getLineAndColumn();
-        return new core.PathFactoryType(
+        return new PathFactoryType(
             lineAndColumn.lineNum,
             lineAndColumn.colNum,
         );
     },
     path(_path) {
         const lineAndColumn = this.source.getLineAndColumn();
-        return new core.PathType(lineAndColumn.lineNum, lineAndColumn.colNum);
+        return new PathType(lineAndColumn.lineNum, lineAndColumn.colNum);
     },
     spaceKeyword(_space) {
         const lineAndColumn = this.source.getLineAndColumn();
-        return new core.SpaceType(lineAndColumn.lineNum, lineAndColumn.colNum);
+        return new SpaceType(lineAndColumn.lineNum, lineAndColumn.colNum);
     },
     openSpace(_openSpace) {
         const lineAndColumn = this.source.getLineAndColumn();
-        return new core.OpenSpaceType(lineAndColumn.lineNum, lineAndColumn.colNum);
+        return new OpenSpaceType(lineAndColumn.lineNum, lineAndColumn.colNum);
     },
     enclosedSpace(_enclosedSpace) {
         const lineAndColumn = this.source.getLineAndColumn();
-        return new core.EnclosedSpaceType(
+        return new EnclosedSpaceType(
             lineAndColumn.lineNum,
             lineAndColumn.colNum,
         );
     },
     entity(_entity) {
         const lineAndColumn = this.source.getLineAndColumn();
-        return new core.EntityType(lineAndColumn.lineNum, lineAndColumn.colNum);
+        return new EntityType(lineAndColumn.lineNum, lineAndColumn.colNum);
     },
     staticEntity(_staticEntity) {
         const lineAndColumn = this.source.getLineAndColumn();
-        return new core.StaticEntityType(
+        return new StaticEntityType(
             lineAndColumn.lineNum,
             lineAndColumn.colNum,
         );
     },
     dynamicEntity(_dynamicEntity) {
         const lineAndColumn = this.source.getLineAndColumn();
-        return new core.DynamicEntityType(
+        return new DynamicEntityType(
             lineAndColumn.lineNum,
             lineAndColumn.colNum,
         );
     },
     animateEntity(_animateEntity) {
         const lineAndColumn = this.source.getLineAndColumn();
-        return new core.AnimateEntityType(
+        return new AnimateEntityType(
             lineAndColumn.lineNum,
             lineAndColumn.colNum,
         );
     },
     smartEntity(_smartEntity) {
         const lineAndColumn = this.source.getLineAndColumn();
-        return new core.SmartEntityType(
+        return new SmartEntityType(
             lineAndColumn.lineNum,
             lineAndColumn.colNum,
         );
     },
     spacePathGraph(_spacePathGraph) {
         const lineAndColumn = this.source.getLineAndColumn();
-        return new core.SpacePathGraphType(
+        return new SpacePathGraphType(
             lineAndColumn.lineNum,
             lineAndColumn.colNum,
         );
@@ -595,7 +625,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
         return new core.Parameter(
             lineAndColumn.lineNum,
             lineAndColumn.colNum,
-            new core.BaseType(-1, -1, core.BaseTypeKind.ANY),
+            new BaseType(-1, -1, BaseTypeKind.ANY),
             new core.Identifier(lineAndColumn.lineNum, lineAndColumn.colNum, "_"),
         );
     },
