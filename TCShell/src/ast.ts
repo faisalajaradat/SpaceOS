@@ -56,8 +56,9 @@ import {
 import {Program} from "./core/program.js";
 import {TypeCast} from "./core/expr/TypeCast.js";
 import {FunCall} from "./core/expr/FunCall.js";
+import { MatchResult } from "ohm-js";
 
-export function ast(match) {
+export function ast(match: MatchResult) {
     return astBuilder(match).ast();
 }
 
