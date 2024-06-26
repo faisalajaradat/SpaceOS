@@ -208,7 +208,7 @@ export const enum TypeRule {
   AssignedToLValue,
   AssignedToOnlyMutableValue,
   TypeCastToContainingType,
-  StringAndNumberPlusOnly,
+  OnlyNumbersAndStringForPlusOperation,
   OnlyNumbersUsedForMathOperation,
   OnlyPrimitiveTypeForEqualityOperation,
   OnlyBoolsUsedForBooleanOperation,
@@ -308,7 +308,7 @@ const typeRuleApplicationDictionary: {
     typeCast._type instanceof CompositionType &&
     typeCast._type.contains(checkType(typeCast.castedExpr)),
 
-  [TypeRule.StringAndNumberPlusOnly]: (additionExpr: BinaryExpr): boolean => {
+  [TypeRule.OnlyNumbersAndStringForPlusOperation]: (additionExpr: BinaryExpr): boolean => {
     const leftHandType: Type = checkType(additionExpr.leftExpr);
     const rightHandType: Type = checkType(additionExpr.rightExpr);
     const eitherSideIsString =
@@ -521,7 +521,7 @@ const typeRuleFailureMessageDictionary: {
     typeCast.getFilePos() +
     "Cannot cast an expression to any type other than a composition type containing the original type!",
 
-  [TypeRule.StringAndNumberPlusOnly]: (additionExpr: BinaryExpr): string =>
+  [TypeRule.OnlyNumbersAndStringForPlusOperation]: (additionExpr: BinaryExpr): string =>
     additionExpr.getFilePos() +
     "Can only use the + operator on numbers and strings!",
 
@@ -639,7 +639,7 @@ function checkType(node: ASTNode): Type {
   else if (node instanceof BinaryExpr)
     typeRulesToEnforce.push(
       node.operator === "+"
-        ? TypeRule.StringAndNumberPlusOnly
+        ? TypeRule.OnlyNumbersAndStringForPlusOperation
         : node.operator === "||" || node.operator === "&&"
           ? TypeRule.OnlyBoolsUsedForBooleanOperation
           : node.operator === "==" || node.operator === "!="

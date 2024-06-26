@@ -32,12 +32,14 @@ export enum BaseTypeKind {
   NONE,
 }
 
-export const astBaseTypeMap = new Map<BaseTypeKind, string>();
-
-astBaseTypeMap.set(BaseTypeKind.NUMBER, "number");
-astBaseTypeMap.set(BaseTypeKind.STRING, "string");
-astBaseTypeMap.set(BaseTypeKind.BOOL, "boolean");
-astBaseTypeMap.set(BaseTypeKind.VOID, "undefined");
+export const astBaseTypeRuntimeDictionary: { [key in BaseTypeKind]: string } = {
+  [BaseTypeKind.NUMBER]: "number",
+  [BaseTypeKind.STRING]: "string",
+  [BaseTypeKind.BOOL]: "boolean",
+  [BaseTypeKind.VOID]: "undefined",
+  [BaseTypeKind.ANY]: "undefined",
+  [BaseTypeKind.NONE]: "undefined,",
+};
 
 export class BaseType extends Type {
   kind: BaseTypeKind;
@@ -83,7 +85,7 @@ export class BaseType extends Type {
   }
 
   async evaluate(): Promise<string> {
-    return astBaseTypeMap.get(this.kind);
+    return astBaseTypeRuntimeDictionary[this.kind];
   }
 }
 
