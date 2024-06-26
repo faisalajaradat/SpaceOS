@@ -29,6 +29,7 @@ program
           ? grammar.trace(input).toString()
           : match.message;
         console.log(output);
+        await disconnect();
         return;
       }
       const astHead: core.Program = ast(match);
@@ -41,12 +42,14 @@ program
       const semanticsErrors = analyze(astHead);
       if (semanticsErrors) {
         console.error("Program has " + semanticsErrors + " error(s)!");
+        await disconnect();
         return;
       }
       await astHead.evaluate();
       await disconnect();
     } catch (err) {
       console.error(err);
+      await disconnect();
     }
   })
   .parse();

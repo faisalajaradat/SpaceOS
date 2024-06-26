@@ -1,9 +1,15 @@
 import * as core from "./core/program.js";
-import {MatchCondition, Program, varStacks} from "./core/program.js";
-import {Block, CaseStmt, DeferredDecorator, Parameter, VarDeclaration} from "./core/stmts.js";
+import { MatchCondition, Program, varStacks } from "./core/program.js";
+import {
+  Block,
+  CaseStmt,
+  DeferredDecorator,
+  Parameter,
+  VarDeclaration,
+} from "./core/stmts.js";
 import * as engine from "../../SpatialComputingEngine/src/frontend-objects.js";
-import {VarSymbol} from "./semantics.js";
-import {Schema} from "redis-om";
+import { VarSymbol } from "./semantics.js";
+import { Schema } from "redis-om";
 import {
   BaseType,
   BaseTypeKind,
@@ -17,24 +23,20 @@ import {
   SpatialTypeDecorator,
   StationaryDecorator,
   Type,
-  VirtualDecorator
+  VirtualDecorator,
 } from "./core/index.js";
 
 export function popOutOfScopeVars(
-    node: Program | FunDeclaration | Block | CaseStmt | DeferredDecorator,
+  node: Program | FunDeclaration | Block | CaseStmt | DeferredDecorator,
 ) {
   node.scope.symbolTable.forEach((symbol) => {
     if (symbol instanceof VarSymbol) varStacks.get(symbol.varDeclaration).pop();
   });
 }
 
-export function getValueOfExpression(
-    value: unknown,
-): unknown {
+export function getValueOfExpression(value: unknown): unknown {
   if (value instanceof Identifier) {
-    value = varStacks
-      .get(<VarDeclaration | Parameter>value.declaration)
-      .at(-1);
+    value = varStacks.get(<VarDeclaration | Parameter>value.declaration).at(-1);
   } else if (value instanceof core.ArrayRepresentation)
     value = value.array[value.index];
   return value;
@@ -45,16 +47,11 @@ export function isAnyType(_type: Type): boolean {
 }
 
 export function isWildcard(matchCondition: MatchCondition): boolean {
-  return (
-    matchCondition instanceof Parameter &&
-    isAnyType(matchCondition._type)
-  );
+  return matchCondition instanceof Parameter && isAnyType(matchCondition._type);
 }
 
-export function isDecorator(
-  _type: Type,
-): _type is SpatialTypeDecorator {
-  return (_type as SpatialTypeDecorator).delegate !== undefined;
+export function isDecorator(_type: Type): _type is SpatialTypeDecorator {
+  return "delegate" in _type;
 }
 
 export function getSpatialTypeSchema(

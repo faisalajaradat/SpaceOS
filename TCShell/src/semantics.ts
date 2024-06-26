@@ -1,5 +1,12 @@
-import {ASTNode, Program, SymbolDeclaration} from "./core/program.js";
-import {isDecorator} from "./utils.js";
+import {
+  Assignment,
+  ASTNode,
+  ControlFlowStmt,
+  ExprStmt,
+  Program,
+  SymbolDeclaration,
+} from "./core/program.js";
+import { isDecorator } from "./utils.js";
 import {
   Block,
   CaseStmt,
@@ -9,13 +16,13 @@ import {
   Match,
   Parameter,
   Return,
+  Stmt,
   UnionDeclaration,
   VarDeclaration,
-  While
+  While,
 } from "./core/stmts.js";
-import {Expr} from "./core/expr/Expr.js";
+import { Expr } from "./core/expr/Expr.js";
 import {
-  AirPathType,
   AnimateEntityType,
   ArrayAccess,
   ArrayLiteral,
@@ -23,34 +30,30 @@ import {
   BaseType,
   BaseTypeKind,
   BinaryExpr,
-  BoolLiteral,
   CompositionType,
   ControlDecorator,
+  DefaultBaseTypeInstance,
   EnclosedSpaceType,
   FunctionType,
   FunDeclaration,
   Identifier,
-  LandPathType,
   MotionDecorator,
-  NoneLiteral,
-  NumberLiteral,
   OpenSpaceType,
   PathType,
   SmartEntityType,
-  SpacialObjectInstantiationExpr,
-  SpatialType,
+  SpaceType,
+  SpatialObjectInstantiationExpr,
   StaticEntityType,
-  StringLiteral,
   Type,
   UnaryExpr,
-  UnionType
+  UnionType,
 } from "./core/index.js";
-import {TypeCast} from "./core/expr/TypeCast.js";
-import {FunCall} from "./core/expr/FunCall.js";
+import { TypeCast } from "./core/expr/TypeCast.js";
+import { FunCall } from "./core/expr/FunCall.js";
 
 export default function analyze(astHead: Program): number {
   visitNameAnalyzer(astHead, null);
-  visitTypeAnalyzer(astHead);
+  checkType(astHead);
   return errors;
 }
 //Defines symbols for symbol table
@@ -123,10 +126,7 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
     node.params.forEach((param) => visitNameAnalyzer(param, curScope));
     visitNameAnalyzer(node._body, curScope);
     node.scope = curScope;
-  } else if (
-    node instanceof VarDeclaration ||
-    node instanceof Parameter
-  ) {
+  } else if (node instanceof VarDeclaration || node instanceof Parameter) {
     visitNameAnalyzer(node._type, scope);
     const paramSymbol = scope.lookupCurrent(node.identifier.value);
     if (paramSymbol !== null) {
@@ -138,8 +138,7 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
           " already defined within scope!",
       );
     } else scope.put(new VarSymbol(node));
-    if (node instanceof VarDeclaration)
-      visitNameAnalyzer(node.value, scope);
+    if (node instanceof VarDeclaration) visitNameAnalyzer(node.value, scope);
   } else if (node instanceof UnionDeclaration) {
     node.options.forEach((option) => visitNameAnalyzer(option, scope));
     const unionSymbol = scope.lookupCurrent(
@@ -165,8 +164,7 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
   } else if (node instanceof DeferredDecorator) {
     node.scopeArgs.forEach((arg) => visitNameAnalyzer(arg, scope));
     node.scopeParams = node.scopeArgs.map(
-      (arg) =>
-        new Parameter(arg.line, arg.column, arg.declaration._type, arg),
+      (arg) => new Parameter(arg.line, arg.column, arg.declaration._type, arg),
     );
     const newScope = new Scope(null);
     libFunctions.forEach((_value, key) => visitNameAnalyzer(key, newScope));
@@ -193,10 +191,7 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
 let returnFunction: FunDeclaration = undefined;
 
 function assignArraySize(type1: ArrayType, type2: ArrayType) {
-  while (
-    type1._type instanceof ArrayType &&
-    type2._type instanceof ArrayType
-  ) {
+  while (type1._type instanceof ArrayType && type2._type instanceof ArrayType) {
     type1._size = type2._size;
     type1 = type1._type;
     type2 = type2._type;
@@ -204,448 +199,482 @@ function assignArraySize(type1: ArrayType, type2: ArrayType) {
   type1._size = type2._size;
 }
 
-function conditionIsValidType(node: If | While): boolean {
-  const boolType = new BaseType(-1, -1, BaseTypeKind.BOOL);
-  const conditionType = visitTypeAnalyzer(node.condition);
-  if (!conditionType.equals(boolType)) {
-    errors++;
-    console.log("Invalid condition expression type!");
-    return false;
-  }
-  return true;
+export const enum TypeRule {
+  ControlFlowConditionIsBool,
+  AssignedToSameType,
+  ReturnsFunctionType,
+  AllCaseTypeAreCompatible,
+  CompleteMatchUnionTypeCoverage,
+  AssignedToLValue,
+  AssignedToOnlyMutableValue,
+  TypeCastToContainingType,
+  StringAndNumberPlusOnly,
+  OnlyNumbersUsedForMathOperation,
+  OnlyPrimitiveTypeForEqualityOperation,
+  OnlyBoolsUsedForBooleanOperation,
+  ArrayAccessIndexIsNumber,
+  OnlyArrayTypesAreAccessed,
+  FunctionCalledOnFunctionType,
+  FunctionCalledWithMatchingNumberOfArgs,
+  AllArgsInFunctionCallMatchParameter,
+  NonAbstractSpatialObjectInstantiated,
+  FullyDescribedSpatialObjectInstantiated,
+  ArrayLiteralDeclaredWithEntriesAllMatchingType,
+}
+
+const typeRuleApplicationDictionary: {
+  [key in TypeRule]: (node: ExprStmt) => boolean;
+} = {
+  [TypeRule.ControlFlowConditionIsBool]: (
+    controlFlowStmt: ControlFlowStmt,
+  ): boolean => {
+    return checkType(controlFlowStmt.condition).equals(
+      DefaultBaseTypeInstance.BOOL,
+    );
+  },
+
+  [TypeRule.AssignedToSameType]: (assignment: Assignment): boolean => {
+    const leftHandType =
+      assignment instanceof VarDeclaration
+        ? assignment._type
+        : checkType(assignment.leftExpr);
+    const rightHandType =
+      assignment instanceof VarDeclaration
+        ? checkType(assignment.value)
+        : checkType(assignment.rightExpr);
+    const isSameType = leftHandType.equals(rightHandType);
+    if (leftHandType instanceof ArrayType && rightHandType instanceof ArrayType)
+      assignArraySize(leftHandType, rightHandType);
+    assignment._type = isSameType
+      ? leftHandType
+      : new BaseType(assignment.line, assignment.column, BaseTypeKind.NONE);
+    return isSameType;
+  },
+
+  [TypeRule.ReturnsFunctionType]: (returnStmt: Return): boolean => {
+    if (returnStmt.possibleValue === null)
+      return (
+        returnFunction === undefined ||
+        (returnFunction._type as FunctionType).returnType.equals(
+          DefaultBaseTypeInstance.VOID,
+        )
+      );
+    return (
+      returnFunction !== undefined &&
+      checkType(returnStmt.possibleValue).equals(
+        (returnFunction._type as FunctionType).returnType,
+      )
+    );
+  },
+
+  [TypeRule.AllCaseTypeAreCompatible]: (matchStmt: Match): boolean => {
+    const subjectType = checkType(matchStmt.subject);
+    return (
+      matchStmt.caseStmts.filter((caseStmt) => {
+        const caseType = checkType(caseStmt.matchCondition);
+        caseStmt._type = caseType;
+        return subjectType instanceof CompositionType
+          ? !subjectType.contains(caseType)
+          : !subjectType.equals(caseType);
+      }).length === 0
+    );
+  },
+
+  [TypeRule.CompleteMatchUnionTypeCoverage]: (matchStmt: Match): boolean => {
+    const subjectType = checkType(matchStmt.subject);
+    return !(
+      subjectType instanceof UnionType &&
+      matchStmt.caseStmts.filter(
+        (caseStmt) =>
+          (
+            subjectType.identifier.declaration as UnionDeclaration
+          ).options.filter((typeOption) => typeOption.equals(caseStmt._type))
+            .length > 0,
+      ).length <
+        (subjectType.identifier.declaration as UnionDeclaration).options.length
+    );
+  },
+
+  [TypeRule.AssignedToLValue]: (assignment: Assignment): boolean =>
+    assignment instanceof VarDeclaration ||
+    assignment.leftExpr instanceof Identifier ||
+    assignment.leftExpr instanceof ArrayAccess,
+
+  [TypeRule.AssignedToOnlyMutableValue]: (assignment: Assignment): boolean =>
+    assignment instanceof VarDeclaration ||
+    !(checkType(assignment.leftExpr) instanceof FunctionType),
+
+  [TypeRule.TypeCastToContainingType]: (typeCast: TypeCast): boolean =>
+    typeCast._type instanceof CompositionType &&
+    typeCast._type.contains(checkType(typeCast.castedExpr)),
+
+  [TypeRule.StringAndNumberPlusOnly]: (additionExpr: BinaryExpr): boolean => {
+    const leftHandType: Type = checkType(additionExpr.leftExpr);
+    const rightHandType: Type = checkType(additionExpr.rightExpr);
+    const eitherSideIsString =
+      leftHandType.equals(DefaultBaseTypeInstance.STRING) ||
+      rightHandType.equals(DefaultBaseTypeInstance.STRING);
+    const bothAreValid =
+      (leftHandType.equals(DefaultBaseTypeInstance.NUMBER) ||
+        leftHandType.equals(DefaultBaseTypeInstance.STRING)) &&
+      (rightHandType.equals(DefaultBaseTypeInstance.STRING) ||
+        rightHandType.equals(DefaultBaseTypeInstance.NUMBER));
+
+    additionExpr._type = new BaseType(
+      additionExpr.line,
+      additionExpr.column,
+      !bothAreValid
+        ? BaseTypeKind.NONE
+        : eitherSideIsString
+          ? BaseTypeKind.STRING
+          : BaseTypeKind.NUMBER,
+    );
+    return bothAreValid;
+  },
+
+  [TypeRule.OnlyNumbersUsedForMathOperation]: (
+    mathExpr: BinaryExpr | UnaryExpr,
+  ): boolean => {
+    const bothSidesAreNumbers =
+      mathExpr instanceof UnaryExpr
+        ? checkType(mathExpr.expr).equals(DefaultBaseTypeInstance.NUMBER)
+        : checkType(mathExpr.leftExpr).equals(DefaultBaseTypeInstance.NUMBER) &&
+          checkType(mathExpr.rightExpr).equals(DefaultBaseTypeInstance.NUMBER);
+    const operatorCreatesBool =
+      mathExpr.operator === ">" ||
+      mathExpr.operator === ">=" ||
+      mathExpr.operator === "<" ||
+      mathExpr.operator === "<=";
+
+    mathExpr._type = new BaseType(
+      mathExpr.line,
+      mathExpr.column,
+      !bothSidesAreNumbers
+        ? BaseTypeKind.NONE
+        : operatorCreatesBool
+          ? BaseTypeKind.BOOL
+          : BaseTypeKind.NUMBER,
+    );
+    return bothSidesAreNumbers;
+  },
+
+  [TypeRule.OnlyPrimitiveTypeForEqualityOperation]: (
+    equalityExpr: BinaryExpr,
+  ): boolean => {
+    const leftHandType = checkType(equalityExpr.leftExpr);
+    const bothSidesAreTheSamePrimitiveType =
+      leftHandType instanceof BaseType &&
+      leftHandType.equals(checkType(equalityExpr.rightExpr));
+    equalityExpr._type = new BaseType(
+      equalityExpr.line,
+      equalityExpr.column,
+      bothSidesAreTheSamePrimitiveType ? BaseTypeKind.BOOL : BaseTypeKind.NONE,
+    );
+    return bothSidesAreTheSamePrimitiveType;
+  },
+
+  [TypeRule.OnlyBoolsUsedForBooleanOperation]: (
+    booleanExpr: BinaryExpr | UnaryExpr,
+  ): boolean => {
+    const bothSidesAreBools =
+      booleanExpr instanceof UnaryExpr
+        ? checkType(booleanExpr.expr).equals(DefaultBaseTypeInstance.BOOL)
+        : checkType(booleanExpr.leftExpr).equals(
+            DefaultBaseTypeInstance.BOOL,
+          ) &&
+          checkType(booleanExpr.rightExpr).equals(DefaultBaseTypeInstance.BOOL);
+    booleanExpr._type = new BaseType(
+      booleanExpr.line,
+      booleanExpr.column,
+      bothSidesAreBools ? BaseTypeKind.BOOL : BaseTypeKind.NONE,
+    );
+    return bothSidesAreBools;
+  },
+
+  [TypeRule.ArrayAccessIndexIsNumber]: (arrayAccess: ArrayAccess): boolean =>
+    checkType(arrayAccess.accessExpr).equals(DefaultBaseTypeInstance.NUMBER),
+
+  [TypeRule.OnlyArrayTypesAreAccessed]: (arrayAccess: ArrayAccess): boolean => {
+    const arrayType = checkType(arrayAccess.arrayExpr);
+    const isArrayType = arrayType instanceof ArrayType;
+    arrayAccess._type = isArrayType
+      ? arrayType._type
+      : new BaseType(arrayAccess.line, arrayAccess.column, BaseTypeKind.NONE);
+    return isArrayType;
+  },
+
+  [TypeRule.FunctionCalledOnFunctionType]: (funCall: FunCall): boolean => {
+    const calledSubjectType = checkType(funCall.identifier);
+    funCall.identifier._type = calledSubjectType;
+    const isFunctionType = calledSubjectType instanceof FunctionType;
+    funCall._type = isFunctionType
+      ? calledSubjectType.returnType
+      : new BaseType(funCall.line, funCall.column, BaseTypeKind.NONE);
+    return isFunctionType;
+  },
+
+  [TypeRule.FunctionCalledWithMatchingNumberOfArgs]: (
+    funCall: FunCall,
+  ): boolean =>
+    funCall.args.length ===
+    (funCall.identifier._type as FunctionType).paramTypes.length,
+
+  [TypeRule.AllArgsInFunctionCallMatchParameter]: (
+    funCall: FunCall,
+  ): boolean => {
+    if (
+      !(funCall.identifier instanceof Identifier) ||
+      funCall.identifier.value !== "push"
+    )
+      return (
+        funCall.args.filter(
+          (arg, pos) =>
+            !checkType(arg).equals(
+              (funCall.identifier._type as FunctionType).paramTypes[pos],
+            ),
+        ).length === 0
+      );
+    const arg0Type = checkType(funCall.args[0]);
+    return (
+      arg0Type instanceof ArrayType &&
+      checkType(funCall.args[1]).equals(arg0Type._type)
+    );
+  },
+
+  [TypeRule.NonAbstractSpatialObjectInstantiated]: (
+    objectInstantiation: SpatialObjectInstantiationExpr,
+  ): boolean => {
+    let baseObjectType = objectInstantiation._type;
+    while (isDecorator(baseObjectType))
+      baseObjectType = baseObjectType.delegate;
+    return (
+      baseObjectType instanceof PathType ||
+      baseObjectType instanceof EnclosedSpaceType ||
+      baseObjectType instanceof OpenSpaceType ||
+      baseObjectType instanceof StaticEntityType ||
+      baseObjectType instanceof AnimateEntityType ||
+      baseObjectType instanceof SmartEntityType
+    );
+  },
+
+  [TypeRule.FullyDescribedSpatialObjectInstantiated]: (
+    objectInstantiation: SpatialObjectInstantiationExpr,
+  ): boolean =>
+    isDecorator(objectInstantiation._type) &&
+    (objectInstantiation._type.delegate instanceof PathType ||
+      (objectInstantiation._type.delegate instanceof ControlDecorator &&
+        (objectInstantiation._type.delegate.delegate instanceof SpaceType ||
+          objectInstantiation._type.delegate.delegate instanceof
+            StaticEntityType ||
+          objectInstantiation._type.delegate.delegate instanceof
+            MotionDecorator))),
+
+  [TypeRule.ArrayLiteralDeclaredWithEntriesAllMatchingType]: (
+    arrayLiteral: ArrayLiteral,
+  ): boolean => {
+    arrayLiteral._type = new ArrayType(
+      arrayLiteral.line,
+      arrayLiteral.column,
+      checkType(arrayLiteral.value[0]),
+      arrayLiteral.value.length,
+    );
+    return (
+      arrayLiteral.value.filter(
+        (expr) =>
+          !(arrayLiteral._type as ArrayType)._type.equals(checkType(expr)),
+      ).length === 0
+    );
+  },
+};
+
+const typeRuleFailureMessageDictionary: {
+  [key in TypeRule]: (node: ExprStmt) => string;
+} = {
+  [TypeRule.ControlFlowConditionIsBool]: (
+    controlFlowStmt: ControlFlowStmt,
+  ): string =>
+    controlFlowStmt.getFilePos() +
+    "The condition of a control flow statment must be of type bool!",
+
+  [TypeRule.AssignedToSameType]: (assignment: Assignment): string =>
+    assignment.getFilePos() +
+    "Both sides of an assignment must be the same type!",
+
+  [TypeRule.ReturnsFunctionType]: (returnStmt: Return): string =>
+    returnStmt.getFilePos() + "Incorrect return type!",
+
+  [TypeRule.AllCaseTypeAreCompatible]: (matchStmt: Match): string =>
+    matchStmt.getFilePos() + "Case type incompatible with subject!",
+
+  [TypeRule.CompleteMatchUnionTypeCoverage]: (matchStmt: Match): string =>
+    matchStmt.getFilePos() +
+    "Need to cover each possible type the subject could be!",
+
+  [TypeRule.AssignedToLValue]: (assignment: Assignment): string =>
+    assignment.getFilePos() + "The left side of assignment must be an lvalue!",
+
+  [TypeRule.AssignedToOnlyMutableValue]: (assignment: Assignment): string =>
+    assignment.getFilePos() +
+    "The left side of assignment must be a mutable type!",
+
+  [TypeRule.TypeCastToContainingType]: (typeCast: TypeCast): string =>
+    typeCast.getFilePos() +
+    "Cannot cast an expression to any type other than a composition type containing the original type!",
+
+  [TypeRule.StringAndNumberPlusOnly]: (additionExpr: BinaryExpr): string =>
+    additionExpr.getFilePos() +
+    "Can only use the + operator on numbers and strings!",
+
+  [TypeRule.OnlyNumbersUsedForMathOperation]: (mathExpr: BinaryExpr): string =>
+    mathExpr.getFilePos() +
+    "Can only use the " +
+    mathExpr.operator +
+    " math operator on numbers!",
+
+  [TypeRule.OnlyPrimitiveTypeForEqualityOperation]: (
+    equalityExpr: BinaryExpr,
+  ): string =>
+    equalityExpr.getFilePos() +
+    "Can only use the " +
+    equalityExpr.operator +
+    " on two of the same primitive types!",
+
+  [TypeRule.OnlyBoolsUsedForBooleanOperation]: (
+    booleanExpr: BinaryExpr,
+  ): string =>
+    booleanExpr.getFilePos() +
+    "Can only use the " +
+    booleanExpr.operator +
+    " operator on bools!",
+
+  [TypeRule.ArrayAccessIndexIsNumber]: (arrayAccess: ArrayAccess): string =>
+    arrayAccess.getFilePos() + "Index must be type number!",
+
+  [TypeRule.OnlyArrayTypesAreAccessed]: (arrayAccess: ArrayAccess): string =>
+    arrayAccess.getFilePos() + "Cannot access type that is not an array!",
+
+  [TypeRule.FunctionCalledOnFunctionType]: (funCall: FunCall): string =>
+    funCall.getFilePos() + "Can only perform call on function types",
+
+  [TypeRule.FunctionCalledWithMatchingNumberOfArgs]: (
+    funCall: FunCall,
+  ): string =>
+    funCall.getFilePos() +
+    "Function called with incorrect number of arguments!",
+
+  [TypeRule.AllArgsInFunctionCallMatchParameter]: (funCall: FunCall): string =>
+    funCall.getFilePos() +
+    "Function called with argument not matching parameter type!",
+
+  [TypeRule.NonAbstractSpatialObjectInstantiated]: (
+    objectInstantiation: SpatialObjectInstantiationExpr,
+  ): string =>
+    objectInstantiation.getFilePos() + "Cannot instantiate abstract type!",
+
+  [TypeRule.FullyDescribedSpatialObjectInstantiated]: (
+    objectInstantiation: SpatialObjectInstantiationExpr,
+  ): string =>
+    objectInstantiation.getFilePos() +
+    "May only instantiate a fully described spatial type!",
+
+  [TypeRule.ArrayLiteralDeclaredWithEntriesAllMatchingType]: (
+    arrayLiteral: ArrayLiteral,
+  ): string =>
+    arrayLiteral.getFilePos() + "Array literal has item of invalid type!",
+};
+
+function enforceTypeRules(node: ExprStmt, rulesToEnforce: TypeRule[]) {
+  rulesToEnforce
+    .filter((rule) => !typeRuleApplicationDictionary[rule](node))
+    .forEach((failedRules) => {
+      errors++;
+      console.log(typeRuleFailureMessageDictionary[failedRules](node));
+    });
 }
 
 //Performs type analysis to enforce typing rules
-function visitTypeAnalyzer(node: ASTNode): Type {
-  const voidType = new BaseType(-1, -1, BaseTypeKind.VOID);
-  const numberType = new BaseType(-1, -1, BaseTypeKind.NUMBER);
-  const boolType = new BaseType(-1, -1, BaseTypeKind.BOOL);
-  const stringType = new BaseType(-1, -1, BaseTypeKind.STRING);
-  if (node instanceof FunDeclaration) {
-    const oldFunDeclaration = returnFunction;
-    returnFunction = node;
-    visitTypeAnalyzer(node._body);
-    returnFunction = oldFunDeclaration;
-    node.params.forEach((param) => visitTypeAnalyzer(param));
-    return node._type;
+function checkType(node: ASTNode): Type {
+  const typeRulesToEnforce = new Array<TypeRule>();
+  if (node instanceof Type) return node;
+  if (node instanceof FunDeclaration || node instanceof DeferredDecorator) {
+    const oldReturnFun = returnFunction;
+    returnFunction = node instanceof FunDeclaration ? node : undefined;
+    if (node instanceof FunDeclaration) {
+      checkType(node._body);
+      returnFunction = oldReturnFun;
+      node.params.forEach(checkType);
+      return node._type;
+    }
+    node.children().forEach(checkType);
+    returnFunction = oldReturnFun;
+    return DefaultBaseTypeInstance.NONE;
+  }
+  if (node instanceof Identifier && node.declaration !== undefined)
+    node._type = node.declaration._type;
+
+  if (node instanceof If || node instanceof While) {
+    if (node instanceof If) {
+      checkType(node.ifStmt);
+      if (node.possibleElseStmt !== null) checkType(node.possibleElseStmt);
+    } else checkType(node.whileStmt);
+    typeRulesToEnforce.push(TypeRule.ControlFlowConditionIsBool);
   } else if (
     node instanceof VarDeclaration ||
-    node instanceof Parameter
-  ) {
-    if (
-      !(node._type instanceof UnionType) &&
-      !(
-        node._type instanceof BaseType &&
-        node._type.kind === BaseTypeKind.ANY
-      ) &&
-      node._type.equals(voidType)
-    ) {
-      errors++;
-      console.log(
-        node.getFilePos() +
-          "Var: " +
-          node.identifier.value +
-          " cannot be type void!",
-      );
-    } else if (node instanceof VarDeclaration) {
-      const valueType = visitTypeAnalyzer(node.value);
-      if (
-        !node._type.equals(valueType) &&
-        !(
-          node.value instanceof ArrayLiteral &&
-          valueType instanceof BaseType &&
-          valueType.kind === BaseTypeKind.NONE
-        )
-      ) {
-        errors++;
-        console.log(
-          node.getFilePos() + "Both sides of assignment must be the same type!",
-        );
-      } else {
-        if (
-          node._type instanceof ArrayType &&
-          valueType instanceof ArrayType
-        )
-          assignArraySize(node._type, valueType);
-        node.value._type = node._type;
-      }
-    } else return node._type;
-  } else if (node instanceof Return) {
-    if (node.possibleValue === null) {
-      if (
-        returnFunction !== undefined &&
-        !returnFunction._type.equals(voidType)
-      ) {
-        errors++;
-        console.log(node.getFilePos() + "Function is not type void!");
-      }
-    } else {
-      const returnType: Type = visitTypeAnalyzer(node.possibleValue);
-      if (
-        returnFunction === undefined ||
-        !returnType.equals(
-          (<FunctionType>returnFunction._type).returnType,
-        )
-      ) {
-        errors++;
-        console.log(node.getFilePos() + "Incorrect return type");
-      }
-    }
-  } else if (node instanceof DeferredDecorator) {
-    const oldFunDeclaration = returnFunction;
-    returnFunction = undefined;
-    node.children().forEach((child) => visitTypeAnalyzer(child));
-    returnFunction = oldFunDeclaration;
-  } else if (node instanceof If) {
-    if (conditionIsValidType(node)) {
-      visitTypeAnalyzer(node.ifStmt);
-      if (node.possibleElseStmt !== null)
-        visitTypeAnalyzer(node.possibleElseStmt);
-    }
-  } else if (node instanceof While) {
-    if (conditionIsValidType(node)) visitTypeAnalyzer(node.whileStmt);
-  } else if (node instanceof Match) {
-    const subjectType = visitTypeAnalyzer(node.subject);
-    const caseTypes = node.caseStmts.map((caseStmt) =>
-      visitTypeAnalyzer(caseStmt),
-    );
-    const incorrectCaseTypes = caseTypes.filter(
-      subjectType instanceof CompositionType
-        ? (caseType) => !subjectType.contains(caseType)
-        : (caseType) => !caseType.equals(subjectType),
-    );
-    incorrectCaseTypes.forEach((caseType) => {
-      errors++;
-      console.log(
-        caseType.getFilePos() + "Case type incompatible with subject!",
-      );
-    });
-    if (incorrectCaseTypes.length > 0)
-      return new BaseType(-1, -1, BaseTypeKind.NONE);
-    if (
-      subjectType instanceof UnionType &&
-      caseTypes.filter(
-        (caseType) =>
-          (<UnionDeclaration>(
-            subjectType.identifier.declaration
-          )).options.filter((option) => option.equals(caseType)).length > 0,
-      ).length <
-        (<UnionDeclaration>subjectType.identifier.declaration).options
-          .length
-    ) {
-      errors++;
-      console.log(
-        node.getFilePos() +
-          "Need to cover each possible type the subject could be!",
-      );
-    }
-  } else if (node instanceof CaseStmt) {
-    visitTypeAnalyzer(node.stmt);
-    node.matchCondition._type =
-      node.matchCondition instanceof Expr
-        ? visitTypeAnalyzer(node.matchCondition)
-        : node.matchCondition._type;
-    node._type = node.matchCondition._type;
-    return node._type;
-  } else if (node instanceof BinaryExpr) {
-    const leftHandType = visitTypeAnalyzer(node.leftExpr);
-    const rightHandType = visitTypeAnalyzer(node.rightExpr);
-    switch (node.operator) {
-      case "+":
-        if (
-          (leftHandType.equals(numberType) &&
-            rightHandType.equals(numberType)) ||
-          (leftHandType.equals(stringType) && rightHandType.equals(stringType))
-        ) {
-          node._type = leftHandType.equals(numberType)
-            ? new BaseType(
-                leftHandType.line,
-                leftHandType.column,
-                BaseTypeKind.NUMBER,
-              )
-            : new BaseType(
-                leftHandType.line,
-                leftHandType.column,
-                BaseTypeKind.STRING,
-              );
-          return node._type;
-        }
-        errors++;
-        console.log(
-          node.getFilePos() +
-            "The + operator can only be used on expressions of the same type that are either numbers or strings!",
-        );
-        break;
-      case "-":
-      case "*":
-      case "/":
-      case "%":
-      case ">":
-      case ">=":
-      case "<":
-      case "<=":
-        if (
-          leftHandType.equals(numberType) &&
-          rightHandType.equals(numberType)
-        ) {
-          const operatorCreatesBool =
-            node.operator === ">" ||
-            node.operator === ">=" ||
-            node.operator === "<" ||
-            node.operator === "<=";
-          node._type = operatorCreatesBool
-            ? new BaseType(node.line, node.column, BaseTypeKind.BOOL)
-            : new BaseType(
-                node.line,
-                node.column,
-                BaseTypeKind.NUMBER,
-              );
-          return node._type;
-        }
-        errors++;
-        console.log(
-          node.getFilePos() +
-            "Can only use the " +
-            node.operator +
-            " operator on numbers!",
-        );
-        break;
-      case "==":
-      case "!=":
-        node._type = new BaseType(
-          node.line,
-          node.column,
-          BaseTypeKind.BOOL,
-        );
-        return node._type;
-      case "||":
-      case "&&":
-        if (leftHandType.equals(boolType) && rightHandType.equals(boolType)) {
-          node._type = new BaseType(
-            node.line,
-            node.column,
-            BaseTypeKind.BOOL,
-          );
-          return node._type;
-        }
-        errors++;
-        console.log(
-          node.getFilePos() +
-            "The " +
-            node.operator +
-            " operator can only be used with type bool!",
-        );
-        break;
-      case "=":
-        if (
-          !(node.leftExpr instanceof Identifier) &&
-          !(node.leftExpr instanceof ArrayAccess)
-        ) {
-          errors++;
-          console.log(
-            node.getFilePos() +
-              "Left-hand side of assignment must be an lvalue!",
-          );
-          break;
-        } else if (
-          !leftHandType.equals(rightHandType) &&
-          !(
-            node.rightExpr instanceof ArrayLiteral &&
-            rightHandType instanceof BaseType &&
-            rightHandType.kind === BaseTypeKind.NONE
-          )
-        ) {
-          errors++;
-          console.log(
-            node.getFilePos() + "Both sides of assigment must be same type!",
-          );
-          break;
-        } else if (leftHandType instanceof FunctionType) {
-          errors++;
-          console.log(
-            node.getFilePos() + "Function declarations are immutable!",
-          );
-          break;
-        } else {
-          if (
-            leftHandType instanceof ArrayType &&
-            rightHandType instanceof ArrayType
-          )
-            assignArraySize(leftHandType, rightHandType);
-          node._type = leftHandType;
-          node.rightExpr._type = node._type;
-          return node._type;
-        }
-    }
-  } else if (node instanceof UnaryExpr) {
-    const expType = visitTypeAnalyzer(node.expr);
-    if (
-      (node.operator === "+" || node.operator === "-") &&
-      !expType.equals(numberType)
-    ) {
-      errors++;
-      console.log(
-        node.getFilePos() +
-          "Can only use the " +
-          node.operator +
-          " on numbers!",
-      );
-    } else if (node.operator === "!" && !expType.equals(boolType)) {
-      errors++;
-      console.log(
-        node.getFilePos() + "Can only use the " + node.operator + " on bools!",
-      );
-    } else {
-      node._type =
-        node.operator === "!"
-          ? new BaseType(node.line, node.column, BaseTypeKind.BOOL)
-          : new BaseType(node.line, node.column, BaseTypeKind.NUMBER);
-      return node._type;
-    }
-  } else if (node instanceof ArrayAccess) {
-    const indexType = visitTypeAnalyzer(node.accessExpr);
-    if (!indexType.equals(numberType)) {
-      errors++;
-      console.log(node.accessExpr.getFilePos() + "Index must be type number!");
-    } else {
-      const arrayElementType = visitTypeAnalyzer(node.arrayExpr);
-      if (arrayElementType instanceof ArrayType) {
-        node._type = arrayElementType._type;
-        return node._type;
-      }
-      errors++;
-      console.log(
-        node.getFilePos() + "Cannot access type that is not an array!",
-      );
-    }
-  } else if (node instanceof TypeCast) {
-    const desiredType = visitTypeAnalyzer(node._type);
-    if (desiredType instanceof CompositionType) {
-      const castedExpressionType = visitTypeAnalyzer(node.castedExpr);
-      if (desiredType.contains(castedExpressionType)) {
-        node._type = desiredType;
-        return node._type;
-      } else {
-        errors++;
-        console.log(
-          node.getFilePos() +
-            "Cannot cast an expression to a composition type that does not contain the original type!",
-        );
-      }
-    } else {
-      errors++;
-      console.log(
-        node.getFilePos() +
-          "Cannot cast an expression to any type other than a composition type containing the original type!",
-      );
-    }
-  } else if (node instanceof FunCall) {
-    const funType = visitTypeAnalyzer(node.identifier);
-    if (!(funType instanceof FunctionType)) {
-      errors++;
-      console.log(
-        node.getFilePos() + "Can only perform call on function types",
-      );
-      return new BaseType(-1, -1, BaseTypeKind.NONE);
-    }
-    if (node.args.length !== funType.paramTypes.length) {
-      errors++;
-      console.log(
-        node.getFilePos() +
-          "Function " +
-          node.identifier +
-          " called with incorrect number of arguments!",
-      );
-      return new BaseType(-1, -1, BaseTypeKind.NONE);
-    }
-    const argsIncorrectTypingArray = node.args.filter(
-      (arg, pos) => !visitTypeAnalyzer(arg).equals(funType.paramTypes[pos]),
-    );
-    if (
-      node.identifier instanceof Identifier &&
-      node.identifier.value === "push"
-    )
-      if (
-        !visitTypeAnalyzer(node.args[1]).equals(
-          (<ArrayType>visitTypeAnalyzer(node.args[0]))._type,
-        )
-      )
-        argsIncorrectTypingArray.push(node.args[1]);
-    if (argsIncorrectTypingArray.length === 0) {
-      node._type = funType.returnType;
-      return node._type;
-    }
-    argsIncorrectTypingArray.forEach((arg) => {
-      errors++;
-      console.log(
-        arg.getFilePos() +
-          "Function " +
-          node.identifier +
-          " called with argument not matching parameter type!",
-      );
-    });
-  } else if (node instanceof SpacialObjectInstantiationExpr) {
-    if (isDecorator(node._type)) {
-      if (
-        node._type.delegate instanceof PathType ||
-        (node._type.delegate instanceof ControlDecorator &&
-          ((<ControlDecorator>node._type.delegate).delegate instanceof
-            SpatialType ||
-            node._type.delegate.delegate instanceof StaticEntityType ||
-            node._type.delegate.delegate instanceof MotionDecorator))
-      ) {
-        let delegateType = node._type.delegate;
-        while (isDecorator(delegateType)) delegateType = delegateType.delegate;
-        if (
-          !(
-            <SpatialType>delegateType instanceof PathType ||
-            delegateType instanceof AirPathType ||
-            delegateType instanceof LandPathType ||
-            delegateType instanceof OpenSpaceType ||
-            delegateType instanceof EnclosedSpaceType ||
-            delegateType instanceof StaticEntityType ||
-            delegateType instanceof SmartEntityType ||
-            delegateType instanceof AnimateEntityType
-          )
-        ) {
-          errors++;
-          console.log(node.getFilePos() + "Cannot instantiate abstract type!");
-        } else return node._type;
-      }
-    }
-    errors++;
-    console.log(
-      node.getFilePos() +
-        "May only instantiate a fully described spatial type!",
-    );
-  } else if (
-    node instanceof StringLiteral ||
-    node instanceof BoolLiteral ||
-    node instanceof NumberLiteral ||
-    node instanceof NoneLiteral
+    (node instanceof BinaryExpr && node.operator === "=")
   )
-    return node._type;
-  else if (node instanceof ArrayLiteral) {
-    if ((<ArrayType>node._type)._size === 0) return node._type;
-    node._type = new ArrayType(
-      node._type.line,
-      node._type.column,
-      visitTypeAnalyzer(node.value[0]),
-      (<ArrayType>node._type)._size,
+    typeRulesToEnforce.push(
+      TypeRule.AssignedToSameType,
+      TypeRule.AssignedToLValue,
+      TypeRule.AssignedToOnlyMutableValue,
     );
-    const listOfArraysIncorrectTypes = node.value.filter(
-      (exp) =>
-        !(<ArrayType>node._type)._type.equals(visitTypeAnalyzer(exp)),
+  else if (node instanceof Return)
+    typeRulesToEnforce.push(TypeRule.ReturnsFunctionType);
+  else if (node instanceof Match)
+    typeRulesToEnforce.push(
+      TypeRule.AllCaseTypeAreCompatible,
+      TypeRule.CompleteMatchUnionTypeCoverage,
     );
-    if (listOfArraysIncorrectTypes.length === 0) return node._type;
-    listOfArraysIncorrectTypes.forEach((exp) => {
-      errors++;
-      console.log(exp.getFilePos() + "Array literal has item of invalid type!");
-    });
-  } else if (node instanceof Identifier) {
-    node._type = node.declaration._type;
-    return node._type;
-  } else if (node instanceof Type) return node;
-  else node.children().forEach((child) => visitTypeAnalyzer(child));
-  return new BaseType(-1, -1, BaseTypeKind.NONE);
+  else if (node instanceof TypeCast)
+    typeRulesToEnforce.push(TypeRule.TypeCastToContainingType);
+  else if (node instanceof BinaryExpr)
+    typeRulesToEnforce.push(
+      node.operator === "+"
+        ? TypeRule.StringAndNumberPlusOnly
+        : node.operator === "||" || node.operator === "&&"
+          ? TypeRule.OnlyBoolsUsedForBooleanOperation
+          : node.operator === "==" || node.operator === "!="
+            ? TypeRule.OnlyPrimitiveTypeForEqualityOperation
+            : TypeRule.OnlyNumbersUsedForMathOperation,
+    );
+  else if (node instanceof UnaryExpr)
+    typeRulesToEnforce.push(
+      node.operator === "!"
+        ? TypeRule.OnlyBoolsUsedForBooleanOperation
+        : TypeRule.OnlyNumbersUsedForMathOperation,
+    );
+  else if (node instanceof ArrayAccess)
+    typeRulesToEnforce.push(
+      TypeRule.ArrayAccessIndexIsNumber,
+      TypeRule.OnlyArrayTypesAreAccessed,
+    );
+  else if (node instanceof FunCall)
+    typeRulesToEnforce.push(
+      TypeRule.FunctionCalledOnFunctionType,
+      TypeRule.FunctionCalledWithMatchingNumberOfArgs,
+      TypeRule.AllArgsInFunctionCallMatchParameter,
+    );
+  else if (node instanceof SpatialObjectInstantiationExpr)
+    typeRulesToEnforce.push(
+      TypeRule.NonAbstractSpatialObjectInstantiated,
+      TypeRule.FullyDescribedSpatialObjectInstantiated,
+    );
+  else if (node instanceof ArrayLiteral)
+    typeRulesToEnforce.push(
+      TypeRule.ArrayLiteralDeclaredWithEntriesAllMatchingType,
+    );
+  else node.children().forEach(checkType);
+  if (typeRulesToEnforce.length > 0)
+    enforceTypeRules(node as ExprStmt, typeRulesToEnforce);
+  if (node instanceof Expr || node instanceof Stmt) return node._type;
+  else return DefaultBaseTypeInstance.NONE;
 }

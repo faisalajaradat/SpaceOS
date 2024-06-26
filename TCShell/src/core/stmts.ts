@@ -430,13 +430,7 @@ export class CaseStmt extends Stmt {
 
     children(): ASTNode[] {
         const children = new Array<ASTNode>();
-        if (
-            !(
-                this.matchCondition instanceof Parameter &&
-                isAnyType(this.matchCondition._type)
-            )
-        )
-            children.push(this.matchCondition);
+        children.push(this.matchCondition);
         children.push(this.stmt);
         return children;
     }

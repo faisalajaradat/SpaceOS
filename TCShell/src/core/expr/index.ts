@@ -6,7 +6,7 @@ export * from "./BoolLiteral.js";
 export * from "./FunDeclaration.js";
 export * from "./NoneLiteral.js";
 export * from "./NumberLiteral.js";
-export * from "./SpacialObjectInstantiationExpr.js";
+export * from "./SpatialObjectInstantiationExpr.js";
 export * from "./StringLiteral.js";
 export * from "./UnaryExpr.js";
 

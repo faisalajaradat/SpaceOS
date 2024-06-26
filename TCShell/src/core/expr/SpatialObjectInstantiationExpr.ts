@@ -14,7 +14,7 @@ import * as engine from "../../../../SpatialComputingEngine/src/frontend-objects
 import {saveData} from "../../../../SpatialComputingEngine/src/spatial-computing-engine.js";
 import {Expr} from "./Expr.js";
 
-export class SpacialObjectInstantiationExpr extends Expr {
+export class SpatialObjectInstantiationExpr extends Expr {
     args: Expr[];
 
     constructor(

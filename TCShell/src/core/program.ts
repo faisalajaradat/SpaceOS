@@ -1,7 +1,15 @@
-import {Scope} from "../semantics.js";
-import {popOutOfScopeVars,} from "../utils.js";
-import {DeferredDecorator, Parameter, Stmt, VarDeclaration} from "./stmts.js";
-import {Expr} from "./expr/Expr.js";
+import { Scope } from "../semantics.js";
+import { popOutOfScopeVars } from "../utils.js";
+import {
+  DeferredDecorator,
+  If,
+  Parameter,
+  Stmt,
+  VarDeclaration,
+  While,
+} from "./stmts.js";
+import { Expr } from "./expr/Expr.js";
+import { BinaryExpr } from "./expr/BinaryExpr.js";
 //A map variable declaration and their stack of assigned values
 export const varStacks = new Map<VarDeclaration | Parameter, unknown[]>();
 export const unresolved = [];
@@ -25,6 +33,10 @@ export type SymbolDeclaration = VarDeclaration | Parameter;
 export type ExprStmt = Stmt | Expr;
 
 export type MatchCondition = Parameter | Expr;
+
+export type ControlFlowStmt = If | While;
+
+export type Assignment = VarDeclaration | BinaryExpr;
 
 //Define all AST nodes
 export interface ASTNode {
@@ -66,9 +78,8 @@ export class Program implements ASTNode {
     dotString.push(programNodeId + '[label=" Program "];\n');
     const declsNodeIds = new Array<string>();
     this.children().forEach((child) => declsNodeIds.push(child.print()));
-    declsNodeIds.forEach(
-      (nodeId) =>
-        (dotString.push(programNodeId + "->" + nodeId + ";\n")),
+    declsNodeIds.forEach((nodeId) =>
+      dotString.push(programNodeId + "->" + nodeId + ";\n"),
     );
     dotString.concat("}");
     return programNodeId;
@@ -83,4 +94,3 @@ export class Program implements ASTNode {
     await Promise.all(unresolved);
   }
 }
-
