@@ -5,15 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3ca96637-c0cc-4056-90a5-aecfcb04fec3" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/TCShell/sample_programs/defer_while.tcs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/TCShell/sample_programs/defer_funcall.tcs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TCShell/src/TCShell.ohm" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/TCShell.ohm" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TCShell/src/ast.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/ast.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/FunDeclaration.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/FunDeclaration.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TCShell/src/core/program.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/program.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TCShell/src/core/stmts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/stmts.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TCShell/src/semantics.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/semantics.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TCShell/src/utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/utils.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -101,7 +96,7 @@
       <workItem from="1719328804702" duration="282000" />
       <workItem from="1719349760112" duration="7179000" />
       <workItem from="1719410604771" duration="3425000" />
-      <workItem from="1719421423780" duration="2782000" />
+      <workItem from="1719421423780" duration="4031000" />
     </task>
     <servers />
   </component>

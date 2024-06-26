@@ -1,0 +1,18 @@
+void(number, number, number) counter = void (number id, number start, number end) {
+    number iter = start
+    while iter < end {
+        print("Counter " + id + ": " + iter)
+        iter = iter + 1
+    }
+}
+
+number iter = 0
+
+defer (counter, iter) counter(1, iter, 10)
+iter = 1
+
+defer (counter, iter) counter(2, iter, 10)
+iter = 2
+
+counter(3, iter, 10)
+
