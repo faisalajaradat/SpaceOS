@@ -2,7 +2,7 @@ import { grammar } from "./grammar.js";
 import {
   Block,
   CaseStmt,
-  DeferredDecorator,
+  DeferDecorator,
   If,
   libFunctions,
   Match,
@@ -74,11 +74,19 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     libFunctions.forEach((value, key) => _program.stmts.unshift(key));
     return _program;
   },
-  Stmt_simple(simpleStatements, _newline) {
-    return simpleStatements.ast()[0];
+  Stmt_simple(possibleDeferDecorator, simpleStatements, _newline) {
+    const simpleStmt = simpleStatements.ast()[0];
+    const deferDecorator = possibleDeferDecorator.ast()[0];
+    if (deferDecorator === undefined) return simpleStmt;
+    (<DeferDecorator>deferDecorator).delegate = simpleStmt;
+    return deferDecorator;
   },
-  Stmt_compound(compoundStatement) {
-    return compoundStatement.ast();
+  Stmt_compound(possibleDeferDecorator, compoundStatement) {
+    const compoundStmt = compoundStatement.ast();
+    const deferDecorator = possibleDeferDecorator.ast()[0];
+    if (deferDecorator === undefined) return compoundStmt;
+    (<DeferDecorator>deferDecorator).delegate = compoundStmt;
+    return deferDecorator;
   },
   SimpleStmts(nonemptyListWithOptionalEndSep) {
     return nonemptyListWithOptionalEndSep.ast();
@@ -123,7 +131,6 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     );
   },
   CompoundStmt_match(
-    possibleDeferDeclaration,
     _match,
     expression,
     _leftBracket,
@@ -131,16 +138,13 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     _rightBracket,
   ) {
     const lineAndColumn = this.source.getLineAndColumn();
-    const matchStmt = new Match(
+    return new Match(
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
       expression.ast(),
       caseStmts.ast(),
     );
-    const deferDeclaration = possibleDeferDeclaration.ast()[0];
-    if (deferDeclaration === undefined) return matchStmt;
-    (<DeferredDecorator>deferDeclaration).delegate = matchStmt;
-    return deferDeclaration;
+
   },
   CaseStmt(condition, _arrow, stmt) {
     const lineAndColumn = this.source.getLineAndColumn();
@@ -382,14 +386,14 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       listOfTypes.asIteration().ast(),
     );
   },
-  DeferDeclaration(
+  DeferDecorator(
     _defer,
     _leftParenthesis,
     listOfIdentifiers,
     _rightParenthesis,
   ) {
     const lineAndColumn = this.source.getLineAndColumn();
-    return new DeferredDecorator(
+    return new DeferDecorator(
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
       listOfIdentifiers.asIteration().ast(),

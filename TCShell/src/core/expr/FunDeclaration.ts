@@ -1,4 +1,4 @@
-import {DeferredDecorator, Parameter, Return} from "../stmts.js";
+import {DeferDecorator, Parameter, Return} from "../stmts.js";
 import {ASTNode, dotString, ExprStmt, newNodeId, unresolved} from "../program.js";
 import {Scope} from "../../semantics.js";
 import {FunctionType, Type} from "../type/index.js";
@@ -55,7 +55,7 @@ export class FunDeclaration extends Expr {
 
     async evaluate(): Promise<unknown> {
         let returnValue = undefined;
-        if (this._body instanceof DeferredDecorator)
+        if (this._body instanceof DeferDecorator)
             unresolved.push(this._body.evaluate());
         else {
             returnValue = await this._body.evaluate();

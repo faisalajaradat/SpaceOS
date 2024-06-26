@@ -4,13 +4,13 @@ TCShell {
 
     Interactive = StmtNewline
 
-	  StmtNewline = CompoundStmt #newline	--compound
-    						| SimpleStmts	--simple
+	  StmtNewline = DeferDecorator? CompoundStmt #newline	--compound
+    						| DeferDecorator? SimpleStmts	--simple
                 | newline
                 | end
 
-    Stmt = SimpleStmts #newline --simple
-    			| CompoundStmt  --compound
+    Stmt = DeferDecorator? SimpleStmts #newline --simple
+    			| DeferDecorator? CompoundStmt  --compound
 
     SimpleStmts = NonemptyListWithOptionalEndSep<SimpleStmt, ";">
 
@@ -21,7 +21,7 @@ TCShell {
 
     CompoundStmt = Block    --block
     		  				| if Exp Stmt (else Stmt)?	--if
-                  | DeferDeclaration? match Exp "{" CaseStmt+ "}"    --match
+                  |  match Exp "{" CaseStmt+ "}"    --match
           				| while Exp Stmt	--while
 
      CaseStmt = (Parameter | Exp | wildcard) "=>" Stmt
@@ -62,7 +62,7 @@ TCShell {
 
     VarDeclaration = Parameter "=" Exp
     UnionDeclaration = UnionType "=" NonemptyListOf<Type, "|">
-    DeferDeclaration = defer "(" ListOf<identifier, ","> ")"
+    DeferDecorator = defer "(" ListOf<identifier, ","> ")"
 
     Parameter = Type identifier
 

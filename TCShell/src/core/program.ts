@@ -1,7 +1,7 @@
 import { Scope } from "../semantics.js";
 import { popOutOfScopeVars } from "../utils.js";
 import {
-  DeferredDecorator,
+  DeferDecorator,
   If,
   Parameter,
   Stmt,
@@ -87,7 +87,7 @@ export class Program implements ASTNode {
 
   async evaluate(): Promise<void> {
     for (const stmt of this.children()) {
-      if (stmt instanceof DeferredDecorator) unresolved.push(stmt.evaluate());
+      if (stmt instanceof DeferDecorator) unresolved.push(stmt.evaluate());
       else await stmt.evaluate();
     }
     popOutOfScopeVars(this);

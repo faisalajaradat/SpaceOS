@@ -63,7 +63,7 @@ export abstract class Stmt implements ASTNode {
     }
 }
 
-export class DeferredDecorator extends Stmt {
+export class DeferDecorator extends Stmt {
     delegate: ExprStmt;
     scopeArgs: Identifier[];
     scopeParams: Parameter[];
@@ -312,13 +312,13 @@ export class If extends Stmt {
         if (
             <boolean>getValueOfExpression(await this.condition.evaluate())
         ) {
-            if (this.ifStmt instanceof DeferredDecorator) {
+            if (this.ifStmt instanceof DeferDecorator) {
                 unresolved.push(this.ifStmt.evaluate());
                 return undefined;
             }
             return await this.ifStmt.evaluate();
         } else if (this.possibleElseStmt !== null) {
-            if (this.possibleElseStmt instanceof DeferredDecorator) {
+            if (this.possibleElseStmt instanceof DeferDecorator) {
                 unresolved.push(this.possibleElseStmt.evaluate());
                 return undefined;
             }
@@ -359,7 +359,7 @@ export class While extends Stmt {
         while (
             <boolean>getValueOfExpression(await this.condition.evaluate())
             ) {
-            if (this.whileStmt instanceof DeferredDecorator) {
+            if (this.whileStmt instanceof DeferDecorator) {
                 unresolved.push(this.whileStmt.evaluate());
                 returnValue = undefined;
             } else returnValue = await this.whileStmt.evaluate();
@@ -398,7 +398,7 @@ export class Block extends Stmt {
     async evaluate(): Promise<unknown> {
         let returnNode = undefined;
         for (let i = 0; i < this.stmts.length; i++) {
-            if (this.stmts[i] instanceof DeferredDecorator) {
+            if (this.stmts[i] instanceof DeferDecorator) {
                 unresolved.push(this.stmts[i].evaluate());
                 continue;
             }
@@ -449,7 +449,7 @@ export class CaseStmt extends Stmt {
 
     async evaluate(): Promise<unknown> {
         let returnValue = undefined;
-        if (this.stmt instanceof DeferredDecorator)
+        if (this.stmt instanceof DeferDecorator)
             unresolved.push(this.stmt.evaluate());
         else {
             returnValue = await this.stmt.evaluate();

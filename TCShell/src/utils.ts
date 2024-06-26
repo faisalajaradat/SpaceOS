@@ -3,7 +3,7 @@ import { MatchCondition, Program, varStacks } from "./core/program.js";
 import {
   Block,
   CaseStmt,
-  DeferredDecorator,
+  DeferDecorator,
   Parameter,
   VarDeclaration,
 } from "./core/stmts.js";
@@ -27,7 +27,7 @@ import {
 } from "./core/index.js";
 
 export function popOutOfScopeVars(
-  node: Program | FunDeclaration | Block | CaseStmt | DeferredDecorator,
+  node: Program | FunDeclaration | Block | CaseStmt | DeferDecorator,
 ) {
   node.scope.symbolTable.forEach((symbol) => {
     if (symbol instanceof VarSymbol) varStacks.get(symbol.varDeclaration).pop();

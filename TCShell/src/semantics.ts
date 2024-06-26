@@ -10,7 +10,7 @@ import { isDecorator } from "./utils.js";
 import {
   Block,
   CaseStmt,
-  DeferredDecorator,
+  DeferDecorator,
   If,
   libFunctions,
   Match,
@@ -127,6 +127,8 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
     visitNameAnalyzer(node._body, curScope);
     node.scope = curScope;
   } else if (node instanceof VarDeclaration || node instanceof Parameter) {
+    if (node.identifier.value === "_")
+      return;
     visitNameAnalyzer(node._type, scope);
     const paramSymbol = scope.lookupCurrent(node.identifier.value);
     if (paramSymbol !== null) {
@@ -161,7 +163,7 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
     const curScope = new Scope(scope);
     node.children().forEach((child) => visitNameAnalyzer(child, curScope));
     node.scope = curScope;
-  } else if (node instanceof DeferredDecorator) {
+  } else if (node instanceof DeferDecorator) {
     node.scopeArgs.forEach((arg) => visitNameAnalyzer(arg, scope));
     node.scopeParams = node.scopeArgs.map(
       (arg) => new Parameter(arg.line, arg.column, arg.declaration._type, arg),
@@ -596,7 +598,7 @@ function enforceTypeRules(node: ExprStmt, rulesToEnforce: TypeRule[]) {
 function checkType(node: ASTNode): Type {
   const typeRulesToEnforce = new Array<TypeRule>();
   if (node instanceof Type) return node;
-  if (node instanceof FunDeclaration || node instanceof DeferredDecorator) {
+  if (node instanceof FunDeclaration || node instanceof DeferDecorator) {
     const oldReturnFun = returnFunction;
     returnFunction = node instanceof FunDeclaration ? node : undefined;
     if (node instanceof FunDeclaration) {
