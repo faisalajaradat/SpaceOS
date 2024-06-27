@@ -1,0 +1,5 @@
+import "./TCShell/sample_programs/fib.tcs" as fibonacci
+
+pub number(number) fib = fibonacci.fib
+
+print(fib(15))

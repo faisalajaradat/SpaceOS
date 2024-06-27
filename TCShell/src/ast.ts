@@ -4,6 +4,7 @@ import {
   CaseStmt,
   DeferDecorator,
   If,
+  ImportDeclaration,
   libFunctions,
   Match,
   Parameter,
@@ -57,6 +58,7 @@ import { Program } from "./core/program.js";
 import { TypeCast } from "./core/expr/TypeCast.js";
 import { FunCall } from "./core/expr/FunCall.js";
 import { MatchResult } from "ohm-js";
+import { SymbolAccess } from "./core/expr/SymbolAccess.js";
 
 export function ast(match: MatchResult) {
   return astBuilder(match).ast();
@@ -140,7 +142,6 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       expression.ast(),
       caseStmts.ast(),
     );
-
   },
   CaseStmt(condition, _arrow, stmt) {
     const lineAndColumn = this.source.getLineAndColumn();
@@ -317,6 +318,15 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       expression.ast(),
     );
   },
+  LeftExp_access(leftExpression, _period, identifier) {
+    const lineAndColumn = this.source.getLineAndColumn();
+    return new SymbolAccess(
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
+      leftExpression.ast(),
+      identifier.ast(),
+    );
+  },
   LeftExp(primaryExpression) {
     return primaryExpression.ast();
   },
@@ -362,7 +372,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       statements.ast(),
     );
   },
-  VarDeclaration(parameter, _equal, expression) {
+  VarDeclaration(possiblePub, parameter, _equal, expression) {
     const lineAndColumn = this.source.getLineAndColumn();
     const typeAndIdentifier = parameter.ast();
     return new VarDeclaration(
@@ -371,6 +381,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       typeAndIdentifier._type,
       typeAndIdentifier.identifier,
       expression.ast(),
+      possiblePub.sourceString === "pub",
     );
   },
   UnionDeclaration(unionType, _equal, listOfTypes) {
@@ -380,6 +391,15 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       lineAndColumn.colNum,
       unionType.ast(),
       listOfTypes.asIteration().ast(),
+    );
+  },
+  ImportDeclaration(_import, stringLiteral, _as, identifier) {
+    const lineAndColumn = this.source.getLineAndColumn();
+    return new ImportDeclaration(
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
+      (stringLiteral.ast() as StringLiteral).value,
+      identifier.ast(),
     );
   },
   DeferDecorator(

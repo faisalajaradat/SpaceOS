@@ -1,6 +1,7 @@
 import * as core from "./core/program.js";
 import { MatchCondition, Program, varStacks } from "./core/program.js";
 import {
+  Stmt,
   Block,
   CaseStmt,
   DeferDecorator,
@@ -8,7 +9,7 @@ import {
   VarDeclaration,
 } from "./core/stmts.js";
 import * as engine from "../../SpatialComputingEngine/src/frontend-objects.js";
-import { VarSymbol } from "./semantics.js";
+import { ImportSymbol, VarSymbol } from "./semantics.js";
 import { Schema } from "redis-om";
 import {
   BaseType,
@@ -31,6 +32,10 @@ export function popOutOfScopeVars(
 ) {
   node.scope.symbolTable.forEach((symbol) => {
     if (symbol instanceof VarSymbol) varStacks.get(symbol.varDeclaration).pop();
+    if (symbol instanceof ImportSymbol)
+      (symbol as ImportSymbol).importDeclaration.importedSymbols.forEach(
+        (varDecl) => varStacks.get(varDecl).pop(),
+      );
   });
 }
 
@@ -52,6 +57,10 @@ export function isWildcard(matchCondition: MatchCondition): boolean {
 
 export function isDecorator(_type: Type): _type is SpatialTypeDecorator {
   return "delegate" in _type;
+}
+
+export function isPublic(stmt: Stmt): boolean {
+  return stmt instanceof VarDeclaration && stmt.isPublic;
 }
 
 export function getSpatialTypeSchema(

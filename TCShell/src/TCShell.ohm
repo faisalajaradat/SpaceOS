@@ -16,6 +16,7 @@ TCShell {
 
     SimpleStmt = UnionDeclaration
                 | VarDeclaration
+                | ImportDeclaration
     					  | return (Exp)?		--return
                 | Exp
 
@@ -47,6 +48,7 @@ TCShell {
     				  | LeftExp
      LeftExp = LeftExp "(" ListOf<Exp, ","> ")"		--call
      				| LeftExp "[" Exp "]"		--array
+            | LeftExp "." identifier    --access
             | PrimaryExp
 
     PrimaryExp = stringLiteral
@@ -60,8 +62,9 @@ TCShell {
 
     Block = "{" Stmt* "}"
 
-    VarDeclaration = Parameter "=" Exp
+    VarDeclaration = pub? Parameter "=" Exp
     UnionDeclaration = UnionType "=" NonemptyListOf<Type, "|">
+    ImportDeclaration = import stringLiteral as identifier
     DeferDecorator = defer "(" ListOf<identifier, ","> ")"
 
     Parameter = Type identifier
@@ -125,6 +128,9 @@ TCShell {
             | spacePathGraph
             | new
             | defer
+            | pub
+            | import
+            | as
 
     union = "union" ~identPart
     while = "while" ~identPart
@@ -157,9 +163,13 @@ TCShell {
     spacePathGraph = "SpacePathGraph" ~identPart
     new = "new" ~identPart
     defer = "defer" ~identPart
+    pub = "pub" ~identPart
+    import = "import" ~identPart
+    as = "as" ~identPart
 
 
-    identStart      = letter | "_"
+    identStart      = letter
+                    | ("_" #identPart)    --underscore
     identPart       = identStart | decimalDigit
     decimalDigit    = "0".."9"
 

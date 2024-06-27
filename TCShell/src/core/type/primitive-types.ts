@@ -38,7 +38,7 @@ export const astBaseTypeRuntimeDictionary: { [key in BaseTypeKind]: string } = {
   [BaseTypeKind.BOOL]: "boolean",
   [BaseTypeKind.VOID]: "undefined",
   [BaseTypeKind.ANY]: "undefined",
-  [BaseTypeKind.NONE]: "undefined,",
+  [BaseTypeKind.NONE]: "undefined",
 };
 
 export class BaseType extends Type {

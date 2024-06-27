@@ -6,12 +6,13 @@ import {
   Program,
   SymbolDeclaration,
 } from "./core/program.js";
-import { isDecorator } from "./utils.js";
+import { isDecorator, isPublic } from "./utils.js";
 import {
   Block,
   CaseStmt,
   DeferDecorator,
   If,
+  ImportDeclaration,
   libFunctions,
   Match,
   Parameter,
@@ -50,6 +51,10 @@ import {
 } from "./core/index.js";
 import { TypeCast } from "./core/expr/TypeCast.js";
 import { FunCall } from "./core/expr/FunCall.js";
+import { grammar } from "./grammar.js";
+import { readFileSync } from "fs";
+import { ast } from "./ast.js";
+import { SymbolAccess } from "./core/expr/SymbolAccess.js";
 
 export default function analyze(astHead: Program): number {
   visitNameAnalyzer(astHead, null);
@@ -80,6 +85,15 @@ export class UnionSymbol extends ProgramSymbol {
   constructor(unionDeclaration: UnionDeclaration) {
     super((<UnionType>unionDeclaration._type).identifier.value);
     this.unionDeclaration = unionDeclaration;
+  }
+}
+
+export class ImportSymbol extends ProgramSymbol {
+  importDeclaration: ImportDeclaration;
+
+  constructor(importDeclaration: ImportDeclaration) {
+    super(importDeclaration.alias.value);
+    this.importDeclaration = importDeclaration;
   }
 }
 
@@ -127,8 +141,7 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
     visitNameAnalyzer(node._body, curScope);
     node.scope = curScope;
   } else if (node instanceof VarDeclaration || node instanceof Parameter) {
-    if (node.identifier.value === "_")
-      return;
+    if (node.identifier.value === "_") return;
     visitNameAnalyzer(node._type, scope);
     const paramSymbol = scope.lookupCurrent(node.identifier.value);
     if (paramSymbol !== null) {
@@ -155,6 +168,41 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
           " already defined within scope!",
       );
     } else scope.put(new UnionSymbol(node));
+  } else if (node instanceof ImportDeclaration) {
+    const importSymbol = scope.lookupCurrent(node.alias.value);
+    if (importSymbol !== null) {
+      errors++;
+      console.log(
+        node.getFilePos() +
+          "Import alias: " +
+          node.alias.value +
+          " already defined within scope!",
+      );
+      return;
+    }
+    try {
+      const importedFile = readFileSync(node.path, "utf-8");
+      const importedMatch = grammar.match(importedFile);
+      if (importedMatch.failed()) {
+        console.log(importedMatch.message);
+        return;
+      }
+      const importedProgram: Program = ast(importedMatch);
+      const semanticErrors = analyze(importedProgram);
+      errors += semanticErrors;
+      if (semanticErrors) return;
+      node.importedSymbols = importedProgram.stmts.filter(
+        isPublic,
+      ) as VarDeclaration[];
+      scope.put(new ImportSymbol(node));
+      node.alias.declaration = node;
+    } catch (err) {
+      errors++;
+      console.log(
+        node.getFilePos() + "Cannot import file at path: " + node.path,
+      );
+      return;
+    }
   } else if (node instanceof Block) {
     const curScope = new Scope(scope);
     node.children().forEach((child) => visitNameAnalyzer(child, curScope));
@@ -185,6 +233,8 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
       node.declaration = programSymbol.varDeclaration;
     else if (programSymbol instanceof UnionSymbol)
       node.declaration = programSymbol.unionDeclaration;
+    else if (programSymbol instanceof ImportSymbol)
+      node.declaration = programSymbol.importDeclaration;
   } else {
     node.children().forEach((child) => visitNameAnalyzer(child, scope));
   }
@@ -310,7 +360,9 @@ const typeRuleApplicationDictionary: {
     typeCast._type instanceof CompositionType &&
     typeCast._type.contains(checkType(typeCast.castedExpr)),
 
-  [TypeRule.OnlyNumbersAndStringForPlusOperation]: (additionExpr: BinaryExpr): boolean => {
+  [TypeRule.OnlyNumbersAndStringForPlusOperation]: (
+    additionExpr: BinaryExpr,
+  ): boolean => {
     const leftHandType: Type = checkType(additionExpr.leftExpr);
     const rightHandType: Type = checkType(additionExpr.rightExpr);
     const eitherSideIsString =
@@ -523,7 +575,9 @@ const typeRuleFailureMessageDictionary: {
     typeCast.getFilePos() +
     "Cannot cast an expression to any type other than a composition type containing the original type!",
 
-  [TypeRule.OnlyNumbersAndStringForPlusOperation]: (additionExpr: BinaryExpr): string =>
+  [TypeRule.OnlyNumbersAndStringForPlusOperation]: (
+    additionExpr: BinaryExpr,
+  ): string =>
     additionExpr.getFilePos() +
     "Can only use the + operator on numbers and strings!",
 
@@ -613,6 +667,19 @@ function checkType(node: ASTNode): Type {
   }
   if (node instanceof Identifier && node.declaration !== undefined)
     node._type = node.declaration._type;
+
+  if (node instanceof SymbolAccess) {
+    if (
+      !(node.locationExpr instanceof Identifier) ||
+      !(node.locationExpr.declaration instanceof ImportDeclaration)
+    )
+      return DefaultBaseTypeInstance.NONE;
+    const matchedSymbols = node.locationExpr.declaration.importedSymbols.filter(
+      (varDecl) => varDecl.identifier.value === node.symbol.value,
+    );
+    node.symbol.declaration = matchedSymbols[0];
+    node._type = checkType(node.symbol);
+  }
 
   if (node instanceof If || node instanceof While) {
     if (node instanceof If) {
