@@ -1,6 +1,6 @@
 void() Main = void(none) {
-  number[] nums = {7, 5, 3}
-  string[][] arraysOfStringArrays = {{"hello!"}, {"Hello"}, {" "}, {"World!"}}
+  number[] nums = [7, 5, 3]
+  string[][] arraysOfStringArrays = [["hello!"], ["Hello"], [" "], ["World!"]]
   print(nums)
   print(nums[0])
   nums[0] = 10

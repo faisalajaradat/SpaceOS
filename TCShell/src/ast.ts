@@ -333,7 +333,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   PrimaryExp_group(_leftParenthesis, expression, _rightParenthesis) {
     return expression.ast();
   },
-  PrimaryExp_array(_leftBracket, listOfExpressions, _rightBracket) {
+  PrimaryExp_array(_leftSquareBracket, listOfExpressions, _rightSquareBracket) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new ArrayLiteral(
       lineAndColumn.lineNum,

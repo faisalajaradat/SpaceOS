@@ -27,14 +27,14 @@ export const rel_test =
 export const add_test = 'print("" + "Right!")';
 export const mul_test = 'if 5 * 5 == 25\n\tprint("Right!")';
 export const unary_test = 'bool no = false\nif !no\n\tprint("Right!")';
-export const array_literal_test = "print({1, 2, 3})";
+export const array_literal_test = "print([1, 2, 3])";
 export const function_declaration_test =
   "string(string[], number) concatStringArray = string(string[] array, number len) {" +
   '\n\tnumber iter = 0\n\tstring fullString = ""\n\twhile iter < len {' +
   "\n\t\tfullString = fullString + array[iter]\n\t\titer = iter + 1\n\t}\n\treturn fullString\n}" +
-  '\nprint(concatStringArray({"R", "i", "g", "h", "t", "!"}, 6))';
+  '\nprint(concatStringArray(["R", "i", "g", "h", "t", "!"], 6))';
 export const array_access_test =
-  'string[] array = {"Wrong!", "Right!", "Wrong!"}\nprint(array[1])';
+  'string[] array = ["Wrong!", "Right!", "Wrong!"]\nprint(array[1])';
 export const recursion_test = fs.readFileSync(
   "./TCShell/sample_programs/fib.tcs",
   "utf-8",

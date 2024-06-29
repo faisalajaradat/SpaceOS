@@ -58,7 +58,7 @@ TCShell {
               | noneLiteral
               | Type "(" (noneLiteral | NonemptyListOf<Parameter, ",">) ")" Stmt  --function
               | "(" Exp ")"		--group
-              | "{" ListOf<Exp, ","> "}"		--array
+              | "[" ListOf<Exp, ","> "]"		--array
 
     Block = "{" Stmt* "}"
 
