@@ -5,13 +5,29 @@ import { ast } from "../src/ast.js";
 import analyze from "../src/semantics.js";
 import * as test_cases from "./test_cases.js";
 import { disconnect } from "../../SpatialComputingEngine/src/spatial-computing-engine.js";
+/*import {
+  DockerComposeEnvironment,
+  StartedDockerComposeEnvironment,
+} from "testcontainers";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+let runningEnvironment: StartedDockerComposeEnvironment = undefined;
+
+beforeAll(async () => {
+  runningEnvironment = await new DockerComposeEnvironment(
+    dirname(fileURLToPath(import.meta.url)) + "../../",
+    "docker-compose.yml",
+  ).up();
+});
+*/
+afterAll(async () => {
+  await disconnect();
+});
 
 async function executeTestCase(testCase: string) {
   const program: core.Program = ast(grammar.match(testCase));
-  if (analyze(program) === 0) {
-    await program.evaluate();
-    await disconnect();
-  }
+  if (analyze(program) === 0) await program.evaluate();
 }
 
 test("newline as statement seperator", async () => {
