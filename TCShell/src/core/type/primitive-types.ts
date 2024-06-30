@@ -1,5 +1,6 @@
-import { ASTNode, dotString, newNodeId } from "../program.js";
-import { isAnyType } from "../../utils.js";
+import { ASTNode, dotString, newNodeId, RuntimeType } from "../program.js";
+import { getTypeDeclaration, isAnyType } from "../../utils.js";
+import { Identifier } from "../expr/Expr.js";
 
 export abstract class Type implements ASTNode {
   line: number;
@@ -77,6 +78,9 @@ export class BaseType extends Type {
       case BaseTypeKind.VOID:
         label = "void";
         break;
+      case BaseTypeKind.ANY:
+        label = "any";
+        break;
       case BaseTypeKind.NONE:
         break;
     }
@@ -103,24 +107,24 @@ export abstract class CompositionType extends Type {
 }
 
 export class FunctionType extends Type {
-  returnType: Type;
-  paramTypes: Type[];
+  protected _returnType: RuntimeType;
+  protected _paramTypes: RuntimeType[];
 
   constructor(
     line: number,
     column: number,
-    returnType: Type,
-    paramTypes: Type[],
+    returnType: RuntimeType,
+    paramTypes: RuntimeType[],
   ) {
     super(line, column);
-    this.returnType = returnType;
-    this.paramTypes = paramTypes;
+    this._returnType = returnType;
+    this._paramTypes = paramTypes;
   }
 
   children(): ASTNode[] {
     const children = new Array<ASTNode>();
-    children.push(this.returnType);
-    children.push(...this.paramTypes);
+    children.push(this._returnType);
+    children.push(...this._paramTypes);
     return children;
   }
 
@@ -138,9 +142,9 @@ export class FunctionType extends Type {
   print(): string {
     const functionTypeNodeId = newNodeId();
     dotString.push(functionTypeNodeId + '[label=" Function "];\n');
-    const typeNodeId = this.returnType.print();
+    const typeNodeId = this._returnType.print();
     dotString.push(functionTypeNodeId + "->" + typeNodeId + ";\n");
-    this.paramTypes
+    this._paramTypes
       .map((paramType) => paramType.print())
       .forEach((nodeId) =>
         dotString.push(functionTypeNodeId + "->" + nodeId + ";\n"),
@@ -151,13 +155,35 @@ export class FunctionType extends Type {
   async evaluate(): Promise<void> {
     return undefined;
   }
+
+  get returnType(): Type {
+    if (this._returnType instanceof Identifier)
+      return getTypeDeclaration(this._returnType);
+    return this._returnType;
+  }
+
+  set returnType(_type: RuntimeType) {
+    this._returnType = _type;
+  }
+
+  get paramTypes(): Type[] {
+    return this._paramTypes.map((paramType) =>
+      paramType instanceof Identifier
+        ? getTypeDeclaration(paramType)
+        : paramType,
+    );
+  }
+
+  set paramTypes(paramTypes: RuntimeType[]) {
+    this._paramTypes = paramTypes;
+  }
 }
 
 export class ArrayType extends Type {
-  _type: Type;
+  protected _type: RuntimeType;
   _size: number;
 
-  constructor(line: number, column: number, type: Type, size: number) {
+  constructor(line: number, column: number, type: RuntimeType, size: number) {
     super(line, column);
     this._type = type;
     this._size = size;
@@ -170,19 +196,28 @@ export class ArrayType extends Type {
   equals(_type: Type): boolean {
     return (
       isAnyType(_type) ||
-      (_type instanceof ArrayType && this._type.equals(_type._type))
+      (_type instanceof ArrayType && this.type.equals(_type.type))
     );
   }
 
   print(): string {
     const arrayTypeNodeId = newNodeId();
     dotString.push(arrayTypeNodeId + '[label=" Array Of "];\n');
-    const typeNodeId = this._type;
+    const typeNodeId = this._type.print();
     dotString.push(arrayTypeNodeId + "->" + typeNodeId + ";\n");
     return arrayTypeNodeId;
   }
 
   async evaluate(): Promise<void> {
     return undefined;
+  }
+
+  get type(): Type {
+    if (this._type instanceof Identifier) return getTypeDeclaration(this._type);
+    return this._type;
+  }
+
+  set type(_type: RuntimeType) {
+    this._type = _type;
   }
 }

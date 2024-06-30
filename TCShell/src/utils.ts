@@ -1,11 +1,14 @@
 import * as core from "./core/program.js";
 import { MatchCondition, Program, varStacks } from "./core/program.js";
 import {
-  Stmt,
+  AliasTypeDeclaration,
   Block,
   CaseStmt,
   DeferDecorator,
   Parameter,
+  RecordDeclaration,
+  Stmt,
+  UnionDeclaration,
   VarDeclaration,
 } from "./core/stmts.js";
 import * as engine from "../../SpatialComputingEngine/src/frontend-objects.js";
@@ -15,17 +18,20 @@ import {
   BaseType,
   BaseTypeKind,
   ControlledDecorator,
+  DefaultBaseTypeInstance,
   FunDeclaration,
-  Identifier,
   MobileDecorator,
   NotControlledDecorator,
   PhysicalDecorator,
+  RecordType,
   SpatialType,
   SpatialTypeDecorator,
   StationaryDecorator,
   Type,
+  UnionType,
   VirtualDecorator,
 } from "./core/index.js";
+import { Identifier } from "./core/expr/Expr.js";
 
 export function popOutOfScopeVars(
   node: Program | FunDeclaration | Block | CaseStmt | DeferDecorator,
@@ -47,12 +53,12 @@ export function getValueOfExpression(value: unknown): unknown {
   return value;
 }
 
-export function isAnyType(_type: Type): boolean {
+export function isAnyType(_type: core.RuntimeType): boolean {
   return _type instanceof BaseType && _type.kind === BaseTypeKind.ANY;
 }
 
 export function isWildcard(matchCondition: MatchCondition): boolean {
-  return matchCondition instanceof Parameter && isAnyType(matchCondition._type);
+  return matchCondition instanceof Parameter && isAnyType(matchCondition.type);
 }
 
 export function isDecorator(_type: Type): _type is SpatialTypeDecorator {
@@ -61,6 +67,26 @@ export function isDecorator(_type: Type): _type is SpatialTypeDecorator {
 
 export function isPublic(stmt: Stmt): boolean {
   return stmt instanceof VarDeclaration && stmt.isPublic;
+}
+
+export function getTypeDeclaration(identifier: Identifier): Type {
+  if (identifier.declaration instanceof UnionDeclaration)
+    return new UnionType(
+      identifier.declaration.line,
+      identifier.declaration.column,
+      identifier,
+    );
+  if (identifier.declaration instanceof RecordDeclaration)
+    return new RecordType(
+      identifier.declaration.line,
+      identifier.declaration.column,
+      identifier,
+    );
+  if (identifier.declaration instanceof AliasTypeDeclaration)
+    if (identifier.declaration.aliasedType instanceof Type)
+      return identifier.declaration.aliasedType;
+    else return getTypeDeclaration(identifier.declaration.aliasedType);
+  return DefaultBaseTypeInstance.NONE;
 }
 
 export function getSpatialTypeSchema(

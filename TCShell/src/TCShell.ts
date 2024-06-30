@@ -35,8 +35,10 @@ program
       const astHead: core.Program = ast(match);
       if (options.dot != undefined) {
         astHead.print();
+        const dotProg = core.dotString.join("");
+        console.log(dotProg);
         graphviz
-          .dot(core.dotString.join(""), "svg")
+          .dot(dotProg, "svg")
           .then((svg) => fs.writeFileSync(options.dot, svg));
       }
       const semanticsErrors = analyze(astHead);

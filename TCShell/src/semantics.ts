@@ -6,8 +6,9 @@ import {
   Program,
   SymbolDeclaration,
 } from "./core/program.js";
-import { isDecorator, isPublic } from "./utils.js";
+import { getTypeDeclaration, isDecorator, isPublic } from "./utils.js";
 import {
+  AliasTypeDeclaration,
   Block,
   CaseStmt,
   DeferDecorator,
@@ -16,13 +17,14 @@ import {
   libFunctions,
   Match,
   Parameter,
+  RecordDeclaration,
   Return,
   Stmt,
   UnionDeclaration,
   VarDeclaration,
   While,
 } from "./core/stmts.js";
-import { Expr } from "./core/expr/Expr.js";
+import { Expr, Identifier } from "./core/expr/Expr.js";
 import {
   AnimateEntityType,
   ArrayAccess,
@@ -37,10 +39,11 @@ import {
   EnclosedSpaceType,
   FunctionType,
   FunDeclaration,
-  Identifier,
   MotionDecorator,
   OpenSpaceType,
   PathType,
+  RecordLiteral,
+  RecordType,
   SmartEntityType,
   SpaceType,
   SpatialObjectInstantiationExpr,
@@ -55,6 +58,7 @@ import { grammar } from "./grammar.js";
 import { readFileSync } from "fs";
 import { ast } from "./ast.js";
 import { SymbolAccess } from "./core/expr/SymbolAccess.js";
+import { error } from "console";
 
 export default function analyze(astHead: Program): number {
   visitNameAnalyzer(astHead, null);
@@ -83,8 +87,17 @@ export class UnionSymbol extends ProgramSymbol {
   unionDeclaration: UnionDeclaration;
 
   constructor(unionDeclaration: UnionDeclaration) {
-    super((<UnionType>unionDeclaration._type).identifier.value);
+    super((unionDeclaration.type as UnionType).identifier.value);
     this.unionDeclaration = unionDeclaration;
+  }
+}
+
+export class AliasTypeSymbol extends ProgramSymbol {
+  aliasTypeDeclaration: AliasTypeDeclaration;
+
+  constructor(aliasTypeDeclaration: AliasTypeDeclaration) {
+    super(aliasTypeDeclaration.alias.value);
+    this.aliasTypeDeclaration = aliasTypeDeclaration;
   }
 }
 
@@ -94,6 +107,15 @@ export class ImportSymbol extends ProgramSymbol {
   constructor(importDeclaration: ImportDeclaration) {
     super(importDeclaration.alias.value);
     this.importDeclaration = importDeclaration;
+  }
+}
+
+export class RecordSymbol extends ProgramSymbol {
+  recordDeclaration: RecordDeclaration;
+
+  constructor(recordDeclaration: RecordDeclaration) {
+    super((recordDeclaration.type as RecordType).identifier.value);
+    this.recordDeclaration = recordDeclaration;
   }
 }
 
@@ -133,7 +155,7 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
     node.children().forEach((child) => visitNameAnalyzer(child, curScope));
     node.scope = curScope;
   } else if (node instanceof FunDeclaration) {
-    visitNameAnalyzer(node._type, scope);
+    visitNameAnalyzer(node.children()[0], scope);
     let curScope = scope;
     while (curScope.outer !== null) curScope = curScope.outer;
     curScope = new Scope(curScope);
@@ -142,7 +164,7 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
     node.scope = curScope;
   } else if (node instanceof VarDeclaration || node instanceof Parameter) {
     if (node.identifier.value === "_") return;
-    visitNameAnalyzer(node._type, scope);
+    visitNameAnalyzer(node.children()[0], scope);
     const paramSymbol = scope.lookupCurrent(node.identifier.value);
     if (paramSymbol !== null) {
       errors++;
@@ -157,17 +179,29 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
   } else if (node instanceof UnionDeclaration) {
     node.options.forEach((option) => visitNameAnalyzer(option, scope));
     const unionSymbol = scope.lookupCurrent(
-      (<UnionType>node._type).identifier.value,
+      (<UnionType>node.type).identifier.value,
     );
     if (unionSymbol !== null) {
       errors++;
       console.log(
         node.getFilePos() +
-          "Union name: " +
-          (<UnionType>node._type).identifier.value +
+          "Type name: " +
+          (<UnionType>node.type).identifier.value +
           " already defined within scope!",
       );
     } else scope.put(new UnionSymbol(node));
+  } else if (node instanceof AliasTypeDeclaration) {
+    visitNameAnalyzer(node.aliasedType, scope);
+    const aliasSymbol = scope.lookupCurrent(node.alias.value);
+    if (aliasSymbol !== null) {
+      errors++;
+      console.log(
+        node.getFilePos() +
+          "Type name: " +
+          node.alias.value +
+          " already defined within scope!",
+      );
+    } else scope.put(new AliasTypeSymbol(node));
   } else if (node instanceof ImportDeclaration) {
     const importSymbol = scope.lookupCurrent(node.alias.value);
     if (importSymbol !== null) {
@@ -203,6 +237,35 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
       );
       return;
     }
+  } else if (node instanceof RecordDeclaration) {
+    const recordSymbol = scope.lookupCurrent(
+      (node.type as RecordType).identifier.value,
+    );
+    if (recordSymbol !== null) {
+      errors++;
+      console.log(
+        node.getFilePos() +
+          "Record: " +
+          (node.type as RecordType).identifier.value +
+          " already defined within scope!",
+      );
+      return;
+    }
+    scope.put(new RecordSymbol(node));
+    (node.type as RecordType).identifier.declaration = node;
+    node.fields
+      .map((field) => {
+        let fieldBaseType = field.paramType;
+        if (fieldBaseType instanceof Identifier) {
+          visitNameAnalyzer(fieldBaseType, scope);
+          fieldBaseType = getTypeDeclaration(fieldBaseType);
+        }
+        while (fieldBaseType instanceof ArrayType)
+          fieldBaseType = fieldBaseType.type;
+        return fieldBaseType;
+      })
+      .filter((fieldType) => fieldType instanceof RecordType)
+      .forEach((fieldType) => visitNameAnalyzer(fieldType, scope));
   } else if (node instanceof Block) {
     const curScope = new Scope(scope);
     node.children().forEach((child) => visitNameAnalyzer(child, curScope));
@@ -214,13 +277,38 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
   } else if (node instanceof DeferDecorator) {
     node.scopeArgs.forEach((arg) => visitNameAnalyzer(arg, scope));
     node.scopeParams = node.scopeArgs.map(
-      (arg) => new Parameter(arg.line, arg.column, arg.declaration._type, arg),
+      (arg) => new Parameter(arg.line, arg.column, arg.declaration.type, arg),
     );
     const newScope = new Scope(null);
     libFunctions.forEach((_value, key) => visitNameAnalyzer(key, newScope));
     node.scopeParams.forEach((param) => visitNameAnalyzer(param, newScope));
     visitNameAnalyzer(node.delegate, newScope);
     node.scope = newScope;
+  } else if (node instanceof RecordType) {
+    const curErrors = errors;
+    visitNameAnalyzer(node.identifier, scope);
+    if (errors > curErrors) return;
+    const fieldsCopy = (
+      node.identifier.declaration as RecordDeclaration
+    ).fields.map(
+      (field) =>
+        new Parameter(
+          field.line,
+          field.column,
+          field.type,
+          new Identifier(
+            field.identifier.line,
+            field.identifier.column,
+            field.identifier.value,
+          ),
+        ),
+    );
+    node.identifier.declaration = new RecordDeclaration(
+      node.identifier.declaration.line,
+      node.identifier.column,
+      node,
+      fieldsCopy,
+    );
   } else if (node instanceof Identifier) {
     const programSymbol = scope.lookup(node.value);
     if (programSymbol === null) {
@@ -233,20 +321,22 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
       node.declaration = programSymbol.varDeclaration;
     else if (programSymbol instanceof UnionSymbol)
       node.declaration = programSymbol.unionDeclaration;
+    else if (programSymbol instanceof AliasTypeSymbol)
+      node.declaration = programSymbol.aliasTypeDeclaration;
     else if (programSymbol instanceof ImportSymbol)
       node.declaration = programSymbol.importDeclaration;
-  } else {
-    node.children().forEach((child) => visitNameAnalyzer(child, scope));
-  }
+    else if (programSymbol instanceof RecordSymbol)
+      node.declaration = programSymbol.recordDeclaration;
+  } else node.children().forEach((child) => visitNameAnalyzer(child, scope));
 }
 
 let returnFunction: FunDeclaration = undefined;
 
 function assignArraySize(type1: ArrayType, type2: ArrayType) {
-  while (type1._type instanceof ArrayType && type2._type instanceof ArrayType) {
+  while (type1.type instanceof ArrayType && type2.type instanceof ArrayType) {
     type1._size = type2._size;
-    type1 = type1._type;
-    type2 = type2._type;
+    type1 = type1.type;
+    type2 = type2.type;
   }
   type1._size = type2._size;
 }
@@ -265,13 +355,16 @@ export const enum TypeRule {
   OnlyPrimitiveTypeForEqualityOperation,
   OnlyBoolsUsedForBooleanOperation,
   ArrayAccessIndexIsNumber,
-  OnlyArrayTypesAreAccessed,
+  OnlyArrayTypesAreAccessedWithIndex,
   FunctionCalledOnFunctionType,
   FunctionCalledWithMatchingNumberOfArgs,
   AllArgsInFunctionCallMatchParameter,
   NonAbstractSpatialObjectInstantiated,
   FullyDescribedSpatialObjectInstantiated,
   ArrayLiteralDeclaredWithEntriesAllMatchingType,
+  OnlyAccessibleSymbolAccessed,
+  AccessedFieldExists,
+  RecordLiteralDeclaredWithEntriesMatchingFieldType,
 }
 
 const typeRuleApplicationDictionary: {
@@ -288,7 +381,7 @@ const typeRuleApplicationDictionary: {
   [TypeRule.AssignedToSameType]: (assignment: Assignment): boolean => {
     const leftHandType =
       assignment instanceof VarDeclaration
-        ? assignment._type
+        ? assignment.type
         : checkType(assignment.leftExpr);
     const rightHandType =
       assignment instanceof VarDeclaration
@@ -297,7 +390,7 @@ const typeRuleApplicationDictionary: {
     const isSameType = leftHandType.equals(rightHandType);
     if (leftHandType instanceof ArrayType && rightHandType instanceof ArrayType)
       assignArraySize(leftHandType, rightHandType);
-    assignment._type = isSameType
+    assignment.type = isSameType
       ? leftHandType
       : new BaseType(assignment.line, assignment.column, BaseTypeKind.NONE);
     return isSameType;
@@ -307,14 +400,14 @@ const typeRuleApplicationDictionary: {
     if (returnStmt.possibleValue === null)
       return (
         returnFunction === undefined ||
-        (returnFunction._type as FunctionType).returnType.equals(
+        (returnFunction.type as FunctionType).returnType.equals(
           DefaultBaseTypeInstance.VOID,
         )
       );
     return (
       returnFunction !== undefined &&
       checkType(returnStmt.possibleValue).equals(
-        (returnFunction._type as FunctionType).returnType,
+        (returnFunction.type as FunctionType).returnType,
       )
     );
   },
@@ -324,7 +417,7 @@ const typeRuleApplicationDictionary: {
     return (
       matchStmt.caseStmts.filter((caseStmt) => {
         const caseType = checkType(caseStmt.matchCondition);
-        caseStmt._type = caseType;
+        caseStmt.type = caseType;
         return subjectType instanceof CompositionType
           ? !subjectType.contains(caseType)
           : !subjectType.equals(caseType);
@@ -340,7 +433,7 @@ const typeRuleApplicationDictionary: {
         (caseStmt) =>
           (
             subjectType.identifier.declaration as UnionDeclaration
-          ).options.filter((typeOption) => typeOption.equals(caseStmt._type))
+          ).options.filter((typeOption) => typeOption.equals(caseStmt.type))
             .length > 0,
       ).length <
         (subjectType.identifier.declaration as UnionDeclaration).options.length
@@ -357,8 +450,8 @@ const typeRuleApplicationDictionary: {
     !(checkType(assignment.leftExpr) instanceof FunctionType),
 
   [TypeRule.TypeCastToContainingType]: (typeCast: TypeCast): boolean =>
-    typeCast._type instanceof CompositionType &&
-    typeCast._type.contains(checkType(typeCast.castedExpr)),
+    typeCast.type instanceof CompositionType &&
+    typeCast.type.contains(checkType(typeCast.castedExpr)),
 
   [TypeRule.OnlyNumbersAndStringForPlusOperation]: (
     additionExpr: BinaryExpr,
@@ -374,7 +467,7 @@ const typeRuleApplicationDictionary: {
       (rightHandType.equals(DefaultBaseTypeInstance.STRING) ||
         rightHandType.equals(DefaultBaseTypeInstance.NUMBER));
 
-    additionExpr._type = new BaseType(
+    additionExpr.type = new BaseType(
       additionExpr.line,
       additionExpr.column,
       !bothAreValid
@@ -400,7 +493,7 @@ const typeRuleApplicationDictionary: {
       mathExpr.operator === "<" ||
       mathExpr.operator === "<=";
 
-    mathExpr._type = new BaseType(
+    mathExpr.type = new BaseType(
       mathExpr.line,
       mathExpr.column,
       !bothSidesAreNumbers
@@ -419,7 +512,7 @@ const typeRuleApplicationDictionary: {
     const bothSidesAreTheSamePrimitiveType =
       leftHandType instanceof BaseType &&
       leftHandType.equals(checkType(equalityExpr.rightExpr));
-    equalityExpr._type = new BaseType(
+    equalityExpr.type = new BaseType(
       equalityExpr.line,
       equalityExpr.column,
       bothSidesAreTheSamePrimitiveType ? BaseTypeKind.BOOL : BaseTypeKind.NONE,
@@ -437,7 +530,7 @@ const typeRuleApplicationDictionary: {
             DefaultBaseTypeInstance.BOOL,
           ) &&
           checkType(booleanExpr.rightExpr).equals(DefaultBaseTypeInstance.BOOL);
-    booleanExpr._type = new BaseType(
+    booleanExpr.type = new BaseType(
       booleanExpr.line,
       booleanExpr.column,
       bothSidesAreBools ? BaseTypeKind.BOOL : BaseTypeKind.NONE,
@@ -448,20 +541,22 @@ const typeRuleApplicationDictionary: {
   [TypeRule.ArrayAccessIndexIsNumber]: (arrayAccess: ArrayAccess): boolean =>
     checkType(arrayAccess.accessExpr).equals(DefaultBaseTypeInstance.NUMBER),
 
-  [TypeRule.OnlyArrayTypesAreAccessed]: (arrayAccess: ArrayAccess): boolean => {
+  [TypeRule.OnlyArrayTypesAreAccessedWithIndex]: (
+    arrayAccess: ArrayAccess,
+  ): boolean => {
     const arrayType = checkType(arrayAccess.arrayExpr);
     const isArrayType = arrayType instanceof ArrayType;
-    arrayAccess._type = isArrayType
-      ? arrayType._type
+    arrayAccess.type = isArrayType
+      ? arrayType.type
       : new BaseType(arrayAccess.line, arrayAccess.column, BaseTypeKind.NONE);
     return isArrayType;
   },
 
   [TypeRule.FunctionCalledOnFunctionType]: (funCall: FunCall): boolean => {
     const calledSubjectType = checkType(funCall.identifier);
-    funCall.identifier._type = calledSubjectType;
+    funCall.identifier.type = calledSubjectType;
     const isFunctionType = calledSubjectType instanceof FunctionType;
-    funCall._type = isFunctionType
+    funCall.type = isFunctionType
       ? calledSubjectType.returnType
       : new BaseType(funCall.line, funCall.column, BaseTypeKind.NONE);
     return isFunctionType;
@@ -471,7 +566,7 @@ const typeRuleApplicationDictionary: {
     funCall: FunCall,
   ): boolean =>
     funCall.args.length ===
-    (funCall.identifier._type as FunctionType).paramTypes.length,
+    (funCall.identifier.type as FunctionType).paramTypes.length,
 
   [TypeRule.AllArgsInFunctionCallMatchParameter]: (
     funCall: FunCall,
@@ -484,21 +579,21 @@ const typeRuleApplicationDictionary: {
         funCall.args.filter(
           (arg, pos) =>
             !checkType(arg).equals(
-              (funCall.identifier._type as FunctionType).paramTypes[pos],
+              (funCall.identifier.type as FunctionType).paramTypes[pos],
             ),
         ).length === 0
       );
     const arg0Type = checkType(funCall.args[0]);
     return (
       arg0Type instanceof ArrayType &&
-      checkType(funCall.args[1]).equals(arg0Type._type)
+      checkType(funCall.args[1]).equals(arg0Type.type)
     );
   },
 
   [TypeRule.NonAbstractSpatialObjectInstantiated]: (
     objectInstantiation: SpatialObjectInstantiationExpr,
   ): boolean => {
-    let baseObjectType = objectInstantiation._type;
+    let baseObjectType = objectInstantiation.type;
     while (isDecorator(baseObjectType))
       baseObjectType = baseObjectType.delegate;
     return (
@@ -514,19 +609,19 @@ const typeRuleApplicationDictionary: {
   [TypeRule.FullyDescribedSpatialObjectInstantiated]: (
     objectInstantiation: SpatialObjectInstantiationExpr,
   ): boolean =>
-    isDecorator(objectInstantiation._type) &&
-    (objectInstantiation._type.delegate instanceof PathType ||
-      (objectInstantiation._type.delegate instanceof ControlDecorator &&
-        (objectInstantiation._type.delegate.delegate instanceof SpaceType ||
-          objectInstantiation._type.delegate.delegate instanceof
+    isDecorator(objectInstantiation.type) &&
+    (objectInstantiation.type.delegate instanceof PathType ||
+      (objectInstantiation.type.delegate instanceof ControlDecorator &&
+        (objectInstantiation.type.delegate.delegate instanceof SpaceType ||
+          objectInstantiation.type.delegate.delegate instanceof
             StaticEntityType ||
-          objectInstantiation._type.delegate.delegate instanceof
+          objectInstantiation.type.delegate.delegate instanceof
             MotionDecorator))),
 
   [TypeRule.ArrayLiteralDeclaredWithEntriesAllMatchingType]: (
     arrayLiteral: ArrayLiteral,
   ): boolean => {
-    arrayLiteral._type = new ArrayType(
+    arrayLiteral.type = new ArrayType(
       arrayLiteral.line,
       arrayLiteral.column,
       checkType(arrayLiteral.value[0]),
@@ -535,10 +630,69 @@ const typeRuleApplicationDictionary: {
     return (
       arrayLiteral.value.filter(
         (expr) =>
-          !(arrayLiteral._type as ArrayType)._type.equals(checkType(expr)),
+          !(arrayLiteral.type as ArrayType).type.equals(checkType(expr)),
       ).length === 0
     );
   },
+
+  [TypeRule.OnlyAccessibleSymbolAccessed]: (
+    symbolAccess: SymbolAccess,
+  ): boolean => {
+    if (
+      symbolAccess.locationExpr instanceof Identifier &&
+      symbolAccess.locationExpr.declaration instanceof ImportDeclaration
+    )
+      return true;
+    const locationType = checkType(symbolAccess.locationExpr);
+    symbolAccess.locationExpr.type =
+      locationType instanceof RecordType
+        ? locationType
+        : DefaultBaseTypeInstance.NONE;
+    return symbolAccess.locationExpr.type instanceof RecordType;
+  },
+
+  [TypeRule.AccessedFieldExists]: (symbolAccess: SymbolAccess): boolean => {
+    if (
+      symbolAccess.locationExpr instanceof Identifier &&
+      symbolAccess.locationExpr.declaration instanceof ImportDeclaration
+    ) {
+      symbolAccess.symbol.declaration =
+        symbolAccess.locationExpr.declaration.importedSymbols.filter(
+          (importSymbol) =>
+            importSymbol.identifier.value === symbolAccess.symbol.value,
+        )[0];
+      symbolAccess.type =
+        symbolAccess.symbol.declaration !== undefined
+          ? symbolAccess.symbol.declaration.type
+          : DefaultBaseTypeInstance.NONE;
+    }
+    if (symbolAccess.locationExpr.type instanceof RecordType) {
+      symbolAccess.type =
+        (
+          symbolAccess.locationExpr.type.identifier
+            .declaration as RecordDeclaration
+        ).fields
+          .filter(
+            (field) => field.identifier.value === symbolAccess.symbol.value,
+          )
+          .map((matchedField) => matchedField.type)[0] ??
+        DefaultBaseTypeInstance.NONE;
+    }
+    return !symbolAccess.type.equals(DefaultBaseTypeInstance.NONE);
+  },
+
+  [TypeRule.RecordLiteralDeclaredWithEntriesMatchingFieldType]: (
+    recordLiteral: RecordLiteral,
+  ): boolean =>
+    recordLiteral.fieldValues
+      .map(checkType)
+      .filter(
+        (fieldType, pos) =>
+          !(
+            (recordLiteral.type as RecordType).identifier
+              .declaration as RecordDeclaration
+          ).fields[pos].type.equals(fieldType),
+      ).length === 0,
 };
 
 const typeRuleFailureMessageDictionary: {
@@ -606,7 +760,9 @@ const typeRuleFailureMessageDictionary: {
   [TypeRule.ArrayAccessIndexIsNumber]: (arrayAccess: ArrayAccess): string =>
     arrayAccess.getFilePos() + "Index must be type number!",
 
-  [TypeRule.OnlyArrayTypesAreAccessed]: (arrayAccess: ArrayAccess): string =>
+  [TypeRule.OnlyArrayTypesAreAccessedWithIndex]: (
+    arrayAccess: ArrayAccess,
+  ): string =>
     arrayAccess.getFilePos() + "Cannot access type that is not an array!",
 
   [TypeRule.FunctionCalledOnFunctionType]: (funCall: FunCall): string =>
@@ -637,6 +793,20 @@ const typeRuleFailureMessageDictionary: {
     arrayLiteral: ArrayLiteral,
   ): string =>
     arrayLiteral.getFilePos() + "Array literal has item of invalid type!",
+
+  [TypeRule.OnlyAccessibleSymbolAccessed]: (
+    symbolAccess: SymbolAccess,
+  ): string =>
+    symbolAccess.getFilePos() + "Symbol access on non accessible type!",
+
+  [TypeRule.AccessedFieldExists]: (symbolAccess: SymbolAccess): string =>
+    symbolAccess.getFilePos() + "Symbol accesed does not exist!",
+
+  [TypeRule.RecordLiteralDeclaredWithEntriesMatchingFieldType]: (
+    recordLiteral: RecordLiteral,
+  ): string =>
+    recordLiteral.getFilePos() +
+    "Record literal has argument not matching corresponding field's type!",
 };
 
 function enforceTypeRules(node: ExprStmt, rulesToEnforce: TypeRule[]) {
@@ -659,27 +829,14 @@ function checkType(node: ASTNode): Type {
       checkType(node._body);
       returnFunction = oldReturnFun;
       node.params.forEach(checkType);
-      return node._type;
+      return node.type;
     }
     node.children().forEach(checkType);
     returnFunction = oldReturnFun;
     return DefaultBaseTypeInstance.NONE;
   }
   if (node instanceof Identifier && node.declaration !== undefined)
-    node._type = node.declaration._type;
-
-  if (node instanceof SymbolAccess) {
-    if (
-      !(node.locationExpr instanceof Identifier) ||
-      !(node.locationExpr.declaration instanceof ImportDeclaration)
-    )
-      return DefaultBaseTypeInstance.NONE;
-    const matchedSymbols = node.locationExpr.declaration.importedSymbols.filter(
-      (varDecl) => varDecl.identifier.value === node.symbol.value,
-    );
-    node.symbol.declaration = matchedSymbols[0];
-    node._type = checkType(node.symbol);
-  }
+    node.type = node.declaration.type;
 
   if (node instanceof If || node instanceof While) {
     if (node instanceof If) {
@@ -705,7 +862,7 @@ function checkType(node: ASTNode): Type {
     );
   else if (node instanceof TypeCast)
     typeRulesToEnforce.push(TypeRule.TypeCastToContainingType);
-  else if (node instanceof BinaryExpr)
+  else if (node instanceof BinaryExpr) {
     typeRulesToEnforce.push(
       node.operator === "+"
         ? TypeRule.OnlyNumbersAndStringForPlusOperation
@@ -715,7 +872,7 @@ function checkType(node: ASTNode): Type {
             ? TypeRule.OnlyPrimitiveTypeForEqualityOperation
             : TypeRule.OnlyNumbersUsedForMathOperation,
     );
-  else if (node instanceof UnaryExpr)
+  } else if (node instanceof UnaryExpr)
     typeRulesToEnforce.push(
       node.operator === "!"
         ? TypeRule.OnlyBoolsUsedForBooleanOperation
@@ -724,7 +881,7 @@ function checkType(node: ASTNode): Type {
   else if (node instanceof ArrayAccess)
     typeRulesToEnforce.push(
       TypeRule.ArrayAccessIndexIsNumber,
-      TypeRule.OnlyArrayTypesAreAccessed,
+      TypeRule.OnlyArrayTypesAreAccessedWithIndex,
     );
   else if (node instanceof FunCall)
     typeRulesToEnforce.push(
@@ -741,9 +898,19 @@ function checkType(node: ASTNode): Type {
     typeRulesToEnforce.push(
       TypeRule.ArrayLiteralDeclaredWithEntriesAllMatchingType,
     );
+  else if (node instanceof SymbolAccess)
+    typeRulesToEnforce.push(
+      TypeRule.OnlyAccessibleSymbolAccessed,
+      TypeRule.AccessedFieldExists,
+    );
+  else if (node instanceof RecordLiteral)
+    typeRulesToEnforce.push(
+      TypeRule.RecordLiteralDeclaredWithEntriesMatchingFieldType,
+      TypeRule.AccessedFieldExists,
+    );
   else node.children().forEach(checkType);
   if (typeRulesToEnforce.length > 0)
     enforceTypeRules(node as ExprStmt, typeRulesToEnforce);
-  if (node instanceof Expr || node instanceof Stmt) return node._type;
+  if (node instanceof Expr || node instanceof Stmt) return node.type;
   else return DefaultBaseTypeInstance.NONE;
 }

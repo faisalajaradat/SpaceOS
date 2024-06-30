@@ -1,5 +1,6 @@
 import { grammar } from "./grammar.js";
 import {
+  AliasTypeDeclaration,
   Block,
   CaseStmt,
   DeferDecorator,
@@ -8,6 +9,7 @@ import {
   libFunctions,
   Match,
   Parameter,
+  RecordDeclaration,
   Return,
   UnionDeclaration,
   VarDeclaration,
@@ -30,7 +32,6 @@ import {
   EntityType,
   FunctionType,
   FunDeclaration,
-  Identifier,
   LandPathType,
   MobileDecorator,
   NoneLiteral,
@@ -40,6 +41,8 @@ import {
   PathFactoryType,
   PathType,
   PhysicalDecorator,
+  RecordLiteral,
+  RecordType,
   SmartEntityType,
   SpaceFactoryType,
   SpacePathGraphType,
@@ -59,6 +62,7 @@ import { TypeCast } from "./core/expr/TypeCast.js";
 import { FunCall } from "./core/expr/FunCall.js";
 import { MatchResult } from "ohm-js";
 import { SymbolAccess } from "./core/expr/SymbolAccess.js";
+import { Identifier } from "./core/expr/Expr.js";
 
 export function ast(match: MatchResult) {
   return astBuilder(match).ast();
@@ -361,6 +365,20 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       stmt.ast(),
     );
   },
+  PrimaryExp_record(
+    recordType,
+    _leftBracket,
+    listOfExpressions,
+    _rightBracket,
+  ) {
+    const lineAndColumn = this.source.getLineAndColumn();
+    return new RecordLiteral(
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
+      recordType.ast(),
+      listOfExpressions.asIteration().ast(),
+    );
+  },
   PrimaryExp(expression) {
     return expression.ast();
   },
@@ -386,12 +404,20 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   },
   UnionDeclaration(unionType, _equal, listOfTypes) {
     const lineAndColumn = this.source.getLineAndColumn();
-    return new UnionDeclaration(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
-      unionType.ast(),
-      listOfTypes.asIteration().ast(),
-    );
+    const types = listOfTypes.asIteration().ast();
+    return types.length > 1
+      ? new UnionDeclaration(
+          lineAndColumn.lineNum,
+          lineAndColumn.colNum,
+          unionType.ast(),
+          types,
+        )
+      : new AliasTypeDeclaration(
+          lineAndColumn.lineNum,
+          lineAndColumn.colNum,
+          (unionType.ast() as UnionType).identifier,
+          types[0],
+        );
   },
   ImportDeclaration(_import, stringLiteral, _as, identifier) {
     const lineAndColumn = this.source.getLineAndColumn();
@@ -400,6 +426,15 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       lineAndColumn.colNum,
       (stringLiteral.ast() as StringLiteral).value,
       identifier.ast(),
+    );
+  },
+  RecordDeclaration(recordType, _leftBracket, listOfParameters, _rightBracket) {
+    const lineAndColumn = this.source.getLineAndColumn();
+    return new RecordDeclaration(
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
+      recordType.ast(),
+      listOfParameters.asIteration().ast(),
     );
   },
   DeferDecorator(
@@ -430,7 +465,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     let fullType = baseType;
     numOfSpecifiers.forEach((specifier) => {
       if (specifier instanceof ArrayType) {
-        (<ArrayType>specifier)._type = fullType;
+        (<ArrayType>specifier).type = fullType;
         fullType = specifier;
       } else if (specifier instanceof FunctionType) {
         (<FunctionType>specifier).returnType = fullType;
@@ -465,6 +500,14 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   UnionType(_union, identifier) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new UnionType(
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
+      identifier.ast(),
+    );
+  },
+  RecordType(_record, identifier) {
+    const lineAndColumn = this.source.getLineAndColumn();
+    return new RecordType(
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
       identifier.ast(),

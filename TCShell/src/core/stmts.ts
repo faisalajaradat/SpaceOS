@@ -1,5 +1,6 @@
 import { Scope } from "../semantics.js";
 import {
+  getTypeDeclaration,
   getValueOfExpression,
   isAnyType,
   isWildcard,
@@ -15,17 +16,20 @@ import {
   ExprStmt,
   MatchCondition,
   newNodeId,
+  RuntimeType,
   unresolved,
   varStacks,
 } from "./program.js";
-import { Expr } from "./expr/Expr.js";
+import { Expr, Identifier } from "./expr/Expr.js";
 import {
   AirPathType,
   AnimateEntityType,
   ArrayType,
   BaseType,
   BaseTypeKind,
+  CompositionType,
   ControlledDecorator,
+  DefaultBaseTypeInstance,
   DynamicEntityType,
   EnclosedSpaceType,
   EntityType,
@@ -36,6 +40,7 @@ import {
   OpenSpaceType,
   PathType,
   PhysicalDecorator,
+  RecordType,
   SmartEntityType,
   SpaceType,
   SpatialObjectType,
@@ -43,9 +48,10 @@ import {
   StaticEntityType,
   StationaryDecorator,
   Type,
+  UnionType,
   VirtualDecorator,
 } from "./type/index.js";
-import { FunDeclaration, Identifier } from "./expr/index.js";
+import { FunDeclaration } from "./expr/index.js";
 
 export abstract class Stmt implements ASTNode {
   abstract children(): ASTNode[];
@@ -56,9 +62,9 @@ export abstract class Stmt implements ASTNode {
 
   line: number;
   column: number;
-  _type: Type;
+  protected _type: RuntimeType;
 
-  protected constructor(line: number, column: number, type: Type) {
+  protected constructor(line: number, column: number, type: RuntimeType) {
     this.line = line;
     this.column = column;
     this._type = type;
@@ -66,6 +72,15 @@ export abstract class Stmt implements ASTNode {
 
   getFilePos(): string {
     return "line: " + this.line + ", column: " + this.column + ", ";
+  }
+
+  get type(): Type {
+    if (this._type instanceof Identifier) return getTypeDeclaration(this._type);
+    return this._type;
+  }
+
+  set type(_type: RuntimeType) {
+    this._type = _type;
   }
 }
 
@@ -124,7 +139,7 @@ export class Parameter extends Stmt {
   constructor(
     line: number,
     column: number,
-    paramType: Type,
+    paramType: RuntimeType,
     identifier: Identifier,
   ) {
     super(line, column, paramType);
@@ -151,6 +166,14 @@ export class Parameter extends Stmt {
   async evaluate(): Promise<void> {
     return undefined;
   }
+
+  get paramType(): RuntimeType {
+    return this._type instanceof Identifier
+      ? this._type.declaration === undefined
+        ? this._type
+        : getTypeDeclaration(this._type)
+      : this._type;
+  }
 }
 
 export class VarDeclaration extends Stmt {
@@ -161,7 +184,7 @@ export class VarDeclaration extends Stmt {
   constructor(
     line: number,
     column: number,
-    type: Type,
+    type: RuntimeType,
     identifier: Identifier,
     value: Expr,
     isPublic: boolean,
@@ -174,6 +197,7 @@ export class VarDeclaration extends Stmt {
 
   children(): ASTNode[] {
     const children = new Array<ASTNode>();
+    children.push(this._type);
     children.push(this.identifier);
     children.push(this.value);
     return children;
@@ -203,15 +227,20 @@ export class VarDeclaration extends Stmt {
 }
 
 export class UnionDeclaration extends Stmt {
-  options: Type[];
+  protected _options: RuntimeType[];
 
-  constructor(line: number, column: number, unionType: Type, options: Type[]) {
+  constructor(
+    line: number,
+    column: number,
+    unionType: UnionType,
+    options: RuntimeType[],
+  ) {
     super(line, column, unionType);
-    this.options = options;
+    this._options = options;
   }
 
   children(): ASTNode[] {
-    return [...this.options];
+    return [...this._options];
   }
 
   print(): string {
@@ -219,7 +248,7 @@ export class UnionDeclaration extends Stmt {
     dotString.push(unionDeclNodeId + '[label= "Union"];\n');
     const unionTypeNodeId = this._type.print();
     dotString.push(unionDeclNodeId + "->" + unionTypeNodeId + ";\n");
-    this.options
+    this._options
       .map((option) => option.print())
       .forEach((nodeId) =>
         dotString.push(unionDeclNodeId + "->" + nodeId + ";\n"),
@@ -228,6 +257,86 @@ export class UnionDeclaration extends Stmt {
   }
 
   async evaluate(): Promise<void> {
+    return undefined;
+  }
+
+  get options(): Type[] {
+    return this._options.map((option) =>
+      option instanceof Identifier ? getTypeDeclaration(option) : option,
+    );
+  }
+}
+
+export class AliasTypeDeclaration extends Stmt {
+  aliasedType: RuntimeType;
+  alias: Identifier;
+
+  constructor(
+    line: number,
+    column: number,
+    alias: Identifier,
+    aliasedType: RuntimeType,
+  ) {
+    super(line, column, DefaultBaseTypeInstance.NONE);
+    this.alias = alias;
+    this.aliasedType = aliasedType;
+  }
+
+  children(): ASTNode[] {
+    return [this.alias, this.aliasedType];
+  }
+
+  print(): string {
+    const aliasTypeDeclarationNodeId = newNodeId();
+    dotString.push(aliasTypeDeclarationNodeId + '[label=" = "];\n');
+    this.children()
+      .map((child) => child.print())
+      .forEach((nodeId) =>
+        dotString.push(aliasTypeDeclarationNodeId + "->" + nodeId + ";\n"),
+      );
+    return aliasTypeDeclarationNodeId;
+  }
+
+  evaluate(): Promise<unknown> {
+    return undefined;
+  }
+}
+
+export class RecordDeclaration extends Stmt {
+  fields: Parameter[];
+
+  constructor(
+    line: number,
+    column: number,
+    recordType: RecordType,
+    fields: Parameter[],
+  ) {
+    super(line, column, recordType);
+    this.fields = fields;
+  }
+
+  children(): ASTNode[] {
+    const children = new Array<ASTNode>();
+    children.push(this._type, ...this.fields);
+    return children;
+  }
+
+  print(): string {
+    const recordDeclarationNodeId = newNodeId();
+    dotString.push(
+      recordDeclarationNodeId + '[label=" RecordDeclaration "];\n',
+    );
+    const recordTypeNodeId = this._type.print();
+    dotString.push(recordDeclarationNodeId + "->" + recordTypeNodeId + ";\n");
+    this.fields
+      .map((field) => field.print())
+      .forEach((nodeId) =>
+        dotString.push(recordDeclarationNodeId + "->" + nodeId + ";\n"),
+      );
+    return recordDeclarationNodeId;
+  }
+
+  evaluate(): Promise<unknown> {
     return undefined;
   }
 }
@@ -481,29 +590,31 @@ export class Match extends Stmt {
     if (condition instanceof Expr)
       return subject === (await condition.evaluate());
 
-    if (isAnyType(condition._type)) return true;
-    if (condition._type instanceof BaseType)
-      return typeof subject === (await condition._type.evaluate());
+    if (isAnyType(condition.type)) return true;
+    if (condition.type instanceof BaseType)
+      return typeof subject === (await condition.type.evaluate());
     if (
-      condition._type instanceof ArrayType &&
+      condition.type instanceof ArrayType &&
       subject instanceof ArrayRepresentation
     ) {
       let subjectBase = subject.array;
-      let conditionTypeBase = condition._type;
+      let conditionTypeBase = condition.type;
       while (
-        conditionTypeBase._type instanceof ArrayType &&
+        conditionTypeBase instanceof ArrayType &&
+        conditionTypeBase.type instanceof ArrayType &&
         Array.isArray(subjectBase[0])
       ) {
-        conditionTypeBase = conditionTypeBase._type;
+        conditionTypeBase = conditionTypeBase.type;
         subjectBase = subjectBase[0];
       }
       return (
-        typeof subjectBase[0] === (await conditionTypeBase._type.evaluate())
+        typeof subjectBase[0] ===
+        (await (conditionTypeBase as ArrayType).type.evaluate())
       );
     }
-    if (condition._type instanceof SpatialType && typeof subject === "string") {
+    if (condition.type instanceof SpatialType && typeof subject === "string") {
       const [propertiesRaw, delegateTypeRaw] = parseSpatialTypeProperties(
-        <SpatialType>condition._type,
+        <SpatialType>condition.type,
       );
       const delegateType: SpatialType = delegateTypeRaw as SpatialType;
       const properties: Map<string, string | boolean> = propertiesRaw as Map<
@@ -599,7 +710,7 @@ export class Match extends Stmt {
                 ? new PhysicalDecorator(-1, -1, constructedType)
                 : new VirtualDecorator(-1, -1, constructedType);
         });
-      return condition._type.contains(constructedType);
+      return (condition.type as CompositionType).contains(constructedType);
     }
     return false;
   }

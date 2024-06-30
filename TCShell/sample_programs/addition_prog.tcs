@@ -1,4 +1,5 @@
-number add(number x, number y)
-  return x + y
-
-print(add(5.5, 1.0e+1))
+number iter = 0
+while iter < 10 {
+  print(iter)
+  iter = iter + 1
+}

@@ -17,6 +17,7 @@ TCShell {
     SimpleStmt = UnionDeclaration
                 | VarDeclaration
                 | ImportDeclaration
+                | RecordDeclaration
     					  | return (Exp)?		--return
                 | Exp
 
@@ -52,11 +53,12 @@ TCShell {
             | PrimaryExp
 
     PrimaryExp = stringLiteral
-    					| identifier
               | numberLiteral
               | booleanLiteral
               | noneLiteral
               | Type "(" (noneLiteral | NonemptyListOf<Parameter, ",">) ")" Stmt  --function
+              | identifier "{" NonemptyListOf<Exp, ","> "}"    --record
+    					| identifier
               | "(" Exp ")"		--group
               | "[" ListOf<Exp, ","> "]"		--array
 
@@ -65,12 +67,13 @@ TCShell {
     VarDeclaration = pub? Parameter "=" Exp
     UnionDeclaration = UnionType "=" NonemptyListOf<Type, "|">
     ImportDeclaration = import stringLiteral as identifier
+    RecordDeclaration = RecordType "{" NonemptyListOf<Parameter, ","> "}"
     DeferDecorator = defer "(" ListOf<identifier, ","> ")"
 
     Parameter = Type identifier
 
     TypeSpecifier = "[]"   --array
-                  |"(" ListOf<Type, ","> ")"    --function
+                  |"{" ListOf<Type, ","> "}"    --function
 
     SpatialType = landPath
                 | airPath
@@ -85,19 +88,20 @@ TCShell {
 
     MaybeMobileSpatialType = (stationary | mobile)? (dynamicEntity | animateEntity | smartEntity)
 
-    Type = (baseTypeKeyword | SpatialType | UnionType) TypeSpecifier*
+    Type = (identifier | baseTypeKeyword | SpatialType) TypeSpecifier*
 
     baseTypeKeyword = "number" ~identPart
     						    | "string" ~identPart
                     | "bool" ~identPart
                     | "void" ~identPart
 
-    UnionType = union identifier
+    UnionType = typeKeyword identifier
+    RecordType = record identifier
 
     keyword = baseTypeKeyword
     				| booleanLiteral
             | noneLiteral
-            | union
+            | typeKeyword
             | while
             | if
             | else
@@ -131,8 +135,9 @@ TCShell {
             | pub
             | import
             | as
+            | record
 
-    union = "union" ~identPart
+    typeKeyword = "type" ~identPart
     while = "while" ~identPart
     if = "if" ~identPart
     else = "else" ~identPart
@@ -166,6 +171,7 @@ TCShell {
     pub = "pub" ~identPart
     import = "import" ~identPart
     as = "as" ~identPart
+    record = "record" ~identPart
 
 
     identStart      = letter

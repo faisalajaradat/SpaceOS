@@ -4,7 +4,38 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3ca96637-c0cc-4056-90a5-aecfcb04fec3" name="Changes" comment="" />
+    <list default="true" id="3ca96637-c0cc-4056-90a5-aecfcb04fec3" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/TCShell.ohm" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/TCShell.ohm" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/TCShell.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/TCShell.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/ast.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/ast.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/ArrayAccess.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/ArrayAccess.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/ArrayLiteral.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/ArrayLiteral.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/BinaryExpr.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/BinaryExpr.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/BoolLiteral.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/BoolLiteral.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/Expr.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/Expr.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/FunCall.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/FunCall.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/FunDeclaration.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/FunDeclaration.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/Identifier.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/NoneLiteral.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/NoneLiteral.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/NumberLiteral.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/NumberLiteral.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/SpatialObjectInstantiationExpr.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/SpatialObjectInstantiationExpr.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/StringLiteral.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/StringLiteral.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/SymbolAccess.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/SymbolAccess.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/TypeCast.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/TypeCast.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/UnaryExpr.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/UnaryExpr.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/program.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/program.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/stmts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/stmts.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/type/UnionType.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/type/UnionType.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/type/factory-types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/type/factory-types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/type/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/type/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/type/primitive-types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/type/primitive-types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/type/spatial-types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/type/spatial-types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/grammar.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/grammar.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/semantics.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/semantics.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/utils.ts" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -21,7 +52,7 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="ProblemsViewState">
-    <option name="selectedTabId" value="CurrentFile" />
+    <option name="selectedTabId" value="ProjectErrors" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 7
@@ -56,11 +87,11 @@
       <recent name="$PROJECT_DIR$/TCShell/sample_programs" />
     </key>
     <key name="es6.move.members.recent.items">
+      <recent name="$PROJECT_DIR$/TCShell/src/core/expr/Expr.ts" />
       <recent name="$PROJECT_DIR$/TCShell/src/core/expr/Identifier.ts" />
       <recent name="$PROJECT_DIR$/TCShell/src/core/expr/ArrayLiteral.ts" />
       <recent name="$PROJECT_DIR$/TCShell/src/core/expr/NoneLiteral.ts" />
       <recent name="$PROJECT_DIR$/TCShell/src/core/expr/NumberLiteral.ts" />
-      <recent name="$PROJECT_DIR$/TCShell/src/core/expr/BoolLiteral.ts" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/TCShell/src/core/expr" />
@@ -93,6 +124,7 @@
       <workItem from="1719410604771" duration="3425000" />
       <workItem from="1719421423780" duration="4424000" />
       <workItem from="1719588445110" duration="41000" />
+      <workItem from="1719765629980" duration="682000" />
     </task>
     <servers />
   </component>

@@ -1,8 +1,8 @@
-union NumOrString = number | string
+type NumOrString = number | string
 
-union NumOrString x = 5
+NumOrString x = (NumOrString) 5
 
 match x {
-	number => print("Right!")
-  string => print("Wrong!")
+	number _x => print("Right!")
+  string _x => print("Wrong!")
 }

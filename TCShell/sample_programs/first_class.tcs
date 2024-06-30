@@ -1,6 +1,6 @@
 number x = 0
 
-void (number, number(number)[]) executeOperationsSequentialOnNumber = void (number x, number(number)[] operations) {
+void {number, number{number}[]} executeOperationsSequentialOnNumber = void (number x, number{number}[] operations) {
   number numOfOperations = len(operations)
   number iteration = 0
   while iteration < numOfOperations {
@@ -9,12 +9,12 @@ void (number, number(number)[]) executeOperationsSequentialOnNumber = void (numb
   }
 }
 
-number(number) incrementAndLogNumber = number(number x) {
+number{number} incrementAndLogNumber = number(number x) {
   number incremented = x + 1
   print(incremented)
   return incremented
 }
 
-number(number)[] operations = [incrementAndLogNumber, incrementAndLogNumber, incrementAndLogNumber, incrementAndLogNumber]
+number{number}[] operations = [incrementAndLogNumber, incrementAndLogNumber, incrementAndLogNumber, incrementAndLogNumber]
 
 executeOperationsSequentialOnNumber(x, operations)

@@ -1,4 +1,4 @@
-void(Space) handleSpace = void (Space s) {
+void{Space} handleSpace = void (Space s) {
   print("Is Space")
   match s {
     EnclosedSpace es => print("Is Enclosed")
@@ -6,7 +6,7 @@ void(Space) handleSpace = void (Space s) {
   }
 }
 
-void(Path) handlePath = void (Path p) {
+void{Path} handlePath = void (Path p) {
   print("Is Path")
   match p {
     AirPath ap => print("Is Air")
@@ -14,7 +14,7 @@ void(Path) handlePath = void (Path p) {
   }
 }
 
-void(Entity) handleEntity = void (Entity e) {
+void{Entity} handleEntity = void (Entity e) {
   print("Is Entity")
   match e {
     StaticEntity se => print("Is Static")
@@ -31,7 +31,7 @@ void(Entity) handleEntity = void (Entity e) {
   }
 }
 
-void(physical SpatialType) handlePhysicalSpatialType = void (physical SpatialType physicalSpatialType) {
+void{physical SpatialType} handlePhysicalSpatialType = void (physical SpatialType physicalSpatialType) {
   print("Is physical")
   match physicalSpatialType {
     physical Space ps => handleSpace((Space) ps)
@@ -40,7 +40,7 @@ void(physical SpatialType) handlePhysicalSpatialType = void (physical SpatialTyp
   }
 }
 
-void(virtual SpatialType) handleVirtualSpatialType = void (virtual SpatialType virtualSpatialType) {
+void{virtual SpatialType} handleVirtualSpatialType = void (virtual SpatialType virtualSpatialType) {
   print("Is virtual")
   match virtualSpatialType {
     virtual Space vs => handleSpace((Space) vs)
@@ -49,7 +49,7 @@ void(virtual SpatialType) handleVirtualSpatialType = void (virtual SpatialType v
   }
 }
 
-void(SpatialType[]) parseAndDescribeSpacialTypes = void (SpatialType[] listOfSpatialTypes) {
+void{SpatialType[]} parseAndDescribeSpacialTypes = void (SpatialType[] listOfSpatialTypes) {
   number iter = 0
   number numOfSpatialType = len(listOfSpatialTypes)
   while iter < numOfSpatialType {
@@ -65,6 +65,6 @@ void(SpatialType[]) parseAndDescribeSpacialTypes = void (SpatialType[] listOfSpa
 virtual mutable mobile SmartEntity car = new virtual mutable mobile SmartEntity()
 physical mutable OpenSpace parkingLot = new physical mutable OpenSpace()
 
-SpatialType[] lotAndCars = { (SpatialType)car, (SpatialType)parkingLot }
+SpatialType[] lotAndCars = [ (SpatialType)car, (SpatialType)parkingLot ]
 
 parseAndDescribeSpacialTypes(lotAndCars)

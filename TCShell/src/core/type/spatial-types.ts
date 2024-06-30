@@ -1,6 +1,6 @@
-import { ASTNode, dotString, newNodeId } from "../program.js";
-import { CompositionType, Type } from "./primitive-types.js";
-import { isAnyType, isDecorator } from "../../utils.js";
+import {ASTNode, dotString, newNodeId} from "../program.js";
+import {CompositionType, Type} from "./primitive-types.js";
+import {isAnyType, isDecorator} from "../../utils.js";
 
 export class SpatialType extends CompositionType {
   constructor(line: number, column: number) {

@@ -8,8 +8,9 @@ import {
   VarDeclaration,
   While,
 } from "./stmts.js";
-import { Expr } from "./expr/Expr.js";
+import { Expr, Identifier } from "./expr/Expr.js";
 import { BinaryExpr } from "./expr/BinaryExpr.js";
+import { Type } from "./type/primitive-types.js";
 //A map variable declaration and their stack of assigned values
 export const varStacks = new Map<VarDeclaration | Parameter, unknown[]>();
 export const unresolved = [];
@@ -37,6 +38,8 @@ export type MatchCondition = Parameter | Expr;
 export type ControlFlowStmt = If | While;
 
 export type Assignment = VarDeclaration | BinaryExpr;
+
+export type RuntimeType = Type | Identifier;
 
 //Define all AST nodes
 export interface ASTNode {
@@ -81,7 +84,7 @@ export class Program implements ASTNode {
     declsNodeIds.forEach((nodeId) =>
       dotString.push(programNodeId + "->" + nodeId + ";\n"),
     );
-    dotString.concat("}");
+    dotString.push("}");
     return programNodeId;
   }
 

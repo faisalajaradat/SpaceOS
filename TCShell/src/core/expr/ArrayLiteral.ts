@@ -1,7 +1,7 @@
-import { ArrayType, BaseType, BaseTypeKind } from "../type/index.js";
-import { ASTNode, dotString, newNodeId } from "../program.js";
-import { getValueOfExpression } from "../../utils.js";
-import { Expr } from "./Expr.js";
+import {ArrayType, BaseType, BaseTypeKind} from "../type/index.js";
+import {ASTNode, dotString, newNodeId} from "../program.js";
+import {getValueOfExpression} from "../../utils.js";
+import {Expr} from "./Expr.js";
 
 export class ArrayLiteral extends Expr {
   value: Expr[];

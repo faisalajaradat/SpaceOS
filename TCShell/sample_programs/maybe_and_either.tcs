@@ -1,60 +1,65 @@
-union MaybeNum = number | void
+type MaybeNum = number | void
 
-union EitherNumOrString = number | string
+type EitherNumOrString = number | string
 
-string() voidError = string(none) {
+type MaybeNumApplyFunctionType = MaybeNum {MaybeNum, MaybeNum {number}}
+
+type EitherNumOrStringApplyFunctionType = EitherNumOrString {EitherNumOrString, EitherNumOrString {number}}
+
+string{} voidError = string(none) {
   return "Error: expected value is void!"
 }
 
-union MaybeNum(union MaybeNum, union MaybeNum(number)) maybeApplyOperation = union MaybeNum(union MaybeNum maybe, union MaybeNum(number) operation) {
+MaybeNumApplyFunctionType maybeApplyOperation = MaybeNum (MaybeNum maybe, MaybeNum{number} operation) {
   match maybe {
     number num => return operation(num)
-    void e => return (union MaybeNum) none
+    void e => return (MaybeNum) none
   }
 }
 
-union EitherNumOrString(union EitherNumOrString, union EitherNumOrString(number)) eitherApplyOperationOrReturnAndLogError = union EitherNumOrString(union EitherNumOrString either, union EitherNumOrString(number) operation) {
+EitherNumOrStringApplyFunctionType eitherApplyOperationOrReturnAndLogError = EitherNumOrString(EitherNumOrString either,
+  EitherNumOrString{number} operation) {
   match either {
     number num => return operation(num)
     string str => {
       print(str)
-      return (union EitherNumOrString) str
+      return (EitherNumOrString) str
     }
   }
 }
 
-union MaybeNum(number) returnsOddNumbers = union MaybeNum(number x) {
+MaybeNum{number} returnsOddNumbers = MaybeNum(number x) {
   match x % 2 {
-    1 => return (union MaybeNum) x
-    0 => return (union MaybeNum) none
+    1 => return (MaybeNum) x
+    0 => return (MaybeNum) none
   }
 }
 
-union EitherNumOrString(union MaybeNum) parseMaybeNumOrReturnError = union EitherNumOrString(union MaybeNum maybe) {
+EitherNumOrString{MaybeNum} parseMaybeNumOrReturnError = EitherNumOrString(MaybeNum maybe) {
   match maybe {
-    number num => return (union EitherNumOrString) num
-    void e => return (union EitherNumOrString) voidError()
+    number num => return (EitherNumOrString) num
+    void e => return (EitherNumOrString) voidError()
   }
 }
 
-union EitherNumOrString(number) printAndReturnOddNumber = union EitherNumOrString(number oddNumber) {
+EitherNumOrString{number} printAndReturnOddNumber = EitherNumOrString(number oddNumber) {
   print("The following is Odd:")
   print(oddNumber)
-  return (union EitherNumOrString) oddNumber
+  return (EitherNumOrString) oddNumber
 }
 
 number sum = 0
 
-void() Main = void(none) {
-  union EitherNumOrString(number) addToSum = union EitherNumOrString(number x) {
+void{} Main = void(none) {
+  EitherNumOrString{number} addToSum = EitherNumOrString(number x) {
     sum = sum + x
-    return (union EitherNumOrString) sum
+    return (EitherNumOrString) sum
   }
   number iter = 0
   while iter < 16 {
-    union MaybeNum maybeOdd = (union MaybeNum) iter
+    MaybeNum maybeOdd = (MaybeNum) iter
     maybeOdd = maybeApplyOperation(maybeOdd, returnsOddNumbers)
-    union EitherNumOrString numOrError = parseMaybeNumOrReturnError(maybeOdd)
+    EitherNumOrString numOrError = parseMaybeNumOrReturnError(maybeOdd)
     numOrError = eitherApplyOperationOrReturnAndLogError(numOrError, printAndReturnOddNumber)
     eitherApplyOperationOrReturnAndLogError(numOrError, addToSum)
     iter = iter + 1
