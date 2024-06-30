@@ -1,0 +1,18 @@
+record Person {
+  string name,
+  number age,
+  bool {Person, Person} isSameAge
+}
+
+bool {Person, Person} isSameAge = bool (Person first, Person second)
+  return first.age == second.age
+
+print(Person {"Alex", 18, isSameAge})
+
+Person sam = Person {"Sam", 21, isSameAge}
+
+print(sam.name + " is " + sam.age + " years old!")
+
+if sam.isSameAge(sam, Person {"Marc", 24, isSameAge})
+  print("Wrong!")
+else print("Right!")

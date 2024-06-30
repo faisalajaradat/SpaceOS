@@ -304,6 +304,7 @@ export class AliasTypeDeclaration extends Stmt {
 
 export class RecordDeclaration extends Stmt {
   fields: Parameter[];
+  defaultRecordImplementation: object;
 
   constructor(
     line: number,
@@ -313,6 +314,7 @@ export class RecordDeclaration extends Stmt {
   ) {
     super(line, column, recordType);
     this.fields = fields;
+    this.defaultRecordImplementation = undefined;
   }
 
   children(): ASTNode[] {
@@ -336,8 +338,30 @@ export class RecordDeclaration extends Stmt {
     return recordDeclarationNodeId;
   }
 
-  evaluate(): Promise<unknown> {
-    return undefined;
+  async fieldDefaultImplementation(field: Parameter): Promise<object> {
+    const value = field.type.equals(DefaultBaseTypeInstance.NUMBER)
+      ? 0
+      : field.type.equals(DefaultBaseTypeInstance.BOOL)
+        ? false
+        : field.type instanceof ArrayType
+          ? []
+          : field.type instanceof RecordType
+            ? await field.type.identifier.declaration.evaluate()
+            : "";
+    return { [field.identifier.value]: { value: value, writable: true } };
+  }
+
+  async evaluate(): Promise<object> {
+    if (this.defaultRecordImplementation === undefined)
+      this.defaultRecordImplementation = Object.assign(
+        {},
+        ...(await Promise.all(
+          this.fields.map(
+            async (field) => await this.fieldDefaultImplementation(field),
+          ),
+        )),
+      );
+    return { ...this.defaultRecordImplementation };
   }
 }
 

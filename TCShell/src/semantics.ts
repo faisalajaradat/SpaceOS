@@ -6,7 +6,7 @@ import {
   Program,
   SymbolDeclaration,
 } from "./core/program.js";
-import { getTypeDeclaration, isDecorator, isPublic } from "./utils.js";
+import { isDecorator, isPublic } from "./utils.js";
 import {
   AliasTypeDeclaration,
   Block,
@@ -58,7 +58,6 @@ import { grammar } from "./grammar.js";
 import { readFileSync } from "fs";
 import { ast } from "./ast.js";
 import { SymbolAccess } from "./core/expr/SymbolAccess.js";
-import { error } from "console";
 
 export default function analyze(astHead: Program): number {
   visitNameAnalyzer(astHead, null);
@@ -253,13 +252,10 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
     }
     scope.put(new RecordSymbol(node));
     (node.type as RecordType).identifier.declaration = node;
+    node.fields.forEach((field) => visitNameAnalyzer(field.paramType, scope));
     node.fields
       .map((field) => {
         let fieldBaseType = field.paramType;
-        if (fieldBaseType instanceof Identifier) {
-          visitNameAnalyzer(fieldBaseType, scope);
-          fieldBaseType = getTypeDeclaration(fieldBaseType);
-        }
         while (fieldBaseType instanceof ArrayType)
           fieldBaseType = fieldBaseType.type;
         return fieldBaseType;
@@ -284,31 +280,6 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
     node.scopeParams.forEach((param) => visitNameAnalyzer(param, newScope));
     visitNameAnalyzer(node.delegate, newScope);
     node.scope = newScope;
-  } else if (node instanceof RecordType) {
-    const curErrors = errors;
-    visitNameAnalyzer(node.identifier, scope);
-    if (errors > curErrors) return;
-    const fieldsCopy = (
-      node.identifier.declaration as RecordDeclaration
-    ).fields.map(
-      (field) =>
-        new Parameter(
-          field.line,
-          field.column,
-          field.type,
-          new Identifier(
-            field.identifier.line,
-            field.identifier.column,
-            field.identifier.value,
-          ),
-        ),
-    );
-    node.identifier.declaration = new RecordDeclaration(
-      node.identifier.declaration.line,
-      node.identifier.column,
-      node,
-      fieldsCopy,
-    );
   } else if (node instanceof Identifier) {
     const programSymbol = scope.lookup(node.value);
     if (programSymbol === null) {
@@ -331,6 +302,7 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
 }
 
 let returnFunction: FunDeclaration = undefined;
+let hasReturned = false;
 
 function assignArraySize(type1: ArrayType, type2: ArrayType) {
   while (type1.type instanceof ArrayType && type2.type instanceof ArrayType) {
@@ -365,6 +337,7 @@ export const enum TypeRule {
   OnlyAccessibleSymbolAccessed,
   AccessedFieldExists,
   RecordLiteralDeclaredWithEntriesMatchingFieldType,
+  FunctionReturnsValueIfExpected,
 }
 
 const typeRuleApplicationDictionary: {
@@ -397,6 +370,7 @@ const typeRuleApplicationDictionary: {
   },
 
   [TypeRule.ReturnsFunctionType]: (returnStmt: Return): boolean => {
+    hasReturned = true;
     if (returnStmt.possibleValue === null)
       return (
         returnFunction === undefined ||
@@ -693,6 +667,25 @@ const typeRuleApplicationDictionary: {
               .declaration as RecordDeclaration
           ).fields[pos].type.equals(fieldType),
       ).length === 0,
+
+  [TypeRule.FunctionReturnsValueIfExpected]: (
+    funDeclaration: FunDeclaration,
+  ): boolean => {
+    const oldReturnFun = returnFunction;
+    returnFunction = funDeclaration;
+    const oldHasReturn = hasReturned;
+    hasReturned = false;
+    checkType(funDeclaration._body);
+    const localHasReturned =
+      hasReturned ||
+      (funDeclaration.type as FunctionType).returnType.equals(
+        DefaultBaseTypeInstance.VOID,
+      );
+    hasReturned = oldHasReturn;
+    returnFunction = oldReturnFun;
+    if (localHasReturned) funDeclaration.params.forEach(checkType);
+    return localHasReturned;
+  },
 };
 
 const typeRuleFailureMessageDictionary: {
@@ -807,6 +800,11 @@ const typeRuleFailureMessageDictionary: {
   ): string =>
     recordLiteral.getFilePos() +
     "Record literal has argument not matching corresponding field's type!",
+  [TypeRule.FunctionReturnsValueIfExpected]: (
+    funDeclaration: FunDeclaration,
+  ): string =>
+    funDeclaration.getFilePos() +
+    "Function does not return a value when one is expected!",
 };
 
 function enforceTypeRules(node: ExprStmt, rulesToEnforce: TypeRule[]) {
@@ -822,23 +820,21 @@ function enforceTypeRules(node: ExprStmt, rulesToEnforce: TypeRule[]) {
 function checkType(node: ASTNode): Type {
   const typeRulesToEnforce = new Array<TypeRule>();
   if (node instanceof Type) return node;
-  if (node instanceof FunDeclaration || node instanceof DeferDecorator) {
+  if (node instanceof DeferDecorator) {
     const oldReturnFun = returnFunction;
-    returnFunction = node instanceof FunDeclaration ? node : undefined;
-    if (node instanceof FunDeclaration) {
-      checkType(node._body);
-      returnFunction = oldReturnFun;
-      node.params.forEach(checkType);
-      return node.type;
-    }
+    returnFunction = undefined;
     node.children().forEach(checkType);
     returnFunction = oldReturnFun;
     return DefaultBaseTypeInstance.NONE;
   }
   if (node instanceof Identifier && node.declaration !== undefined)
     node.type = node.declaration.type;
-
-  if (node instanceof If || node instanceof While) {
+  if (
+    node instanceof FunDeclaration &&
+    (!(node._body instanceof Block) || node._body.stmts.length > 0)
+  )
+    typeRulesToEnforce.push(TypeRule.FunctionReturnsValueIfExpected);
+  else if (node instanceof If || node instanceof While) {
     if (node instanceof If) {
       checkType(node.ifStmt);
       if (node.possibleElseStmt !== null) checkType(node.possibleElseStmt);
@@ -855,12 +851,13 @@ function checkType(node: ASTNode): Type {
     );
   else if (node instanceof Return)
     typeRulesToEnforce.push(TypeRule.ReturnsFunctionType);
-  else if (node instanceof Match)
+  else if (node instanceof Match) {
+    node.caseStmts.forEach((caseStmt) => checkType(caseStmt.stmt));
     typeRulesToEnforce.push(
       TypeRule.AllCaseTypeAreCompatible,
       TypeRule.CompleteMatchUnionTypeCoverage,
     );
-  else if (node instanceof TypeCast)
+  } else if (node instanceof TypeCast)
     typeRulesToEnforce.push(TypeRule.TypeCastToContainingType);
   else if (node instanceof BinaryExpr) {
     typeRulesToEnforce.push(
@@ -906,7 +903,6 @@ function checkType(node: ASTNode): Type {
   else if (node instanceof RecordLiteral)
     typeRulesToEnforce.push(
       TypeRule.RecordLiteralDeclaredWithEntriesMatchingFieldType,
-      TypeRule.AccessedFieldExists,
     );
   else node.children().forEach(checkType);
   if (typeRulesToEnforce.length > 0)

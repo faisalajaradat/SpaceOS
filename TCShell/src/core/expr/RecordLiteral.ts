@@ -1,5 +1,6 @@
-import {ASTNode, dotString, newNodeId} from "../program.js";
-import {Expr, Identifier} from "./Expr.js";
+import { ASTNode, dotString, newNodeId } from "../program.js";
+import { RecordType } from "../type/RecordType.js";
+import { Expr, Identifier } from "./Expr.js";
 
 export class RecordLiteral extends Expr {
   fieldValues: Expr[];
@@ -33,7 +34,16 @@ export class RecordLiteral extends Expr {
     return recordLiteralNodeId;
   }
 
-  evaluate(): Promise<unknown> {
-    return undefined;
+  async evaluate(): Promise<object> {
+    const defaultRecord = (await (
+      this.type as RecordType
+    ).identifier.declaration.evaluate()) as object;
+    const props = Object.keys(defaultRecord);
+    (
+      await Promise.all(
+        this.fieldValues.map(async (expr) => await expr.evaluate()),
+      )
+    ).forEach((value, pos) => (defaultRecord[props[pos]] = value));
+    return defaultRecord;
   }
 }

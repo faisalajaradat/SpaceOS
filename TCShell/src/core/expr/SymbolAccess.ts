@@ -1,5 +1,6 @@
 import { getValueOfExpression } from "../../utils.js";
 import { ASTNode, dotString, newNodeId } from "../program.js";
+import { ImportDeclaration } from "../stmts.js";
 import { BaseType, BaseTypeKind } from "../type/primitive-types.js";
 import { Expr, Identifier } from "./Expr.js";
 
@@ -37,6 +38,13 @@ export class SymbolAccess extends Expr {
   }
 
   async evaluate(): Promise<unknown> {
-    return await getValueOfExpression(this.symbol.evaluate());
+    if (
+      this.locationExpr instanceof Identifier &&
+      this.locationExpr.declaration instanceof ImportDeclaration
+    )
+      return getValueOfExpression(await this.symbol.evaluate());
+    return getValueOfExpression(await this.locationExpr.evaluate())[
+      this.symbol.value
+    ];
   }
 }
