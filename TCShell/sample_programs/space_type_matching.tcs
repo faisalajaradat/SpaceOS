@@ -67,7 +67,7 @@ void{SpatialType[]} parseAndDescribeSpacialTypes = void (SpatialType[] listOfSpa
 }
 
 physical mutable mobile SmartEntity car = new physical mutable mobile SmartEntity()
-physical mutable OpenSpace parkingLot = new physical mutable OpenSpace()
+physical mutable OpenSpace parkingLot = new physical mutable OpenSpace(Location {50, 20})
 bidirectional LandPath street = new bidirectional LandPath()
 
 SpatialType[] lotAndCars = [ (SpatialType)car, (SpatialType)parkingLot, (SpatialType)street ]

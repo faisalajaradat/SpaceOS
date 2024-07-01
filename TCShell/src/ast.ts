@@ -6,6 +6,7 @@ import {
   DeferDecorator,
   If,
   ImportDeclaration,
+  libDeclarations,
   libFunctions,
   Match,
   Parameter,
@@ -80,6 +81,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       lineAndColumn.colNum,
       stmts.ast(),
     );
+    _program.stmts.unshift(...libDeclarations);
     libFunctions.forEach((_value, key) => _program.stmts.unshift(key));
     return _program;
   },

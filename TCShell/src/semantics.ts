@@ -14,6 +14,7 @@ import {
   DeferDecorator,
   If,
   ImportDeclaration,
+  libDeclarations,
   libFunctions,
   Match,
   Parameter,
@@ -594,6 +595,35 @@ const typeRuleApplicationDictionary: {
           objectInstantiation.type.delegate.delegate instanceof
             MotionDecorator))),
 
+  [TypeRule.SpatialObjectInstantiatedWithCompatibleArguments]: (
+    objectInstantiation: SpatialObjectInstantiationExpr,
+  ): boolean => {
+    let baseType = objectInstantiation.type;
+    while (isDecorator(baseType)) baseType = baseType.delegate;
+    if (
+      objectInstantiation.args.length === 0 &&
+      !(baseType instanceof SpaceType)
+    )
+      return true;
+    if (objectInstantiation.args.length === 0) return false;
+    let argumentsAreCompatible = checkType(objectInstantiation.args[0]).equals(
+      libDeclarations[0].type,
+    );
+    if (objectInstantiation.args.length > 1)
+      argumentsAreCompatible =
+        argumentsAreCompatible &&
+        checkType(objectInstantiation.args[1]).equals(
+          DefaultBaseTypeInstance.NUMBER,
+        );
+    if (objectInstantiation.args.length > 2)
+      argumentsAreCompatible =
+        argumentsAreCompatible &&
+        checkType(objectInstantiation.args[2]).equals(
+          DefaultBaseTypeInstance.STRING,
+        );
+    return argumentsAreCompatible && objectInstantiation.args.length < 3;
+  },
+
   [TypeRule.ArrayLiteralDeclaredWithEntriesAllMatchingType]: (
     arrayLiteral: ArrayLiteral,
   ): boolean => {
@@ -784,6 +814,12 @@ const typeRuleFailureMessageDictionary: {
     objectInstantiation.getFilePos() +
     "May only instantiate a fully described spatial type!",
 
+  [TypeRule.SpatialObjectInstantiatedWithCompatibleArguments]: (
+    objectInstantiation: SpatialObjectInstantiationExpr,
+  ): string =>
+    objectInstantiation.getFilePos() +
+    "May only instantiate a spatial type with all required arguments of correct type!",
+
   [TypeRule.ArrayLiteralDeclaredWithEntriesAllMatchingType]: (
     arrayLiteral: ArrayLiteral,
   ): string =>
@@ -892,6 +928,7 @@ function checkType(node: ASTNode): Type {
     typeRulesToEnforce.push(
       TypeRule.NonAbstractSpatialObjectInstantiated,
       TypeRule.FullyDescribedSpatialObjectInstantiated,
+      TypeRule.SpatialObjectInstantiatedWithCompatibleArguments,
     );
   else if (node instanceof ArrayLiteral)
     typeRulesToEnforce.push(

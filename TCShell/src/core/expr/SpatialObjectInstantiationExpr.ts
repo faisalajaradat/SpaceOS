@@ -33,6 +33,7 @@ export class SpatialObjectInstantiationExpr extends Expr {
   children(): ASTNode[] {
     const children = new Array<ASTNode>();
     children.push(this._type);
+    children.push(...this.args);
     return children;
   }
 
