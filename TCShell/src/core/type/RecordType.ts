@@ -6,7 +6,7 @@ import { isAnyType } from "../../utils.js";
 export class RecordType extends Type {
   identifier: Identifier;
 
-  constructor(line: number, column: number, identifier: Identifier) {
+  constructor(identifier: Identifier, line: number = -1, column: number = -1) {
     super(line, column);
     this.identifier = identifier;
   }

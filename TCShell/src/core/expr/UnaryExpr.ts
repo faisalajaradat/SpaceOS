@@ -1,20 +1,20 @@
-import {Type} from "../type/index.js";
-import {ASTNode, dotString, newNodeId} from "../program.js";
-import {getValueOfExpression} from "../../utils.js";
-import {Expr} from "./Expr.js";
+import { Type } from "../type/index.js";
+import { ASTNode, dotString, newNodeId } from "../program.js";
+import { getValueOfExpression } from "../../utils.js";
+import { Expr } from "./Expr.js";
 
 export class UnaryExpr extends Expr {
   operator: string;
   expr: Expr;
 
   constructor(
-    line: number,
-    column: number,
     type: Type,
     operator: string,
     expr: Expr,
+    line: number = -1,
+    column: number = -1,
   ) {
-    super(line, column, type);
+    super(type, line, column);
     this.operator = operator;
     this.expr = expr;
   }

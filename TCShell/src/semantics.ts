@@ -274,7 +274,7 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
   } else if (node instanceof DeferDecorator) {
     node.scopeArgs.forEach((arg) => visitNameAnalyzer(arg, scope));
     node.scopeParams = node.scopeArgs.map(
-      (arg) => new Parameter(arg.line, arg.column, arg.declaration.type, arg),
+      (arg) => new Parameter(arg.declaration.type, arg, arg.line, arg.column),
     );
     const newScope = new Scope(null);
     libFunctions.forEach((_value, key) => visitNameAnalyzer(key, newScope));
@@ -334,6 +334,7 @@ export const enum TypeRule {
   AllArgsInFunctionCallMatchParameter,
   NonAbstractSpatialObjectInstantiated,
   FullyDescribedSpatialObjectInstantiated,
+  SpatialObjectInstantiatedWithCompatibleArguments,
   ArrayLiteralDeclaredWithEntriesAllMatchingType,
   OnlyAccessibleSymbolAccessed,
   AccessedFieldExists,
@@ -366,7 +367,7 @@ const typeRuleApplicationDictionary: {
       assignArraySize(leftHandType, rightHandType);
     assignment.type = isSameType
       ? leftHandType
-      : new BaseType(assignment.line, assignment.column, BaseTypeKind.NONE);
+      : new BaseType(BaseTypeKind.NONE, assignment.column, assignment.line);
     return isSameType;
   },
 
@@ -443,13 +444,13 @@ const typeRuleApplicationDictionary: {
         rightHandType.equals(DefaultBaseTypeInstance.NUMBER));
 
     additionExpr.type = new BaseType(
-      additionExpr.line,
-      additionExpr.column,
       !bothAreValid
         ? BaseTypeKind.NONE
         : eitherSideIsString
           ? BaseTypeKind.STRING
           : BaseTypeKind.NUMBER,
+      additionExpr.column,
+      additionExpr.line,
     );
     return bothAreValid;
   },
@@ -469,13 +470,13 @@ const typeRuleApplicationDictionary: {
       mathExpr.operator === "<=";
 
     mathExpr.type = new BaseType(
-      mathExpr.line,
-      mathExpr.column,
       !bothSidesAreNumbers
         ? BaseTypeKind.NONE
         : operatorCreatesBool
           ? BaseTypeKind.BOOL
           : BaseTypeKind.NUMBER,
+      mathExpr.column,
+      mathExpr.line,
     );
     return bothSidesAreNumbers;
   },
@@ -488,9 +489,9 @@ const typeRuleApplicationDictionary: {
       leftHandType instanceof BaseType &&
       leftHandType.equals(checkType(equalityExpr.rightExpr));
     equalityExpr.type = new BaseType(
-      equalityExpr.line,
-      equalityExpr.column,
       bothSidesAreTheSamePrimitiveType ? BaseTypeKind.BOOL : BaseTypeKind.NONE,
+      equalityExpr.column,
+      equalityExpr.line,
     );
     return bothSidesAreTheSamePrimitiveType;
   },
@@ -506,9 +507,9 @@ const typeRuleApplicationDictionary: {
           ) &&
           checkType(booleanExpr.rightExpr).equals(DefaultBaseTypeInstance.BOOL);
     booleanExpr.type = new BaseType(
-      booleanExpr.line,
-      booleanExpr.column,
       bothSidesAreBools ? BaseTypeKind.BOOL : BaseTypeKind.NONE,
+      booleanExpr.column,
+      booleanExpr.line,
     );
     return bothSidesAreBools;
   },
@@ -523,7 +524,7 @@ const typeRuleApplicationDictionary: {
     const isArrayType = arrayType instanceof ArrayType;
     arrayAccess.type = isArrayType
       ? arrayType.type
-      : new BaseType(arrayAccess.line, arrayAccess.column, BaseTypeKind.NONE);
+      : new BaseType(BaseTypeKind.NONE, arrayAccess.column, arrayAccess.line);
     return isArrayType;
   },
 
@@ -533,7 +534,7 @@ const typeRuleApplicationDictionary: {
     const isFunctionType = calledSubjectType instanceof FunctionType;
     funCall.type = isFunctionType
       ? calledSubjectType.returnType
-      : new BaseType(funCall.line, funCall.column, BaseTypeKind.NONE);
+      : new BaseType(BaseTypeKind.NONE, funCall.column, funCall.line);
     return isFunctionType;
   },
 
@@ -597,10 +598,10 @@ const typeRuleApplicationDictionary: {
     arrayLiteral: ArrayLiteral,
   ): boolean => {
     arrayLiteral.type = new ArrayType(
-      arrayLiteral.line,
-      arrayLiteral.column,
       checkType(arrayLiteral.value[0]),
       arrayLiteral.value.length,
+      arrayLiteral.line,
+      arrayLiteral.column,
     );
     return (
       arrayLiteral.value.filter(

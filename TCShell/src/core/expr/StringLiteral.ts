@@ -1,12 +1,12 @@
-import {BaseType, BaseTypeKind} from "../type/index.js";
-import {ASTNode, dotString, newNodeId} from "../program.js";
-import {Expr} from "./Expr.js";
+import { BaseType, BaseTypeKind } from "../type/index.js";
+import { ASTNode, dotString, newNodeId } from "../program.js";
+import { Expr } from "./Expr.js";
 
 export class StringLiteral extends Expr {
   value: string;
 
-  constructor(line: number, column: number, value: string) {
-    super(line, column, new BaseType(-1, -1, BaseTypeKind.STRING));
+  constructor(value: string, line: number = -1, column: number = -1) {
+    super(new BaseType(BaseTypeKind.STRING), line, column);
     this.value = value;
   }
 

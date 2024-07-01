@@ -1,21 +1,27 @@
-import {ASTNode, dotString, newNodeId, RuntimeType, varStacks,} from "../program.js";
-import {libFunctions, VarDeclaration} from "../stmts.js";
-import {getValueOfExpression} from "../../utils.js";
-import {FunDeclaration} from "./FunDeclaration.js";
-import {Expr, Identifier} from "./Expr.js";
+import {
+  ASTNode,
+  dotString,
+  newNodeId,
+  RuntimeType,
+  varStacks,
+} from "../program.js";
+import { libFunctions, VarDeclaration } from "../stmts.js";
+import { getValueOfExpression } from "../../utils.js";
+import { FunDeclaration } from "./FunDeclaration.js";
+import { Expr, Identifier } from "./Expr.js";
 
 export class FunCall extends Expr {
   identifier: Expr;
   args: Expr[];
 
   constructor(
-    line: number,
-    column: number,
     type: RuntimeType,
     identifier: Expr,
     args: Expr[],
+    line: number = -1,
+    column: number = -1,
   ) {
-    super(line, column, type);
+    super(type, line, column);
     this.identifier = identifier;
     this.args = args;
   }

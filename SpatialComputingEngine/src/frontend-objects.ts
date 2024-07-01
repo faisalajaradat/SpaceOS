@@ -1,7 +1,7 @@
-import { Entity, Schema, SchemaDefinition } from "redis-om";
+import { Entity, EntityDataValue, Schema, SchemaDefinition } from "redis-om";
 
 export abstract class SpatialTypeEntity implements Entity {
-  [index: string]: string | boolean | null | undefined;
+  [index: string]: EntityDataValue;
   _type: string;
   locality: string;
 
@@ -29,7 +29,15 @@ export abstract class SpatialObject extends SpatialTypeEntity {
   }
 }
 
-export abstract class Space extends SpatialObject {}
+export abstract class Space extends SpatialObject {
+  locationJSON: string;
+  dimension: number;
+  name: string;
+  constructor(locality: string, isControlled: boolean, locationJSON: string) {
+    super(locality, isControlled);
+    this.locationJSON = locationJSON;
+  }
+}
 
 export abstract class SpatialEntity extends SpatialObject {}
 
@@ -37,6 +45,9 @@ const SPACE_SCHEMA_DEF: SchemaDefinition = {
   _type: { type: "string" },
   locality: { type: "string" },
   isControlled: { type: "boolean" },
+  locationJSON: { type: "string" },
+  dimension: { type: "string" },
+  name: { type: "string" },
 };
 
 export const SPACE_SCHEMA: Schema = new Schema("Space", SPACE_SCHEMA_DEF, {
@@ -53,7 +64,9 @@ export abstract class DynamicEntity extends SpatialEntity {
 }
 
 const ENTITY_SCHEMA_DEF: SchemaDefinition = {
-  ...SPACE_SCHEMA_DEF,
+  _type: { type: "string" },
+  locality: { type: "string" },
+  isControlled: { type: "boolean" },
   motion: { type: "string" },
 };
 
@@ -62,15 +75,15 @@ export const ENTITY_SCHEMA: Schema = new Schema("Entity", ENTITY_SCHEMA_DEF, {
 });
 
 export class OpenSpace extends Space {
-  constructor(locality: string, isControlled: boolean) {
-    super(locality, isControlled);
+  constructor(locality: string, isControlled: boolean, locationJSON: string) {
+    super(locality, isControlled, locationJSON);
     this._type = "OpenSpace";
   }
 }
 
 export class EnclosedSpace extends Space {
-  constructor(locality: string, isControlled: boolean) {
-    super(locality, isControlled);
+  constructor(locality: string, isControlled: boolean, locationJSON: string) {
+    super(locality, isControlled, locationJSON);
     this._type = "EnclosedSpace";
   }
 }

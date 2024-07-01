@@ -1,16 +1,16 @@
-import {ASTNode, dotString, newNodeId, RuntimeType} from "../program.js";
-import {Expr} from "./Expr.js";
+import { ASTNode, dotString, newNodeId, RuntimeType } from "../program.js";
+import { Expr } from "./Expr.js";
 
 export class TypeCast extends Expr {
   castedExpr: Expr;
 
   constructor(
-    line: number,
-    column: number,
     desiredType: RuntimeType,
     castedExpr: Expr,
+    line: number = -1,
+    column: number = -1,
   ) {
-    super(line, column, desiredType);
+    super(desiredType, line, column);
     this.castedExpr = castedExpr;
   }
 

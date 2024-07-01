@@ -1,9 +1,16 @@
-import {DeferDecorator, Parameter, Return} from "../stmts.js";
-import {ASTNode, dotString, ExprStmt, newNodeId, RuntimeType, unresolved,} from "../program.js";
-import {Scope} from "../../semantics.js";
-import {FunctionType} from "../type/index.js";
-import {getValueOfExpression, popOutOfScopeVars} from "../../utils.js";
-import {Expr} from "./Expr.js";
+import { DeferDecorator, Parameter, Return } from "../stmts.js";
+import {
+  ASTNode,
+  dotString,
+  ExprStmt,
+  newNodeId,
+  RuntimeType,
+  unresolved,
+} from "../program.js";
+import { Scope } from "../../semantics.js";
+import { FunctionType } from "../type/index.js";
+import { getValueOfExpression, popOutOfScopeVars } from "../../utils.js";
+import { Expr } from "./Expr.js";
 
 export class FunDeclaration extends Expr {
   params: Parameter[];
@@ -11,17 +18,17 @@ export class FunDeclaration extends Expr {
   scope: Scope;
 
   constructor(
-    line: number,
-    column: number,
     type: RuntimeType,
     params: Parameter[],
     body: ExprStmt,
+    line: number = -1,
+    column: number = -1,
   ) {
     const paramTypes: RuntimeType[] = params.map((param) => param.paramType);
     super(
+      new FunctionType(type, paramTypes, type.line, type.column),
       line,
       column,
-      new FunctionType(type.line, type.column, type, paramTypes),
     );
     this.params = params;
     this._body = body;

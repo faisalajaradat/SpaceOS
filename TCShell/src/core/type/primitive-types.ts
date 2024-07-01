@@ -45,7 +45,7 @@ export const astBaseTypeRuntimeDictionary: { [key in BaseTypeKind]: string } = {
 export class BaseType extends Type {
   kind: BaseTypeKind;
 
-  constructor(line: number, column: number, kind: BaseTypeKind) {
+  constructor(kind: BaseTypeKind, column: number = -1, line: number = -1) {
     super(line, column);
     this.kind = kind;
   }
@@ -94,12 +94,12 @@ export class BaseType extends Type {
 }
 
 export const DefaultBaseTypeInstance = {
-  NUMBER: new BaseType(-1, -1, BaseTypeKind.NUMBER),
-  STRING: new BaseType(-1, -1, BaseTypeKind.STRING),
-  BOOL: new BaseType(-1, -1, BaseTypeKind.BOOL),
-  VOID: new BaseType(-1, -1, BaseTypeKind.VOID),
-  ANY: new BaseType(-1, -1, BaseTypeKind.ANY),
-  NONE: new BaseType(-1, -1, BaseTypeKind.NONE),
+  NUMBER: new BaseType(BaseTypeKind.NUMBER),
+  STRING: new BaseType(BaseTypeKind.STRING),
+  BOOL: new BaseType(BaseTypeKind.BOOL),
+  VOID: new BaseType(BaseTypeKind.VOID),
+  ANY: new BaseType(BaseTypeKind.ANY),
+  NONE: new BaseType(BaseTypeKind.NONE),
 } as const;
 
 export abstract class CompositionType extends Type {
@@ -111,10 +111,10 @@ export class FunctionType extends Type {
   protected _paramTypes: RuntimeType[];
 
   constructor(
-    line: number,
-    column: number,
     returnType: RuntimeType,
     paramTypes: RuntimeType[],
+    line: number = -1,
+    column: number = -1,
   ) {
     super(line, column);
     this._returnType = returnType;
@@ -183,7 +183,12 @@ export class ArrayType extends Type {
   protected _type: RuntimeType;
   _size: number;
 
-  constructor(line: number, column: number, type: RuntimeType, size: number) {
+  constructor(
+    type: RuntimeType,
+    size: number = -1,
+    line: number = -1,
+    column: number = -1,
+  ) {
     super(line, column);
     this._type = type;
     this._size = size;

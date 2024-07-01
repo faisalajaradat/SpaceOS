@@ -66,7 +66,7 @@ export abstract class Stmt implements ASTNode {
   column: number;
   protected _type: RuntimeType;
 
-  protected constructor(line: number, column: number, type: RuntimeType) {
+  protected constructor(type: RuntimeType, line: number, column: number) {
     this.line = line;
     this.column = column;
     this._type = type;
@@ -92,8 +92,8 @@ export class DeferDecorator extends Stmt {
   scopeParams: Parameter[];
   scope: Scope;
 
-  constructor(line: number, column: number, scopeArgs: Identifier[]) {
-    super(line, column, new BaseType(line, column, BaseTypeKind.NONE));
+  constructor(scopeArgs: Identifier[], line: number = -1, column: number = -1) {
+    super(new BaseType(BaseTypeKind.NONE), line, column);
     this.scopeArgs = scopeArgs;
   }
 
@@ -139,12 +139,12 @@ export class Parameter extends Stmt {
   identifier: Identifier;
 
   constructor(
-    line: number,
-    column: number,
     paramType: RuntimeType,
     identifier: Identifier,
+    line: number = -1,
+    column: number = -1,
   ) {
-    super(line, column, paramType);
+    super(paramType, line, column);
     this.identifier = identifier;
   }
 
@@ -184,14 +184,14 @@ export class VarDeclaration extends Stmt {
   isPublic: boolean;
 
   constructor(
-    line: number,
-    column: number,
     type: RuntimeType,
     identifier: Identifier,
     value: Expr,
-    isPublic: boolean,
+    isPublic: boolean = false,
+    line: number = -1,
+    column: number = -1,
   ) {
-    super(line, column, type);
+    super(type, line, column);
     this.identifier = identifier;
     this.value = value;
     this.isPublic = isPublic;
@@ -232,12 +232,12 @@ export class UnionDeclaration extends Stmt {
   protected _options: RuntimeType[];
 
   constructor(
-    line: number,
-    column: number,
     unionType: UnionType,
     options: RuntimeType[],
+    line: number = -1,
+    column: number = -1,
   ) {
-    super(line, column, unionType);
+    super(unionType, line, column);
     this._options = options;
   }
 
@@ -274,12 +274,12 @@ export class AliasTypeDeclaration extends Stmt {
   alias: Identifier;
 
   constructor(
-    line: number,
-    column: number,
     alias: Identifier,
     aliasedType: RuntimeType,
+    line: number = -1,
+    column: number = -1,
   ) {
-    super(line, column, DefaultBaseTypeInstance.NONE);
+    super(DefaultBaseTypeInstance.NONE, line, column);
     this.alias = alias;
     this.aliasedType = aliasedType;
   }
@@ -309,12 +309,12 @@ export class RecordDeclaration extends Stmt {
   defaultRecordImplementation: object;
 
   constructor(
-    line: number,
-    column: number,
     recordType: RecordType,
     fields: Parameter[],
+    line: number = -1,
+    column: number = -1,
   ) {
-    super(line, column, recordType);
+    super(recordType, line, column);
     this.fields = fields;
     this.defaultRecordImplementation = undefined;
   }
@@ -370,8 +370,8 @@ export class RecordDeclaration extends Stmt {
 export class Return extends Stmt {
   possibleValue: Expr;
 
-  constructor(line: number, column: number, possibleValue: Expr) {
-    super(line, column, new BaseType(-1, -1, BaseTypeKind.NONE));
+  constructor(possibleValue: Expr, line: number = -1, column: number = -1) {
+    super(new BaseType(BaseTypeKind.NONE), line, column);
     this.possibleValue = possibleValue;
   }
 
@@ -401,13 +401,13 @@ export class If extends Stmt {
   possibleElseStmt: ExprStmt;
 
   constructor(
-    line: number,
-    column: number,
     condition: Expr,
     ifStmt: ExprStmt,
     possibleElseStmt: ExprStmt,
+    line: number = -1,
+    column: number = -1,
   ) {
-    super(line, column, new BaseType(-1, -1, BaseTypeKind.NONE));
+    super(new BaseType(BaseTypeKind.NONE), line, column);
     this.condition = condition;
     this.ifStmt = ifStmt;
     this.possibleElseStmt = possibleElseStmt;
@@ -464,12 +464,12 @@ export class While extends Stmt {
   whileStmt: ExprStmt;
 
   constructor(
-    line: number,
-    column: number,
     condition: Expr,
     whileStmt: ExprStmt,
+    line: number = -1,
+    column: number = -1,
   ) {
-    super(line, column, new BaseType(-1, -1, BaseTypeKind.NONE));
+    super(new BaseType(BaseTypeKind.NONE), line, column);
     this.condition = condition;
     this.whileStmt = whileStmt;
   }
@@ -507,8 +507,8 @@ export class Block extends Stmt {
   stmts: ExprStmt[];
   scope: Scope;
 
-  constructor(line: number, column: number, stmts: ExprStmt[]) {
-    super(line, column, new BaseType(-1, -1, BaseTypeKind.NONE));
+  constructor(stmts: ExprStmt[], line: number = -1, column: number = -1) {
+    super(new BaseType(BaseTypeKind.NONE), line, column);
     this.stmts = stmts;
   }
 
@@ -554,12 +554,12 @@ export class CaseStmt extends Stmt {
   scope: Scope;
 
   constructor(
-    line: number,
-    column: number,
     matchCondition: MatchCondition,
     stmt: ExprStmt,
+    line: number = -1,
+    column: number = -1,
   ) {
-    super(line, column, new BaseType(-1, -1, BaseTypeKind.NONE));
+    super(new BaseType(BaseTypeKind.NONE), line, column);
     this.matchCondition = matchCondition;
     this.stmt = stmt;
   }
@@ -602,12 +602,12 @@ export class Match extends Stmt {
   caseStmts: CaseStmt[];
 
   constructor(
-    line: number,
-    column: number,
     subject: Expr,
     caseStmts: CaseStmt[],
+    line: number = -1,
+    column: number = -1,
   ) {
-    super(line, column, new BaseType(-1, -1, BaseTypeKind.NONE));
+    super(new BaseType(BaseTypeKind.NONE), line, column);
     this.subject = subject;
     this.caseStmts = caseStmts;
   }
@@ -659,9 +659,9 @@ export class Match extends Stmt {
         }
         if (data === undefined) return false;
       } else {
-        const schema = new SpaceType(-1, -1).contains(delegateType)
+        const schema = new SpaceType().contains(delegateType)
           ? engine.SPACE_SCHEMA
-          : new EntityType(-1, -1).contains(delegateType)
+          : new EntityType().contains(delegateType)
             ? engine.ENTITY_SCHEMA
             : engine.PATH_SCHEMA;
         data = await fetchData(schema, subject);
@@ -670,35 +670,35 @@ export class Match extends Stmt {
       let constructedType = undefined;
       switch (data._type) {
         case "Path": {
-          constructedType = new PathType(-1, -1);
+          constructedType = new PathType();
           break;
         }
         case "AirPath": {
-          constructedType = new AirPathType(-1, -1);
+          constructedType = new AirPathType();
           break;
         }
         case "LandPath": {
-          constructedType = new LandPathType(-1, -1);
+          constructedType = new LandPathType();
           break;
         }
         case "OpenSpace": {
-          constructedType = new OpenSpaceType(-1, -1);
+          constructedType = new OpenSpaceType();
           break;
         }
         case "EnclosedSpace": {
-          constructedType = new EnclosedSpaceType(-1, -1);
+          constructedType = new EnclosedSpaceType();
           break;
         }
         case "StaticEntity": {
-          constructedType = new StaticEntityType(-1, -1);
+          constructedType = new StaticEntityType();
           break;
         }
         case "AnimateEntity": {
-          constructedType = new AnimateEntityType(-1, -1);
+          constructedType = new AnimateEntityType();
           break;
         }
         case "SmartEntity": {
-          constructedType = new SmartEntityType(-1, -1);
+          constructedType = new SmartEntityType();
           break;
         }
       }
@@ -708,46 +708,22 @@ export class Match extends Stmt {
           if (property === "motion")
             constructedType =
               (<engine.DynamicEntity>data).motion === "mobile"
-                ? new MobileDecorator(
-                    -1,
-                    -1,
-                    <DynamicEntityType>constructedType,
-                  )
-                : new StationaryDecorator(
-                    -1,
-                    -1,
-                    <DynamicEntityType>constructedType,
-                  );
+                ? new MobileDecorator(<DynamicEntityType>constructedType)
+                : new StationaryDecorator(<DynamicEntityType>constructedType);
           if (property === "isControlled")
             constructedType = (<engine.SpatialObject>data).isControlled
-              ? new ControlledDecorator(
-                  -1,
-                  -1,
-                  <SpatialObjectType>constructedType,
-                )
-              : new NotControlledDecorator(
-                  -1,
-                  -1,
-                  <SpatialObjectType>constructedType,
-                );
+              ? new ControlledDecorator(<SpatialObjectType>constructedType)
+              : new NotControlledDecorator(<SpatialObjectType>constructedType);
           if (property === "direction")
             constructedType =
               (data as engine.Path).direction === "unidirectional"
-                ? new UnidirectionalDecorator(
-                    -1,
-                    -1,
-                    constructedType as PathType,
-                  )
-                : new BidirectionalDecorator(
-                    -1,
-                    -1,
-                    constructedType as PathType,
-                  );
+                ? new UnidirectionalDecorator(constructedType as PathType)
+                : new BidirectionalDecorator(constructedType as PathType);
           if (property === "locality")
             constructedType =
               data.locality === "physical"
-                ? new PhysicalDecorator(-1, -1, constructedType)
-                : new VirtualDecorator(-1, -1, constructedType);
+                ? new PhysicalDecorator(constructedType)
+                : new VirtualDecorator(constructedType);
         });
       return (condition.type as CompositionType).contains(constructedType);
     }
@@ -814,8 +790,13 @@ export class ImportDeclaration extends Stmt {
   alias: Identifier;
   importedSymbols: VarDeclaration[];
 
-  constructor(line: number, column: number, path: string, alias: Identifier) {
-    super(line, column, new BaseType(line, column, BaseTypeKind.NONE));
+  constructor(
+    path: string,
+    alias: Identifier,
+    line: number = -1,
+    column: number = -1,
+  ) {
+    super(new BaseType(BaseTypeKind.NONE, column, line), line, column);
     this.path = path;
     this.alias = alias;
   }
@@ -837,12 +818,23 @@ export class ImportDeclaration extends Stmt {
     return importDeclarationNodeId;
   }
 
-  async evaluate(): Promise<unknown> {
-    return await this.importedSymbols.forEach(
-      async (varDecl) => await varDecl.evaluate(),
-    );
+  async evaluate(): Promise<void> {
+    for (const varDecl of this.importedSymbols) await varDecl.evaluate();
   }
 }
+
+//List of program declarations implemented in TS
+export const libDeclarations: (
+  | VarDeclaration
+  | UnionDeclaration
+  | AliasTypeDeclaration
+  | RecordDeclaration
+)[] = [
+  new RecordDeclaration(new RecordType(new Identifier("Location")), [
+    new Parameter(new BaseType(BaseTypeKind.NUMBER), new Identifier("x")),
+    new Parameter(new BaseType(BaseTypeKind.NUMBER), new Identifier("y")),
+  ]),
+];
 
 //Dictionary of predefined functions implemented in TS to be called in TCShell
 export const libFunctions = new Map<
@@ -851,126 +843,92 @@ export const libFunctions = new Map<
 >();
 libFunctions.set(
   new VarDeclaration(
-    -1,
-    -1,
-    new FunctionType(-1, -1, new BaseType(-1, -1, BaseTypeKind.VOID), [
-      new BaseType(-1, -1, BaseTypeKind.ANY),
+    new FunctionType(new BaseType(BaseTypeKind.VOID), [
+      new BaseType(BaseTypeKind.ANY),
     ]),
-    new Identifier(-1, -1, "print"),
+    new Identifier("print"),
     new FunDeclaration(
-      -1,
-      -1,
-      new BaseType(-1, -1, BaseTypeKind.VOID),
+      new BaseType(BaseTypeKind.VOID),
       [
         new Parameter(
-          -1,
-          -1,
-          new BaseType(-1, -1, BaseTypeKind.ANY),
-          new Identifier(-1, -1, "message"),
+          new BaseType(BaseTypeKind.ANY),
+          new Identifier("message"),
         ),
       ],
-      new Block(-1, -1, []),
+      new Block([]),
     ),
-    false,
   ),
   (...args) => console.log(args[0]),
 );
 libFunctions.set(
   new VarDeclaration(
-    -1,
-    -1,
-    new FunctionType(-1, -1, new BaseType(-1, -1, BaseTypeKind.NUMBER), [
-      new ArrayType(-1, -1, new BaseType(-1, -1, BaseTypeKind.ANY), -1),
+    new FunctionType(new BaseType(BaseTypeKind.NUMBER), [
+      new ArrayType(new BaseType(BaseTypeKind.ANY)),
     ]),
-    new Identifier(-1, -1, "len"),
+    new Identifier("len"),
     new FunDeclaration(
-      -1,
-      -1,
-      new BaseType(-1, -1, BaseTypeKind.NUMBER),
+      new BaseType(BaseTypeKind.NUMBER),
       [
         new Parameter(
-          -1,
-          -1,
-          new ArrayType(-1, -1, new BaseType(-1, -1, BaseTypeKind.ANY), -1),
-          new Identifier(-1, -1, "array"),
+          new ArrayType(new BaseType(BaseTypeKind.ANY)),
+          new Identifier("array"),
         ),
       ],
-      new Block(-1, -1, new Array<ExprStmt>()),
+      new Block(new Array<ExprStmt>()),
     ),
-    false,
   ),
   (...args) => (<unknown[]>args[0]).length,
 );
 libFunctions.set(
   new VarDeclaration(
-    -1,
-    -1,
-    new FunctionType(-1, -1, new BaseType(-1, -1, BaseTypeKind.NUMBER), [
-      new ArrayType(-1, -1, new BaseType(-1, -1, BaseTypeKind.ANY), -1),
-      new BaseType(-1, -1, BaseTypeKind.ANY),
+    new FunctionType(new BaseType(BaseTypeKind.NUMBER), [
+      new ArrayType(new BaseType(BaseTypeKind.ANY)),
+      new BaseType(BaseTypeKind.ANY),
     ]),
-    new Identifier(-1, -1, "push"),
+    new Identifier("push"),
     new FunDeclaration(
-      -1,
-      -1,
-      new BaseType(-1, -1, BaseTypeKind.NUMBER),
+      new BaseType(BaseTypeKind.NUMBER),
       [
         new Parameter(
-          -1,
-          -1,
-          new ArrayType(-1, -1, new BaseType(-1, -1, BaseTypeKind.ANY), -1),
-          new Identifier(-1, -1, "array"),
+          new ArrayType(new BaseType(BaseTypeKind.ANY)),
+          new Identifier("array"),
         ),
         new Parameter(
-          -1,
-          -1,
-          new BaseType(-1, -1, BaseTypeKind.ANY),
-          new Identifier(-1, -1, "element"),
+          new BaseType(BaseTypeKind.ANY),
+          new Identifier("element"),
         ),
       ],
-      new Block(-1, -1, new Array<ExprStmt>()),
+      new Block(new Array<ExprStmt>()),
     ),
-    false,
   ),
   (...args) => (<unknown[]>args[0]).push(<unknown>args[1]),
 );
 libFunctions.set(
   new VarDeclaration(
-    -1,
-    -1,
-    new FunctionType(-1, -1, new BaseType(-1, -1, BaseTypeKind.VOID), [
-      new ArrayType(-1, -1, new BaseType(-1, -1, BaseTypeKind.ANY), -1),
-      new BaseType(-1, -1, BaseTypeKind.NUMBER),
-      new BaseType(-1, -1, BaseTypeKind.NUMBER),
+    new FunctionType(new BaseType(BaseTypeKind.VOID), [
+      new ArrayType(new BaseType(BaseTypeKind.ANY)),
+      new BaseType(BaseTypeKind.NUMBER),
+      new BaseType(BaseTypeKind.NUMBER),
     ]),
-    new Identifier(-1, -1, "removeElements"),
+    new Identifier("removeElements"),
     new FunDeclaration(
-      -1,
-      -1,
-      new BaseType(-1, -1, BaseTypeKind.VOID),
+      new BaseType(BaseTypeKind.VOID),
       [
         new Parameter(
-          -1,
-          -1,
-          new ArrayType(-1, -1, new BaseType(-1, -1, BaseTypeKind.ANY), -1),
-          new Identifier(-1, -1, "array"),
+          new ArrayType(new BaseType(BaseTypeKind.ANY)),
+          new Identifier("array"),
         ),
         new Parameter(
-          -1,
-          -1,
-          new BaseType(-1, -1, BaseTypeKind.NUMBER),
-          new Identifier(-1, -1, "startIndex"),
+          new BaseType(BaseTypeKind.NUMBER),
+          new Identifier("startIndex"),
         ),
         new Parameter(
-          -1,
-          -1,
-          new BaseType(-1, -1, BaseTypeKind.NUMBER),
-          new Identifier(-1, -1, "count"),
+          new BaseType(BaseTypeKind.NUMBER),
+          new Identifier("count"),
         ),
       ],
-      new Block(-1, -1, new Array<ExprStmt>()),
+      new Block(new Array<ExprStmt>()),
     ),
-    false,
   ),
   (...args) => (<unknown[]>args[0]).splice(<number>args[1], <number>args[2]),
 );

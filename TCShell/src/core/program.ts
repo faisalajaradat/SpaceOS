@@ -41,6 +41,8 @@ export type Assignment = VarDeclaration | BinaryExpr;
 
 export type RuntimeType = Type | Identifier;
 
+export type Location = { x: number; y: number };
+
 //Define all AST nodes
 export interface ASTNode {
   line: number;

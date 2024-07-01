@@ -1,13 +1,25 @@
-import {ArrayRepresentation, ASTNode, dotString, newNodeId, SymbolDeclaration, varStacks,} from "../program.js";
-import {getValueOfExpression} from "../../utils.js";
-import {Expr, Identifier} from "./Expr.js";
+import {
+  ArrayRepresentation,
+  ASTNode,
+  dotString,
+  newNodeId,
+  SymbolDeclaration,
+  varStacks,
+} from "../program.js";
+import { getValueOfExpression } from "../../utils.js";
+import { Expr, Identifier } from "./Expr.js";
 
 export class ArrayAccess extends Expr {
   arrayExpr: Expr;
   accessExpr: Expr;
 
-  constructor(line: number, column: number, arrayExpr: Expr, accessExpr: Expr) {
-    super(line, column, null);
+  constructor(
+    arrayExpr: Expr,
+    accessExpr: Expr,
+    line: number = -1,
+    column: number = -1,
+  ) {
+    super(null, line, column);
     this.arrayExpr = arrayExpr;
     this.accessExpr = accessExpr;
   }

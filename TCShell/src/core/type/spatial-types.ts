@@ -3,7 +3,7 @@ import { CompositionType, Type } from "./primitive-types.js";
 import { isAnyType, isDecorator } from "../../utils.js";
 
 export class SpatialType extends CompositionType {
-  constructor(line: number, column: number) {
+  constructor(line: number = -1, column: number = -1) {
     super(line, column);
   }
 
@@ -48,7 +48,7 @@ export abstract class LocalityDecorator
 {
   delegate: SpatialType;
 
-  constructor(line: number, column: number, delegate: SpatialType) {
+  constructor(delegate: SpatialType, line: number = -1, column: number = -1) {
     super(line, column);
     this.delegate = delegate;
   }
@@ -123,7 +123,7 @@ export class VirtualDecorator extends LocalityDecorator {
 }
 
 export class SpacePathGraphType extends SpatialType {
-  constructor(line: number, column: number) {
+  constructor(line: number = -1, column: number = -1) {
     super(line, column);
   }
 
@@ -156,7 +156,7 @@ export class SpacePathGraphType extends SpatialType {
 }
 
 export class PathType extends SpatialType {
-  constructor(line: number, column: number) {
+  constructor(line: number = -1, column: number = -1) {
     super(line, column);
   }
 
@@ -192,7 +192,7 @@ export abstract class DirectionDecorator
 {
   delegate: PathType;
 
-  constructor(line: number, column: number, delegate: PathType) {
+  constructor(delegate: PathType, line: number = -1, column: number = -1) {
     super(line, column);
     this.delegate = delegate;
   }
@@ -275,7 +275,7 @@ export class BidirectionalDecorator extends DirectionDecorator {
 }
 
 export class LandPathType extends PathType {
-  constructor(line: number, column: number) {
+  constructor(line: number = -1, column: number = -1) {
     super(line, column);
   }
 
@@ -306,7 +306,7 @@ export class LandPathType extends PathType {
 }
 
 export class AirPathType extends PathType {
-  constructor(line: number, column: number) {
+  constructor(line: number = -1, column: number = -1) {
     super(line, column);
   }
 
@@ -344,7 +344,11 @@ export abstract class ControlDecorator
 {
   delegate: SpatialObjectType;
 
-  constructor(line: number, column: number, delegate: SpatialObjectType) {
+  constructor(
+    delegate: SpatialObjectType,
+    line: number = -1,
+    column: number = -1,
+  ) {
     super(line, column);
     this.delegate = delegate;
   }
@@ -419,7 +423,7 @@ export class NotControlledDecorator extends ControlDecorator {
 }
 
 export class SpaceType extends SpatialObjectType {
-  constructor(line: number, column: number) {
+  constructor(line: number = -1, column: number = -1) {
     super(line, column);
   }
 
@@ -450,7 +454,7 @@ export class SpaceType extends SpatialObjectType {
 }
 
 export class OpenSpaceType extends SpaceType {
-  constructor(line: number, column: number) {
+  constructor(line: number = -1, column: number = -1) {
     super(line, column);
   }
 
@@ -481,7 +485,7 @@ export class OpenSpaceType extends SpaceType {
 }
 
 export class EnclosedSpaceType extends SpaceType {
-  constructor(line: number, column: number) {
+  constructor(line: number = -1, column: number = -1) {
     super(line, column);
   }
 
@@ -512,7 +516,7 @@ export class EnclosedSpaceType extends SpaceType {
 }
 
 export class EntityType extends SpatialObjectType {
-  constructor(line: number, column: number) {
+  constructor(line: number = -1, column: number = -1) {
     super(line, column);
   }
 
@@ -543,7 +547,7 @@ export class EntityType extends SpatialObjectType {
 }
 
 export class StaticEntityType extends EntityType {
-  constructor(line: number, column: number) {
+  constructor(line: number = -1, column: number = -1) {
     super(line, column);
   }
 
@@ -574,7 +578,7 @@ export class StaticEntityType extends EntityType {
 }
 
 export class DynamicEntityType extends EntityType {
-  constructor(line: number, column: number) {
+  constructor(line: number = -1, column: number = -1) {
     super(line, column);
   }
 
@@ -605,7 +609,7 @@ export class DynamicEntityType extends EntityType {
 }
 
 export class AnimateEntityType extends DynamicEntityType {
-  constructor(line: number, column: number) {
+  constructor(line: number = -1, column: number = -1) {
     super(line, column);
   }
 
@@ -636,7 +640,7 @@ export class AnimateEntityType extends DynamicEntityType {
 }
 
 export class SmartEntityType extends DynamicEntityType {
-  constructor(line: number, column: number) {
+  constructor(line: number = -1, column: number = -1) {
     super(line, column);
   }
 
@@ -672,7 +676,11 @@ export abstract class MotionDecorator
 {
   delegate: DynamicEntityType;
 
-  constructor(line: number, column: number, delegate: DynamicEntityType) {
+  constructor(
+    delegate: DynamicEntityType,
+    line: number = -1,
+    column: number = -1,
+  ) {
     super(line, column);
     this.delegate = delegate;
   }

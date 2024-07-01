@@ -1,12 +1,12 @@
-import {BaseType, BaseTypeKind} from "../type/index.js";
-import {ASTNode, dotString, newNodeId} from "../program.js";
-import {Expr} from "./Expr.js";
+import { BaseType, BaseTypeKind } from "../type/index.js";
+import { ASTNode, dotString, newNodeId } from "../program.js";
+import { Expr } from "./Expr.js";
 
 export class BoolLiteral extends Expr {
   value: boolean;
 
-  constructor(line: number, column: number, value: boolean) {
-    super(line, column, new BaseType(-1, -1, BaseTypeKind.BOOL));
+  constructor(value: boolean, line: number = -1, column: number = -1) {
+    super(new BaseType(BaseTypeKind.BOOL), line, column);
     this.value = value;
   }
 

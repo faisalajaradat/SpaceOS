@@ -74,15 +74,15 @@ export function isPublic(stmt: Stmt): boolean {
 export function getTypeDeclaration(identifier: Identifier): Type {
   if (identifier.declaration instanceof UnionDeclaration)
     return new UnionType(
+      identifier,
       identifier.declaration.line,
       identifier.declaration.column,
-      identifier,
     );
   if (identifier.declaration instanceof RecordDeclaration)
     return new RecordType(
+      identifier,
       identifier.declaration.line,
       identifier.declaration.column,
-      identifier,
     );
   if (identifier.declaration instanceof AliasTypeDeclaration)
     if (identifier.declaration.aliasedType instanceof Type)

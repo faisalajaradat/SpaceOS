@@ -1,14 +1,25 @@
-import {getTypeDeclaration} from "../../utils.js";
-import {ASTNode, dotString, newNodeId, RuntimeType, SymbolDeclaration} from "../program.js";
-import {BaseType, BaseTypeKind, Type} from "../type/index.js";
-import {AliasTypeDeclaration, ImportDeclaration, RecordDeclaration, UnionDeclaration} from "../stmts.js";
+import { getTypeDeclaration } from "../../utils.js";
+import {
+  ASTNode,
+  dotString,
+  newNodeId,
+  RuntimeType,
+  SymbolDeclaration,
+} from "../program.js";
+import { BaseType, BaseTypeKind, Type } from "../type/index.js";
+import {
+  AliasTypeDeclaration,
+  ImportDeclaration,
+  RecordDeclaration,
+  UnionDeclaration,
+} from "../stmts.js";
 
 export abstract class Expr implements ASTNode {
   column: number;
   line: number;
   protected _type: RuntimeType;
 
-  protected constructor(line: number, column: number, exprType: RuntimeType) {
+  protected constructor(exprType: RuntimeType, line: number, column: number) {
     this.column = column;
     this.line = line;
     this._type = exprType;
@@ -33,18 +44,17 @@ export abstract class Expr implements ASTNode {
   }
 }
 
-
 export class Identifier extends Expr {
   value: string;
   declaration:
-      | SymbolDeclaration
-      | UnionDeclaration
-      | ImportDeclaration
-      | RecordDeclaration
-      | AliasTypeDeclaration;
+    | SymbolDeclaration
+    | UnionDeclaration
+    | ImportDeclaration
+    | RecordDeclaration
+    | AliasTypeDeclaration;
 
-  constructor(line: number, column: number, value: string) {
-    super(line, column, new BaseType(-1, -1, BaseTypeKind.NONE));
+  constructor(value: string, line: number = -1, column: number = -1) {
+    super(new BaseType(BaseTypeKind.NONE), line, column);
     this.value = value;
   }
 

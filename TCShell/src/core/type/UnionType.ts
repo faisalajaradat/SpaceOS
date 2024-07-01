@@ -1,13 +1,13 @@
-import {CompositionType, Type} from "./primitive-types.js";
-import {ASTNode, dotString, newNodeId} from "../program.js";
-import {isAnyType} from "../../utils.js";
-import {UnionDeclaration} from "../stmts.js";
-import {Identifier} from "../expr/Expr.js";
+import { CompositionType, Type } from "./primitive-types.js";
+import { ASTNode, dotString, newNodeId } from "../program.js";
+import { isAnyType } from "../../utils.js";
+import { UnionDeclaration } from "../stmts.js";
+import { Identifier } from "../expr/Expr.js";
 
 export class UnionType extends CompositionType {
   identifier: Identifier;
 
-  constructor(line: number, column: number, identifier: Identifier) {
+  constructor(identifier: Identifier, line: number = -1, column: number = -1) {
     super(line, column);
     this.identifier = identifier;
   }

@@ -21,12 +21,12 @@ export class SpatialObjectInstantiationExpr extends Expr {
   args: Expr[];
 
   constructor(
-    line: number,
-    column: number,
     spatialType: SpatialType,
     args: Expr[],
+    line: number = -1,
+    column: number = -1,
   ) {
-    super(line, column, spatialType);
+    super(spatialType, line, column);
     this.args = args;
   }
 
@@ -65,11 +65,13 @@ export class SpatialObjectInstantiationExpr extends Expr {
               ? new engine.OpenSpace(
                   properties.get("locality") as string,
                   properties.get("isControlled") as boolean,
+                  JSON.stringify(await this.args[0].evaluate()),
                 )
               : delegateType instanceof EnclosedSpaceType
                 ? new engine.EnclosedSpace(
                     properties.get("locality") as string,
                     properties.get("isControlled") as boolean,
+                    JSON.stringify(await this.args[0].evaluate()),
                   )
                 : delegateType instanceof StaticEntityType
                   ? new engine.StaticEntity(
@@ -87,6 +89,12 @@ export class SpatialObjectInstantiationExpr extends Expr {
                         properties.get("isControlled") as boolean,
                         properties.get("motion") as string,
                       );
+    if (newObject instanceof engine.Space) {
+      if (this.args.length > 1)
+        newObject.dimension = (await this.args[1].evaluate()) as number;
+      if (this.args.length > 2)
+        newObject.name = (await this.args[2].evaluate()) as string;
+    }
     return await saveData(getSpatialTypeSchema(newObject), newObject);
   }
 }

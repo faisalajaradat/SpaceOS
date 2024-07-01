@@ -1,7 +1,7 @@
-import {ASTNode, dotString, newNodeId, RuntimeType} from "../program.js";
-import {isAnyType} from "../../utils.js";
+import { ASTNode, dotString, newNodeId, RuntimeType } from "../program.js";
+import { isAnyType } from "../../utils.js";
 
-import {Type} from "./primitive-types.js";
+import { Type } from "./primitive-types.js";
 
 export abstract class FactoryType extends Type {
   protected constructor(line: number, column: number) {
@@ -10,7 +10,7 @@ export abstract class FactoryType extends Type {
 }
 
 export class SpaceFactoryType extends FactoryType {
-  constructor(line: number, column: number) {
+  constructor(line: number = -1, column: number = -1) {
     super(line, column);
   }
 
@@ -36,7 +36,7 @@ export class SpaceFactoryType extends FactoryType {
 }
 
 export class EntityFactoryType extends FactoryType {
-  constructor(line: number, column: number) {
+  constructor(line: number = -1, column: number = -1) {
     super(line, column);
   }
 
@@ -62,7 +62,7 @@ export class EntityFactoryType extends FactoryType {
 }
 
 export class PathFactoryType extends FactoryType {
-  constructor(line: number, column: number) {
+  constructor(line: number = -1, column: number = -1) {
     super(line, column);
   }
 

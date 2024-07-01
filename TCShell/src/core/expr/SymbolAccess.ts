@@ -1,7 +1,7 @@
 import { getValueOfExpression } from "../../utils.js";
 import { ASTNode, dotString, newNodeId } from "../program.js";
 import { ImportDeclaration } from "../stmts.js";
-import { BaseType, BaseTypeKind } from "../type/primitive-types.js";
+import { BaseType, BaseTypeKind } from "../type/index.js";
 import { Expr, Identifier } from "./Expr.js";
 
 export class SymbolAccess extends Expr {
@@ -9,12 +9,12 @@ export class SymbolAccess extends Expr {
   symbol: Identifier;
 
   constructor(
-    line: number,
-    column: number,
     locationExpr: Expr,
     symbol: Identifier,
+    line: number = -1,
+    column: number = -1,
   ) {
-    super(line, column, new BaseType(line, column, BaseTypeKind.NONE));
+    super(new BaseType(BaseTypeKind.NONE), line, column);
     this.locationExpr = locationExpr;
     this.symbol = symbol;
   }

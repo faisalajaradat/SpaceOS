@@ -1,17 +1,17 @@
 import { ASTNode, dotString, newNodeId } from "../program.js";
-import { RecordType } from "../type/RecordType.js";
+import { RecordType } from "../type/index.js";
 import { Expr, Identifier } from "./Expr.js";
 
 export class RecordLiteral extends Expr {
   fieldValues: Expr[];
 
   constructor(
-    line: number,
-    column: number,
     recordType: Identifier,
     fieldValues: Expr[],
+    line: number = -1,
+    column: number = -1,
   ) {
-    super(line, column, recordType);
+    super(recordType, line, column);
     this.fieldValues = fieldValues;
   }
 

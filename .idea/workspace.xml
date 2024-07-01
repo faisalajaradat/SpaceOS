@@ -5,11 +5,33 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3ca96637-c0cc-4056-90a5-aecfcb04fec3" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SpatialComputingEngine/src/frontend-objects.ts" beforeDir="false" afterPath="$PROJECT_DIR$/SpatialComputingEngine/src/frontend-objects.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/ast.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/ast.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/ArrayAccess.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/ArrayAccess.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/ArrayLiteral.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/ArrayLiteral.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/BinaryExpr.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/BinaryExpr.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/BoolLiteral.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/BoolLiteral.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/Expr.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/Expr.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/FunCall.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/FunCall.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/FunDeclaration.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/FunDeclaration.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/NoneLiteral.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/NoneLiteral.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/NumberLiteral.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/NumberLiteral.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/RecordLiteral.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/RecordLiteral.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/SpatialObjectInstantiationExpr.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/SpatialObjectInstantiationExpr.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/StringLiteral.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/StringLiteral.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/SymbolAccess.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/SymbolAccess.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/TypeCast.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/TypeCast.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/UnaryExpr.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/UnaryExpr.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/program.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/program.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TCShell/src/core/stmts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/stmts.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TCShell/src/core/type/RecordType.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/type/RecordType.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/type/UnionType.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/type/UnionType.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/type/factory-types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/type/factory-types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/type/primitive-types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/type/primitive-types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/type/spatial-types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/type/spatial-types.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TCShell/src/semantics.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/semantics.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/utils.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -27,7 +49,7 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="ProblemsViewState">
-    <option name="selectedTabId" value="ProjectErrors" />
+    <option name="selectedTabId" value="CurrentFile" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 7
@@ -40,24 +62,24 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_ADD_EXTERNAL_FILES": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "TCShell",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/home/coldstuff1/work/space_os/spaceOS/TCShell/sample_programs",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "run.code.analysis.last.selected.profile": "pProject Default",
-    "settings.editor.selected.configurable": "com.maddyhome.idea.vim.ui.VimEmulationConfigurable",
-    "ts.external.directory.path": "/home/coldstuff1/work/space_os/spaceOS/node_modules/typescript/lib",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;TCShell&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/coldstuff1/work/space_os/spaceOS/TCShell/sample_programs&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.maddyhome.idea.vim.ui.VimEmulationConfigurable&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/home/coldstuff1/work/space_os/spaceOS/node_modules/typescript/lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/TCShell/sample_programs" />
@@ -102,6 +124,7 @@
       <workItem from="1719588445110" duration="41000" />
       <workItem from="1719765629980" duration="682000" />
       <workItem from="1719786876901" duration="97000" />
+      <workItem from="1719863766394" duration="3740000" />
     </task>
     <servers />
   </component>

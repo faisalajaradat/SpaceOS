@@ -66,7 +66,6 @@ import { FunCall } from "./core/expr/FunCall.js";
 import { MatchResult } from "ohm-js";
 import { SymbolAccess } from "./core/expr/SymbolAccess.js";
 import { Identifier } from "./core/expr/Expr.js";
-import { time } from "console";
 
 export function ast(match: MatchResult) {
   return astBuilder(match).ast();
@@ -81,7 +80,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       lineAndColumn.colNum,
       stmts.ast(),
     );
-    libFunctions.forEach((value, key) => _program.stmts.unshift(key));
+    libFunctions.forEach((_value, key) => _program.stmts.unshift(key));
     return _program;
   },
   Stmt_simple(simpleStatements, _newline) {
@@ -100,9 +99,9 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   SimpleStmt_return(returnKeyword, possibleExpression) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new Return(
+      possibleExpression.ast()[0],
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
-      possibleExpression.ast()[0],
     );
   },
   SimpleStmt(simpleStmt) {
@@ -120,20 +119,20 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   ) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new If(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       expression.ast(),
       ifStatement.ast(),
       possibleElseStatement.ast()[0] ?? null,
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   CompoundStmt_while(whileKeyword, expression, statement) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new While(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       expression.ast(),
       statement.ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   CompoundStmt_match(
@@ -145,19 +144,19 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   ) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new Match(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       expression.ast(),
       caseStmts.ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   CaseStmt(condition, _arrow, stmt) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new CaseStmt(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       condition.ast(),
       stmt.ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   Exp(assignExpression) {
@@ -166,12 +165,12 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   AssignExp_assign(unaryExpression, _equal, assignExpression) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new BinaryExpr(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       null,
       _equal.sourceString,
       unaryExpression.ast(),
       assignExpression.ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   AssignExp(lorExpression) {
@@ -180,12 +179,12 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   LorExp_lor(lorExpression, _lor, larExpression) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new BinaryExpr(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       null,
       _lor.sourceString,
       lorExpression.ast(),
       larExpression.ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   LorExp(larExpression) {
@@ -194,12 +193,12 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   LarExp_lar(larExpression, _lar, eqExpression) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new BinaryExpr(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       null,
       _lar.sourceString,
       larExpression.ast(),
       eqExpression.ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   LarExp(eqExpression) {
@@ -208,12 +207,12 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   EqExp_eq(eqExpression, operator, relExpression) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new BinaryExpr(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       null,
       operator.sourceString,
       eqExpression.ast(),
       relExpression.ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   EqExp(relExpression) {
@@ -222,12 +221,12 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   RelExp_rel(relExpression, operator, addExpression) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new BinaryExpr(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       null,
       operator.sourceString,
       relExpression.ast(),
       addExpression.ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   RelExp(addExpression) {
@@ -236,12 +235,12 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   AddExp_add(addExpression, operator, multExpression) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new BinaryExpr(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       null,
       operator.sourceString,
       addExpression.ast(),
       multExpression.ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   AddExp(multExpression) {
@@ -250,12 +249,12 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   MultExp_mult(multExpression, operator, unaryExpression) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new BinaryExpr(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       null,
       operator.sourceString,
       multExpression.ast(),
       unaryExpression.ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   MultExp(unaryExpression) {
@@ -264,11 +263,11 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   UnaryExp_unary(operator, unaryExpression) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new UnaryExpr(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       null,
       operator.sourceString,
       unaryExpression.ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   UnaryExp_typecast(
@@ -279,19 +278,19 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   ) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new TypeCast(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       _type.ast(),
       unaryExpression.ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   UnaryExp_new(_new, spatialType, _leftParenthesis, args, _rightParenthesis) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new SpatialObjectInstantiationExpr(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       spatialType.ast(),
       args.asIteration().ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   UnaryExp(leftExpression) {
@@ -305,11 +304,11 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   ) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new FunCall(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       null,
       leftExpression.ast(),
       listOfExpressions.asIteration().ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   LeftExp_array(
@@ -320,19 +319,19 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   ) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new ArrayAccess(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       leftExpression.ast(),
       expression.ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   LeftExp_access(leftExpression, _period, identifier) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new SymbolAccess(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       leftExpression.ast(),
       identifier.ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   LeftExp(primaryExpression) {
@@ -344,9 +343,9 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   PrimaryExp_array(_leftSquareBracket, listOfExpressions, _rightSquareBracket) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new ArrayLiteral(
+      listOfExpressions.asIteration().ast(),
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
-      listOfExpressions.asIteration().ast(),
     );
   },
   PrimaryExp_function(
@@ -362,11 +361,11 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
         ? []
         : listOfParameters.asIteration().ast();
     return new FunDeclaration(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       type.ast(),
       params,
       stmt.ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   PrimaryExp_record(
@@ -377,10 +376,10 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   ) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new RecordLiteral(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       recordType.ast(),
       listOfExpressions.asIteration().ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   PrimaryExp(expression) {
@@ -389,21 +388,21 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   Block(_leftBracket, statements, _rightBracket) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new Block(
+      statements.ast(),
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
-      statements.ast(),
     );
   },
   VarDeclaration(possiblePub, parameter, _equal, expression) {
     const lineAndColumn = this.source.getLineAndColumn();
     const typeAndIdentifier = parameter.ast();
     return new VarDeclaration(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       typeAndIdentifier._type,
       typeAndIdentifier.identifier,
       expression.ast(),
       possiblePub.sourceString === "pub",
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   UnionDeclaration(unionType, _equal, listOfTypes) {
@@ -411,34 +410,34 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     const types = listOfTypes.asIteration().ast();
     return types.length > 1
       ? new UnionDeclaration(
-          lineAndColumn.lineNum,
-          lineAndColumn.colNum,
           unionType.ast(),
           types,
-        )
-      : new AliasTypeDeclaration(
           lineAndColumn.lineNum,
           lineAndColumn.colNum,
+        )
+      : new AliasTypeDeclaration(
           (unionType.ast() as UnionType).identifier,
           types[0],
+          lineAndColumn.lineNum,
+          lineAndColumn.colNum,
         );
   },
   ImportDeclaration(_import, stringLiteral, _as, identifier) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new ImportDeclaration(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       (stringLiteral.ast() as StringLiteral).value,
       identifier.ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   RecordDeclaration(recordType, _leftBracket, listOfParameters, _rightBracket) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new RecordDeclaration(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       recordType.ast(),
       listOfParameters.asIteration().ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   DeferDecorator(
@@ -449,30 +448,33 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   ) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new DeferDecorator(
+      listOfIdentifiers.asIteration().ast(),
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
-      listOfIdentifiers.asIteration().ast(),
     );
   },
   Parameter(type, identifier) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new Parameter(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       type.ast(),
       identifier.ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   Type(baseTypeDef, typeSpecifiers) {
     const baseType = baseTypeDef.ast();
-    const numOfSpecifiers = <(ArrayType | FunctionType)[]>typeSpecifiers.ast();
+    const numOfSpecifiers = typeSpecifiers.ast() as (
+      | ArrayType
+      | FunctionType
+    )[];
     let fullType = baseType;
     numOfSpecifiers.forEach((specifier) => {
       if (specifier instanceof ArrayType) {
-        (<ArrayType>specifier).type = fullType;
+        (specifier as ArrayType).type = fullType;
         fullType = specifier;
       } else if (specifier instanceof FunctionType) {
-        (<FunctionType>specifier).returnType = fullType;
+        (specifier as FunctionType).returnType = fullType;
         fullType = specifier;
       }
     });
@@ -496,38 +498,38 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
         break;
     }
     return new BaseType(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       baseTypeKind,
+      lineAndColumn.colNum,
+      lineAndColumn.lineNum,
     );
   },
   UnionType(_union, identifier) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new UnionType(
+      identifier.ast(),
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
-      identifier.ast(),
     );
   },
   RecordType(_record, identifier) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new RecordType(
+      identifier.ast(),
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
-      identifier.ast(),
     );
   },
   TypeSpecifier_array(specifier) {
     const lineAndColumn = this.source.getLineAndColumn();
-    return new ArrayType(lineAndColumn.lineNum, lineAndColumn.colNum, null, -1);
+    return new ArrayType(null, lineAndColumn.lineNum, lineAndColumn.colNum);
   },
   TypeSpecifier_function(_leftParenthesis, listOfTypes, _rightParenthesis) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new FunctionType(
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
       null,
       listOfTypes.asIteration().ast(),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   SpatialType(spatialType) {
@@ -541,14 +543,14 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       (physicalPathType as LocalityDecorator).delegate =
         directionDescriptor === "unidirectional"
           ? new UnidirectionalDecorator(
+              (physicalPathType as LocalityDecorator).delegate as PathType,
               lineAndColumn.lineNum,
               lineAndColumn.colNum,
-              (physicalPathType as LocalityDecorator).delegate as PathType,
             )
           : new BidirectionalDecorator(
+              (physicalPathType as LocalityDecorator).delegate as PathType,
               lineAndColumn.lineNum,
               lineAndColumn.colNum,
-              (physicalPathType as LocalityDecorator).delegate as PathType,
             );
     return physicalPathType;
   },
@@ -560,14 +562,14 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       ? pathType
       : directionDescriptor === "unidirectional"
         ? new UnidirectionalDecorator(
+            pathType,
             lineAndColumn.lineNum,
             lineAndColumn.colNum,
-            pathType,
           )
         : new BidirectionalDecorator(
+            pathType,
             lineAndColumn.lineNum,
             lineAndColumn.colNum,
-            pathType,
           );
   },
   MaybeVirtualSpatialType(possibleVirtualOrPhysical, spatialType) {
@@ -579,33 +581,33 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       ? maybeVirtualSpatialType
       : localityDescriptor === "physical"
         ? new PhysicalDecorator(
+            maybeVirtualSpatialType,
             localityLineAndColumn.lineNum,
             localityLineAndColumn.colNum,
-            maybeVirtualSpatialType,
           )
         : new VirtualDecorator(
+            maybeVirtualSpatialType,
             localityLineAndColumn.lineNum,
             localityLineAndColumn.colNum,
-            maybeVirtualSpatialType,
           );
   },
   MaybeImmutableSpatialType(possibleImmutableOrMutable, spatialType) {
     const maybeImmutableSpatialType: SpatialObjectType = spatialType.ast();
-    const controllDescriptor = possibleImmutableOrMutable.ast()[0];
-    const controllLineAndColumn =
+    const controlDescriptor = possibleImmutableOrMutable.ast()[0];
+    const controlLineAndColumn =
       possibleImmutableOrMutable.source.getLineAndColumn();
-    return controllDescriptor === undefined
+    return controlDescriptor === undefined
       ? maybeImmutableSpatialType
-      : controllDescriptor === "mutable"
+      : controlDescriptor === "mutable"
         ? new ControlledDecorator(
-            controllLineAndColumn.lineNum,
-            controllLineAndColumn.colNum,
             maybeImmutableSpatialType,
+            controlLineAndColumn.lineNum,
+            controlLineAndColumn.colNum,
           )
         : new NotControlledDecorator(
-            controllLineAndColumn.lineNum,
-            controllLineAndColumn.colNum,
             maybeImmutableSpatialType,
+            controlLineAndColumn.lineNum,
+            controlLineAndColumn.colNum,
           );
   },
   MaybeMobileSpatialType(possibleMobileOrStationary, spatialType) {
@@ -617,14 +619,14 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       ? maybeMobileSpatialType
       : motionDescriptor === "stationary"
         ? new StationaryDecorator(
+            maybeMobileSpatialType,
             motionLineAndColumn.lineNum,
             motionLineAndColumn.colNum,
-            maybeMobileSpatialType,
           )
         : new MobileDecorator(
+            maybeMobileSpatialType,
             motionLineAndColumn.lineNum,
             motionLineAndColumn.colNum,
-            maybeMobileSpatialType,
           );
   },
   physical(_physical) {
@@ -658,17 +660,17 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   landPath(_landPath) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new PhysicalDecorator(
+      new LandPathType(lineAndColumn.lineNum, lineAndColumn.colNum),
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
-      new LandPathType(lineAndColumn.lineNum, lineAndColumn.colNum),
     );
   },
   airPath(_airPath) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new PhysicalDecorator(
+      new AirPathType(lineAndColumn.lineNum, lineAndColumn.colNum),
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
-      new AirPathType(lineAndColumn.lineNum, lineAndColumn.colNum),
     );
   },
   spaceFactory(_spaceFactory) {
@@ -726,26 +728,26 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   wildcard(_underscore) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new Parameter(
+      new BaseType(BaseTypeKind.ANY),
+      new Identifier("_", lineAndColumn.lineNum, lineAndColumn.colNum),
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
-      new BaseType(-1, -1, BaseTypeKind.ANY),
-      new Identifier(lineAndColumn.lineNum, lineAndColumn.colNum, "_"),
     );
   },
   identifier(component) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new Identifier(
+      this.sourceString,
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
-      this.sourceString,
     );
   },
   booleanLiteral(keyword) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new BoolLiteral(
+      JSON.parse(this.sourceString),
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
-      JSON.parse(this.sourceString),
     );
   },
   numberLiteral(
@@ -758,27 +760,27 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   ) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new NumberLiteral(
+      Number(this.sourceString),
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
-      Number(this.sourceString),
     );
   },
   stringLiteral_doublequotes(_leftDoubleQuote, chars, _rightDoubleQuote) {
     const lineAndColumn = this.source.getLineAndColumn();
     const value = this.sourceString.slice(1, this.sourceString.length - 1);
     return new StringLiteral(
+      value,
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
-      value,
     );
   },
   stringLiteral_singlequotes(_leftSingleQuote, chars, _rightSingleQuote) {
     const lineAndColumn = this.source.getLineAndColumn();
     const value = this.sourceString.slice(1, this.sourceString.length - 1);
     return new StringLiteral(
+      value,
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
-      value,
     );
   },
   noneLiteral(keyword) {

@@ -1,12 +1,12 @@
-import {BaseType, BaseTypeKind} from "../type/index.js";
-import {ASTNode, dotString, newNodeId} from "../program.js";
-import {Expr} from "./Expr.js";
+import { BaseType, BaseTypeKind } from "../type/index.js";
+import { ASTNode, dotString, newNodeId } from "../program.js";
+import { Expr } from "./Expr.js";
 
 export class NoneLiteral extends Expr {
   value: undefined;
 
-  constructor(line: number, column: number) {
-    super(line, column, new BaseType(-1, -1, BaseTypeKind.VOID));
+  constructor(line: number = -1, column: number = -1) {
+    super(new BaseType(BaseTypeKind.VOID), line, column);
     this.value = undefined;
   }
 

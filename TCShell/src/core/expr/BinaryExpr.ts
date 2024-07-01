@@ -1,15 +1,15 @@
 import {
-    ArrayRepresentation,
-    ASTNode,
-    dotString,
-    newNodeId,
-    RuntimeType,
-    SymbolDeclaration,
-    varStacks,
+  ArrayRepresentation,
+  ASTNode,
+  dotString,
+  newNodeId,
+  RuntimeType,
+  SymbolDeclaration,
+  varStacks,
 } from "../program.js";
-import {getValueOfExpression} from "../../utils.js";
-import {Expr, Identifier} from "./Expr.js";
-import {FunDeclaration} from "./FunDeclaration.js";
+import { getValueOfExpression } from "../../utils.js";
+import { Expr, Identifier } from "./Expr.js";
+import { FunDeclaration } from "./FunDeclaration.js";
 
 export class BinaryExpr extends Expr {
   leftExpr: Expr;
@@ -17,14 +17,14 @@ export class BinaryExpr extends Expr {
   rightExpr: Expr;
 
   constructor(
-    line: number,
-    column: number,
     type: RuntimeType,
     operator: string,
     leftExpr: Expr,
     rightExpr: Expr,
+    line: number = -1,
+    column: number = -1,
   ) {
-    super(line, column, type);
+    super(type, line, column);
     this.leftExpr = leftExpr;
     this.operator = operator;
     this.rightExpr = rightExpr;
