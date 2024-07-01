@@ -13,6 +13,7 @@ export abstract class SpatialTypeEntity implements Entity {
 const PATH_SCHEMA_DEF: SchemaDefinition = {
   _type: { type: "string" },
   locality: { type: "string" },
+  direction: { type: "string" },
 };
 
 export const PATH_SCHEMA: Schema = new Schema("Path", PATH_SCHEMA_DEF, {
@@ -33,7 +34,8 @@ export abstract class Space extends SpatialObject {}
 export abstract class SpatialEntity extends SpatialObject {}
 
 const SPACE_SCHEMA_DEF: SchemaDefinition = {
-  ...PATH_SCHEMA_DEF,
+  _type: { type: "string" },
+  locality: { type: "string" },
   isControlled: { type: "boolean" },
 };
 
@@ -95,22 +97,24 @@ export class SmartEntity extends DynamicEntity {
 }
 
 export class Path extends SpatialTypeEntity {
-  constructor(locality: string) {
+  direction: string;
+  constructor(locality: string, direction: string) {
     super(locality);
+    this.direction = direction;
     this._type = "Path";
   }
 }
 
 export class AirPath extends Path {
-  constructor() {
-    super("physical");
+  constructor(direction: string) {
+    super("physical", direction);
     this._type = "AirPath";
   }
 }
 
 export class LandPath extends Path {
-  constructor() {
-    super("physical");
+  constructor(direction) {
+    super("physical", direction);
     this._type = "LandPath";
   }
 }

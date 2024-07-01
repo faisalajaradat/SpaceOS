@@ -23,6 +23,7 @@ import {
   ArrayType,
   BaseType,
   BaseTypeKind,
+  BidirectionalDecorator,
   BinaryExpr,
   BoolLiteral,
   ControlledDecorator,
@@ -33,6 +34,7 @@ import {
   FunctionType,
   FunDeclaration,
   LandPathType,
+  LocalityDecorator,
   MobileDecorator,
   NoneLiteral,
   NotControlledDecorator,
@@ -54,6 +56,7 @@ import {
   StationaryDecorator,
   StringLiteral,
   UnaryExpr,
+  UnidirectionalDecorator,
   UnionType,
   VirtualDecorator,
 } from "./core/index.js";
@@ -63,6 +66,7 @@ import { FunCall } from "./core/expr/FunCall.js";
 import { MatchResult } from "ohm-js";
 import { SymbolAccess } from "./core/expr/SymbolAccess.js";
 import { Identifier } from "./core/expr/Expr.js";
+import { time } from "console";
 
 export function ast(match: MatchResult) {
   return astBuilder(match).ast();
@@ -529,6 +533,43 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   SpatialType(spatialType) {
     return spatialType.ast();
   },
+  PhysicalPathType(possibleDirection, airOrLandPath) {
+    const lineAndColumn = this.source.getLineAndColumn();
+    const directionDescriptor = possibleDirection.ast()[0];
+    const physicalPathType = airOrLandPath.ast();
+    if (directionDescriptor !== undefined)
+      (physicalPathType as LocalityDecorator).delegate =
+        directionDescriptor === "unidirectional"
+          ? new UnidirectionalDecorator(
+              lineAndColumn.lineNum,
+              lineAndColumn.colNum,
+              (physicalPathType as LocalityDecorator).delegate as PathType,
+            )
+          : new BidirectionalDecorator(
+              lineAndColumn.lineNum,
+              lineAndColumn.colNum,
+              (physicalPathType as LocalityDecorator).delegate as PathType,
+            );
+    return physicalPathType;
+  },
+  PathType(possibleDirection, path) {
+    const lineAndColumn = this.source.getLineAndColumn();
+    const directionDescriptor = possibleDirection.ast()[0];
+    const pathType = path.ast();
+    return directionDescriptor === undefined
+      ? pathType
+      : directionDescriptor === "unidirectional"
+        ? new UnidirectionalDecorator(
+            lineAndColumn.lineNum,
+            lineAndColumn.colNum,
+            pathType,
+          )
+        : new BidirectionalDecorator(
+            lineAndColumn.lineNum,
+            lineAndColumn.colNum,
+            pathType,
+          );
+  },
   MaybeVirtualSpatialType(possibleVirtualOrPhysical, spatialType) {
     const maybeVirtualSpatialType: SpatialType = spatialType.ast();
     const localityDescriptor = possibleVirtualOrPhysical.ast()[0];
@@ -602,6 +643,12 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     return this.sourceString;
   },
   mobile(_mobile) {
+    return this.sourceString;
+  },
+  unidirectional(_unidirectional) {
+    return this.sourceString;
+  },
+  bidirectional(_bidirectional) {
     return this.sourceString;
   },
   spatialTypeKeyword(_spatialType) {

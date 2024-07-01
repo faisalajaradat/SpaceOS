@@ -12,6 +12,10 @@ void{Path} handlePath = void (Path p) {
     AirPath ap => print("Is Air")
     LandPath lp => print("Is Land")
   }
+  match p {
+    unidirectional Path up => print("Is unidirectional")
+    bidirectional Path bp => print("Is bidirectional")
+  }
 }
 
 void{Entity} handleEntity = void (Entity e) {
@@ -62,9 +66,10 @@ void{SpatialType[]} parseAndDescribeSpacialTypes = void (SpatialType[] listOfSpa
   }
 }
 
-virtual mutable mobile SmartEntity car = new virtual mutable mobile SmartEntity()
+physical mutable mobile SmartEntity car = new physical mutable mobile SmartEntity()
 physical mutable OpenSpace parkingLot = new physical mutable OpenSpace()
+bidirectional LandPath street = new bidirectional LandPath()
 
-SpatialType[] lotAndCars = [ (SpatialType)car, (SpatialType)parkingLot ]
+SpatialType[] lotAndCars = [ (SpatialType)car, (SpatialType)parkingLot, (SpatialType)street ]
 
 parseAndDescribeSpacialTypes(lotAndCars)

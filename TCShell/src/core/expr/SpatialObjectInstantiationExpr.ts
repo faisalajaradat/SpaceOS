@@ -1,18 +1,21 @@
 import {
-    AirPathType,
-    EnclosedSpaceType,
-    LandPathType,
-    OpenSpaceType,
-    PathType,
-    SmartEntityType,
-    SpatialType,
-    StaticEntityType,
+  AirPathType,
+  EnclosedSpaceType,
+  LandPathType,
+  OpenSpaceType,
+  PathType,
+  SmartEntityType,
+  SpatialType,
+  StaticEntityType,
 } from "../type/index.js";
-import {ASTNode, dotString, newNodeId} from "../program.js";
-import {getSpatialTypeSchema, parseSpatialTypeProperties,} from "../../utils.js";
+import { ASTNode, dotString, newNodeId } from "../program.js";
+import {
+  getSpatialTypeSchema,
+  parseSpatialTypeProperties,
+} from "../../utils.js";
 import * as engine from "../../../../SpatialComputingEngine/src/frontend-objects.js";
-import {saveData} from "../../../../SpatialComputingEngine/src/spatial-computing-engine.js";
-import {Expr} from "./Expr.js";
+import { saveData } from "../../../../SpatialComputingEngine/src/spatial-computing-engine.js";
+import { Expr } from "./Expr.js";
 
 export class SpatialObjectInstantiationExpr extends Expr {
   args: Expr[];
@@ -53,11 +56,11 @@ export class SpatialObjectInstantiationExpr extends Expr {
     >;
     const newObject: engine.SpatialTypeEntity =
       delegateType instanceof AirPathType
-        ? new engine.AirPath()
+        ? new engine.AirPath(properties.get("direction") as string)
         : delegateType instanceof LandPathType
-          ? new engine.LandPath()
+          ? new engine.LandPath(properties.get("direction") as string)
           : delegateType instanceof PathType
-            ? new engine.Path("virtual")
+            ? new engine.Path("virtual", properties.get("direction") as string)
             : delegateType instanceof OpenSpaceType
               ? new engine.OpenSpace(
                   properties.get("locality") as string,

@@ -75,14 +75,17 @@ TCShell {
     TypeSpecifier = "[]"   --array
                   |"{" ListOf<Type, ","> "}"    --function
 
-    SpatialType = landPath
-                | airPath
+    SpatialType = MaybeVirtualSpatialType
+                | PhysicalPathType
                 | spaceFactory
                 | entityFactory
                 | pathFactory
-                | MaybeVirtualSpatialType
 
-    MaybeVirtualSpatialType = (physical | virtual)? (spatialTypeKeyword | path | spacePathGraph | MaybeImmutableSpatialType)
+    PhysicalPathType = (unidirectional | bidirectional)? (landPath | airPath)
+
+    PathType = (unidirectional | bidirectional)? path
+
+    MaybeVirtualSpatialType = (physical | virtual)? (spatialTypeKeyword | PathType | spacePathGraph | MaybeImmutableSpatialType)
 
     MaybeImmutableSpatialType = (mutable | immutable)? (spaceKeyword | openSpace | enclosedSpace | entity | staticEntity | MaybeMobileSpatialType)
 
@@ -113,6 +116,8 @@ TCShell {
             | immutable
             | stationary
             | mobile
+            | unidirectional
+            | bidirectional
             | spatialTypeKeyword
             | spaceKeyword
             | openSpace
@@ -149,6 +154,8 @@ TCShell {
     immutable = "immutable" ~identPart
     mobile = "mobile" ~identPart
     stationary = "stationary" ~identPart
+    unidirectional = "unidirectional" ~identPart
+    bidirectional = "bidirectional" ~identPart
     spatialTypeKeyword = "SpatialType" ~identPart
     spaceKeyword = "Space" ~identPart
     openSpace = "OpenSpace" ~identPart
@@ -172,6 +179,7 @@ TCShell {
     import = "import" ~identPart
     as = "as" ~identPart
     record = "record" ~identPart
+
 
 
     identStart      = letter

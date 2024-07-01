@@ -1,6 +1,6 @@
-import {ASTNode, dotString, newNodeId} from "../program.js";
-import {CompositionType, Type} from "./primitive-types.js";
-import {isAnyType, isDecorator} from "../../utils.js";
+import { ASTNode, dotString, newNodeId } from "../program.js";
+import { CompositionType, Type } from "./primitive-types.js";
+import { isAnyType, isDecorator } from "../../utils.js";
 
 export class SpatialType extends CompositionType {
   constructor(line: number, column: number) {
@@ -182,6 +182,94 @@ export class PathType extends SpatialType {
     return (
       this.equals(_type) ||
       (isDecorator(_type) && this.contains(_type.delegate))
+    );
+  }
+}
+
+export abstract class DirectionDecorator
+  extends PathType
+  implements SpatialTypeDecorator
+{
+  delegate: PathType;
+
+  constructor(line: number, column: number, delegate: PathType) {
+    super(line, column);
+    this.delegate = delegate;
+  }
+}
+
+export class UnidirectionalDecorator extends DirectionDecorator {
+  children(): ASTNode[] {
+    return this.delegate.children();
+  }
+
+  print(): string {
+    const unidirectionalDecoratorNodeId = newNodeId();
+    dotString.push(
+      unidirectionalDecoratorNodeId + '[label=" unidirectional "];\n',
+    );
+    const delegateNodeId = this.delegate.print();
+    dotString.push(
+      unidirectionalDecoratorNodeId + "->" + delegateNodeId + ";\n",
+    );
+    return unidirectionalDecoratorNodeId;
+  }
+
+  async evaluate(): Promise<void> {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return (
+      isAnyType(_type) ||
+      (this.contains(_type) &&
+        this.delegate.equals((<UnidirectionalDecorator>_type).delegate))
+    );
+  }
+
+  contains(_type: Type): boolean {
+    return (
+      isAnyType(_type) ||
+      (_type instanceof UnidirectionalDecorator &&
+        this.delegate.contains(_type.delegate))
+    );
+  }
+}
+
+export class BidirectionalDecorator extends DirectionDecorator {
+  children(): ASTNode[] {
+    return this.delegate.children();
+  }
+
+  print(): string {
+    const bidirectionalDecoratorNodeId = newNodeId();
+    dotString.push(
+      bidirectionalDecoratorNodeId + '[label=" bidirectional "];\n',
+    );
+    const delegateNodeId = this.delegate.print();
+    dotString.push(
+      bidirectionalDecoratorNodeId + "->" + delegateNodeId + ";\n",
+    );
+    return bidirectionalDecoratorNodeId;
+  }
+
+  async evaluate(): Promise<void> {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return (
+      isAnyType(_type) ||
+      (this.contains(_type) &&
+        this.delegate.equals((<BidirectionalDecorator>_type).delegate))
+    );
+  }
+
+  contains(_type: Type): boolean {
+    return (
+      isAnyType(_type) ||
+      (_type instanceof BidirectionalDecorator &&
+        this.delegate.contains(_type.delegate))
     );
   }
 }

@@ -17,6 +17,7 @@ import { Schema } from "redis-om";
 import {
   BaseType,
   BaseTypeKind,
+  BidirectionalDecorator,
   ControlledDecorator,
   DefaultBaseTypeInstance,
   FunDeclaration,
@@ -28,6 +29,7 @@ import {
   SpatialTypeDecorator,
   StationaryDecorator,
   Type,
+  UnidirectionalDecorator,
   UnionType,
   VirtualDecorator,
 } from "./core/index.js";
@@ -116,6 +118,10 @@ export function parseSpatialTypeProperties(
       properties.set("motion", "mobile");
     if (delegateType instanceof StationaryDecorator)
       properties.set("motion", "stationary");
+    if (delegateType instanceof UnidirectionalDecorator)
+      properties.set("direction", "unidirectional");
+    if (delegateType instanceof BidirectionalDecorator)
+      properties.set("direction", "bidirectional");
     delegateType = delegateType.delegate;
   }
   return [properties, delegateType];
