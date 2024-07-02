@@ -17,6 +17,8 @@ const PATH_SCHEMA_DEF: SchemaDefinition = {
   locality: { type: "string" },
   direction: { type: "string" },
   name: { type: "string" },
+  segment: { type: "number" },
+  reachable: { type: "string[]" },
 };
 
 export const PATH_SCHEMA: Schema = new Schema("Path", PATH_SCHEMA_DEF, {
@@ -142,23 +144,27 @@ export class SmartEntity extends DynamicEntity {
 export class Path extends SpatialTypeEntity {
   direction: string;
   name: string;
-  constructor(locality: string, direction: string) {
+  segment: number;
+  reachable: string[];
+  constructor(locality: string, direction: string, segment: number = 0) {
     super(locality);
     this.direction = direction;
+    this.segment = segment;
+    this.reachable = new Array<string>();
     this._type = "Path";
   }
 }
 
 export class AirPath extends Path {
-  constructor(direction: string) {
-    super("physical", direction);
+  constructor(direction: string, segment: number = 0) {
+    super("physical", direction, segment);
     this._type = "AirPath";
   }
 }
 
 export class LandPath extends Path {
-  constructor(direction) {
-    super("physical", direction);
+  constructor(direction: string, segment: number = 0) {
+    super("physical", direction, segment);
     this._type = "LandPath";
   }
 }

@@ -987,7 +987,15 @@ SPGLibMethods.set("addPathSpace", async (...args) => {
     destNodeNeighbours.push(args[1] as string);
   else struct.table.set(args[2] as string, [args[1] as string]);
   spg.structJSON = JSON.stringify(struct, jsonReplacer, 4);
+  const path = (await fetchData(
+    engine.PATH_SCHEMA,
+    args[1] as string,
+  )) as engine.Path;
   await saveData(engine.SPG_SCHEMA, spg);
+  path.direction === "unidirectional"
+    ? path.reachable.push(args[1] as string)
+    : path.reachable.push(args[1] as string, struct.root);
+  await saveData(engine.PATH_SCHEMA, path);
 });
 SPGLibMethods.set("getStructJSON", async (...args) => {
   const spg: engine.SpacePathGraph = (await fetchData(
