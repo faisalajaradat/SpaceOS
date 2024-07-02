@@ -1,5 +1,7 @@
 import { Entity, EntityDataValue, Schema, SchemaDefinition } from "redis-om";
 
+export type EngineEntity = SpatialTypeEntity | SpacePathGraph;
+
 export abstract class SpatialTypeEntity implements Entity {
   [index: string]: EntityDataValue;
   _type: string;
@@ -76,20 +78,18 @@ export const ENTITY_SCHEMA: Schema = new Schema("Entity", ENTITY_SCHEMA_DEF, {
   dataStructure: "JSON",
 });
 
-export class SpacePathGraph extends SpatialTypeEntity {
+export class SpacePathGraph implements Entity {
+  [index: string]: EntityDataValue;
   structJSON: string;
   stateJSON: string;
   hazardJSON: string;
 
-  constructor(locality: string, structJSON: string) {
-    super(locality);
+  constructor(structJSON: string) {
     this.structJSON = structJSON;
   }
 }
 
 const SPG_SCHEMA_DEF: SchemaDefinition = {
-  _type: { type: "string" },
-  locality: { type: "string" },
   structJSON: { type: "string" },
   stateJSON: { type: "string" },
   hazardJSON: { type: "string" },

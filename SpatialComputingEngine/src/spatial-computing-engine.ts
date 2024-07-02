@@ -19,7 +19,7 @@ export async function disconnect(): Promise<void> {
 
 export async function saveData(
   schema: Schema,
-  data: engine.SpatialTypeEntity,
+  data: engine.EngineEntity,
 ): Promise<string> {
   const repo = await connectAndGetRepo(schema);
   return (await repo.save(data))[EntityId];
@@ -28,7 +28,7 @@ export async function saveData(
 export async function fetchData(
   schema: Schema,
   id: string,
-): Promise<engine.SpatialTypeEntity> {
+): Promise<engine.EngineEntity> {
   const repo = await connectAndGetRepo(schema);
-  return (await repo.fetch(id)) as engine.SpatialTypeEntity;
+  return (await repo.fetch(id)) as engine.EngineEntity;
 }

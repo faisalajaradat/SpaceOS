@@ -554,18 +554,9 @@ const typeRuleApplicationDictionary: {
   ): boolean => {
     if (funCall.identifier instanceof SymbolAccess) {
       const spgType = checkType(funCall.identifier.locationExpr);
-      if (
-        spgType instanceof SpacePathGraphType ||
-        (isDecorator(spgType) && spgType.delegate instanceof SpacePathGraphType)
-      ) {
+      if (spgType instanceof SpacePathGraphType) {
         if (funCall.identifier.symbol.value === "setRoot")
-          return checkType(funCall.args[0]).equals(
-            isDecorator(spgType)
-              ? spgType instanceof PhysicalDecorator
-                ? new PhysicalDecorator(new SpaceType())
-                : new VirtualDecorator(new SpaceType())
-              : new SpaceType(),
-          );
+          return new SpaceType().contains(checkType(funCall.args[0]));
       }
     }
     if (
@@ -607,15 +598,15 @@ const typeRuleApplicationDictionary: {
   [TypeRule.FullyDescribedSpatialObjectInstantiated]: (
     objectInstantiation: SpatialObjectInstantiationExpr,
   ): boolean =>
-    isDecorator(objectInstantiation.type) &&
-    (objectInstantiation.type.delegate instanceof DirectionDecorator ||
-      objectInstantiation.type.delegate instanceof SpacePathGraphType ||
-      (objectInstantiation.type.delegate instanceof ControlDecorator &&
-        (objectInstantiation.type.delegate.delegate instanceof SpaceType ||
-          objectInstantiation.type.delegate.delegate instanceof
-            StaticEntityType ||
-          objectInstantiation.type.delegate.delegate instanceof
-            MotionDecorator))),
+    (isDecorator(objectInstantiation.type) &&
+      (objectInstantiation.type.delegate instanceof DirectionDecorator ||
+        (objectInstantiation.type.delegate instanceof ControlDecorator &&
+          (objectInstantiation.type.delegate.delegate instanceof SpaceType ||
+            objectInstantiation.type.delegate.delegate instanceof
+              StaticEntityType ||
+            objectInstantiation.type.delegate.delegate instanceof
+              MotionDecorator)))) ||
+    objectInstantiation.type instanceof SpacePathGraphType,
 
   [TypeRule.SpatialObjectInstantiatedWithCompatibleArguments]: (
     objectInstantiation: SpatialObjectInstantiationExpr,
@@ -630,14 +621,7 @@ const typeRuleApplicationDictionary: {
     if (objectInstantiation.args.length === 0) return false;
     if (baseType instanceof SpacePathGraphType) {
       if (objectInstantiation.args.length > 1) return false;
-      let argBaseType = checkType(objectInstantiation.args[0]);
-      const hasSameLocality =
-        objectInstantiation.type instanceof PhysicalDecorator
-          ? argBaseType instanceof PhysicalDecorator
-          : argBaseType instanceof VirtualDecorator;
-      if (!hasSameLocality) return false;
-      while (isDecorator(argBaseType)) argBaseType = argBaseType.delegate;
-      return argBaseType instanceof SpaceType;
+      return new SpaceType().contains(checkType(objectInstantiation.args[0]));
     }
     if (!(baseType instanceof SpaceType))
       return (
@@ -693,9 +677,7 @@ const typeRuleApplicationDictionary: {
     const locationType = checkType(symbolAccess.locationExpr);
     symbolAccess.locationExpr.type =
       locationType instanceof RecordType ||
-      locationType instanceof SpacePathGraphType ||
-      (isDecorator(locationType) &&
-        locationType.delegate instanceof SpacePathGraphType)
+      locationType instanceof SpacePathGraphType
         ? locationType
         : DefaultBaseTypeInstance.NONE;
     return !symbolAccess.locationExpr.type.equals(DefaultBaseTypeInstance.NONE);
@@ -715,11 +697,7 @@ const typeRuleApplicationDictionary: {
         symbolAccess.symbol.declaration !== undefined
           ? symbolAccess.symbol.declaration.type
           : DefaultBaseTypeInstance.NONE;
-    } else if (
-      symbolAccess.locationExpr.type instanceof SpacePathGraphType ||
-      (isDecorator(symbolAccess.locationExpr.type) &&
-        symbolAccess.locationExpr.type.delegate instanceof SpacePathGraphType)
-    ) {
+    } else if (symbolAccess.locationExpr.type instanceof SpacePathGraphType) {
       symbolAccess.type =
         Array.from(SPGLibMethods.keys())
           .filter((methodName) => methodName === symbolAccess.symbol.value)
