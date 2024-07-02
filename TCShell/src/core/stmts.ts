@@ -8,15 +8,21 @@ import {
   popOutOfScopeVars,
 } from "../utils.js";
 import * as engine from "../../../SpatialComputingEngine/src/frontend-objects.js";
-import { fetchData } from "../../../SpatialComputingEngine/src/spatial-computing-engine.js";
+import {
+  fetchData,
+  saveData,
+} from "../../../SpatialComputingEngine/src/spatial-computing-engine.js";
 import {
   ArrayRepresentation,
   ASTNode,
   dotString,
   ExprStmt,
+  jsonReplacer,
+  jsonReviver,
   MatchCondition,
   newNodeId,
   RuntimeType,
+  SPGStruct,
   unresolved,
   varStacks,
 } from "./program.js";
@@ -932,3 +938,23 @@ libFunctions.set(
   ),
   (...args) => (<unknown[]>args[0]).splice(<number>args[1], <number>args[2]),
 );
+
+export const SPGLibMethods = new Map<
+  string,
+  (...args: unknown[]) => Promise<unknown>
+>();
+
+SPGLibMethods.set("setRoot", async (...args) => {
+  const spg: engine.SpacePathGraph = (await fetchData(
+    engine.SPG_SCHEMA,
+    args[0] as string,
+  )) as engine.SpacePathGraph;
+  const struct: SPGStruct = JSON.parse(
+    spg.structJSON,
+    jsonReviver,
+  ) as SPGStruct;
+  struct.root = args[1] as string;
+  struct.table.set(args[1] as string, new Array<string>());
+  spg.structJSON = JSON.stringify(struct, jsonReplacer);
+  await saveData(engine.SPG_SCHEMA, spg);
+});

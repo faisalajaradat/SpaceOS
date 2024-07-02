@@ -122,39 +122,6 @@ export class VirtualDecorator extends LocalityDecorator {
   }
 }
 
-export class SpacePathGraphType extends SpatialType {
-  constructor(line: number = -1, column: number = -1) {
-    super(line, column);
-  }
-
-  children(): ASTNode[] {
-    return new Array<ASTNode>();
-  }
-
-  print(): string {
-    const spacePathGraphTypeNodeId = newNodeId();
-    dotString.push(
-      spacePathGraphTypeNodeId + '[label=" Space Path Graph Type "];\n',
-    );
-    return spacePathGraphTypeNodeId;
-  }
-
-  async evaluate(): Promise<void> {
-    return undefined;
-  }
-
-  equals(_type: Type): boolean {
-    return isAnyType(_type) || _type instanceof SpacePathGraphType;
-  }
-
-  contains(_type: Type): boolean {
-    return (
-      this.equals(_type) ||
-      (isDecorator(_type) && this.contains(_type.delegate))
-    );
-  }
-}
-
 export class PathType extends SpatialType {
   constructor(line: number = -1, column: number = -1) {
     super(line, column);
@@ -750,6 +717,39 @@ export class StationaryDecorator extends MotionDecorator {
       isAnyType(_type) ||
       (_type instanceof StationaryDecorator &&
         this.delegate.contains(_type.delegate))
+    );
+  }
+}
+
+export class SpacePathGraphType extends SpatialType {
+  constructor(line: number = -1, column: number = -1) {
+    super(line, column);
+  }
+
+  children(): ASTNode[] {
+    return new Array<ASTNode>();
+  }
+
+  print(): string {
+    const spacePathGraphTypeNodeId = newNodeId();
+    dotString.push(
+      spacePathGraphTypeNodeId + '[label=" Space Path Graph Type "];\n',
+    );
+    return spacePathGraphTypeNodeId;
+  }
+
+  async evaluate(): Promise<void> {
+    return undefined;
+  }
+
+  equals(_type: Type): boolean {
+    return isAnyType(_type) || _type instanceof SpacePathGraphType;
+  }
+
+  contains(_type: Type): boolean {
+    return (
+      this.equals(_type) ||
+      (isDecorator(_type) && this.contains(_type.delegate))
     );
   }
 }

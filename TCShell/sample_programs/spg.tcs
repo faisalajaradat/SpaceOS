@@ -9,6 +9,8 @@ PhysicalBikeSpace bikePathStart
 PhysicalBikeSpace bikePathEnd
   = new physical mutable OpenSpace(Location {10, 10}, 10, "End")
 BikeSPG bikeSPG
-  = new physical SpacePathGraph(bikePathStart)
+  = new physical SpacePathGraph(bikePathEnd)
+
+bikeSPG.setRoot((physical Space) bikePathStart)
 
 print(bikeSPG)

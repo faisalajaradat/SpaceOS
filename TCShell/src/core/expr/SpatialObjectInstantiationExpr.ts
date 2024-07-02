@@ -9,7 +9,13 @@ import {
   SpatialType,
   StaticEntityType,
 } from "../type/index.js";
-import { ASTNode, dotString, newNodeId, SPGStruct } from "../program.js";
+import {
+  ASTNode,
+  dotString,
+  jsonReplacer,
+  newNodeId,
+  SPGStruct,
+} from "../program.js";
 import {
   getSpatialTypeSchema,
   getValueOfExpression,
@@ -68,7 +74,7 @@ export class SpatialObjectInstantiationExpr extends Expr {
       struct.table.set(rootSpaceId, new Array<string>());
       const newSPG = new engine.SpacePathGraph(
         properties.get("locality") as string,
-        JSON.stringify(struct),
+        JSON.stringify(struct, jsonReplacer),
       );
       return await saveData(engine.SPG_SCHEMA, newSPG);
     }
@@ -85,6 +91,7 @@ export class SpatialObjectInstantiationExpr extends Expr {
                   properties.get("isControlled") as boolean,
                   JSON.stringify(
                     getValueOfExpression(await this.args[0].evaluate()),
+                    jsonReplacer,
                   ),
                 )
               : delegateType instanceof EnclosedSpaceType
@@ -93,6 +100,7 @@ export class SpatialObjectInstantiationExpr extends Expr {
                     properties.get("isControlled") as boolean,
                     JSON.stringify(
                       getValueOfExpression(await this.args[0].evaluate()),
+                      jsonReplacer,
                     ),
                   )
                 : delegateType instanceof StaticEntityType

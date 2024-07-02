@@ -20,6 +20,7 @@ import {
   Parameter,
   RecordDeclaration,
   Return,
+  SPGLibMethods,
   Stmt,
   UnionDeclaration,
   VarDeclaration,
@@ -551,6 +552,22 @@ const typeRuleApplicationDictionary: {
   [TypeRule.AllArgsInFunctionCallMatchParameter]: (
     funCall: FunCall,
   ): boolean => {
+    if (funCall.identifier instanceof SymbolAccess) {
+      const spgType = checkType(funCall.identifier.locationExpr);
+      if (
+        spgType instanceof SpacePathGraphType ||
+        (isDecorator(spgType) && spgType.delegate instanceof SpacePathGraphType)
+      ) {
+        if (funCall.identifier.symbol.value === "setRoot")
+          return checkType(funCall.args[0]).equals(
+            isDecorator(spgType)
+              ? spgType instanceof PhysicalDecorator
+                ? new PhysicalDecorator(new SpaceType())
+                : new VirtualDecorator(new SpaceType())
+              : new SpaceType(),
+          );
+      }
+    }
     if (
       !(funCall.identifier instanceof Identifier) ||
       funCall.identifier.value !== "push"
@@ -675,10 +692,13 @@ const typeRuleApplicationDictionary: {
       return true;
     const locationType = checkType(symbolAccess.locationExpr);
     symbolAccess.locationExpr.type =
-      locationType instanceof RecordType
+      locationType instanceof RecordType ||
+      locationType instanceof SpacePathGraphType ||
+      (isDecorator(locationType) &&
+        locationType.delegate instanceof SpacePathGraphType)
         ? locationType
         : DefaultBaseTypeInstance.NONE;
-    return symbolAccess.locationExpr.type instanceof RecordType;
+    return !symbolAccess.locationExpr.type.equals(DefaultBaseTypeInstance.NONE);
   },
 
   [TypeRule.AccessedFieldExists]: (symbolAccess: SymbolAccess): boolean => {
@@ -695,8 +715,21 @@ const typeRuleApplicationDictionary: {
         symbolAccess.symbol.declaration !== undefined
           ? symbolAccess.symbol.declaration.type
           : DefaultBaseTypeInstance.NONE;
-    }
-    if (symbolAccess.locationExpr.type instanceof RecordType) {
+    } else if (
+      symbolAccess.locationExpr.type instanceof SpacePathGraphType ||
+      (isDecorator(symbolAccess.locationExpr.type) &&
+        symbolAccess.locationExpr.type.delegate instanceof SpacePathGraphType)
+    ) {
+      symbolAccess.type =
+        Array.from(SPGLibMethods.keys())
+          .filter((methodName) => methodName === symbolAccess.symbol.value)
+          .map((matchedMethod) => {
+            if (matchedMethod === "setRoot")
+              return new FunctionType(DefaultBaseTypeInstance.NONE, [
+                new SpaceType(),
+              ]);
+          })[0] ?? DefaultBaseTypeInstance.NONE;
+    } else if (symbolAccess.locationExpr.type instanceof RecordType) {
       symbolAccess.type =
         (
           symbolAccess.locationExpr.type.identifier
@@ -707,7 +740,7 @@ const typeRuleApplicationDictionary: {
           )
           .map((matchedField) => matchedField.type)[0] ??
         DefaultBaseTypeInstance.NONE;
-    }
+    } else symbolAccess.type = DefaultBaseTypeInstance.NONE;
     return !symbolAccess.type.equals(DefaultBaseTypeInstance.NONE);
   },
 

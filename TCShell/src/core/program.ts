@@ -46,6 +46,18 @@ export type Location = { x: number; y: number };
 
 export type SPGStruct = { root: string; table: Map<string, string[]> };
 
+export function jsonReplacer(key, value) {
+  if (value instanceof Map) return { dataType: "Map", value: [...value] };
+  return value;
+}
+
+export function jsonReviver(key, value) {
+  if (typeof value === "object" && value !== null) {
+    if (value.dataType === "Map") return new Map(value.value);
+  }
+  return value;
+}
+
 //Define all AST nodes
 export interface ASTNode {
   line: number;

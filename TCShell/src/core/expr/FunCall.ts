@@ -5,10 +5,12 @@ import {
   RuntimeType,
   varStacks,
 } from "../program.js";
-import { libFunctions, VarDeclaration } from "../stmts.js";
-import { getValueOfExpression } from "../../utils.js";
+import { libFunctions, SPGLibMethods, VarDeclaration } from "../stmts.js";
+import { getValueOfExpression, isDecorator } from "../../utils.js";
 import { FunDeclaration } from "./FunDeclaration.js";
 import { Expr, Identifier } from "./Expr.js";
+import { SymbolAccess } from "./SymbolAccess.js";
+import { SpacePathGraphType } from "../type/spatial-types.js";
 
 export class FunCall extends Expr {
   identifier: Expr;
@@ -47,6 +49,21 @@ export class FunCall extends Expr {
   }
 
   async evaluate(): Promise<unknown> {
+    if (
+      this.identifier instanceof SymbolAccess &&
+      (this.identifier.locationExpr.type instanceof SpacePathGraphType ||
+        (isDecorator(this.identifier.locationExpr.type) &&
+          this.identifier.locationExpr.type.delegate instanceof
+            SpacePathGraphType))
+    ) {
+      const args = new Array<unknown>();
+      for (const arg of this.args)
+        args.push(getValueOfExpression(await arg.evaluate()));
+      args.unshift(
+        getValueOfExpression(await this.identifier.locationExpr.evaluate()),
+      );
+      return await SPGLibMethods.get(this.identifier.symbol.value)(...args);
+    }
     const identifier = await this.identifier.evaluate();
     if (
       identifier instanceof Identifier &&
