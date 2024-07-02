@@ -45,7 +45,6 @@ import {
   MotionDecorator,
   OpenSpaceType,
   PathType,
-  PhysicalDecorator,
   RecordLiteral,
   RecordType,
   SmartEntityType,
@@ -56,7 +55,6 @@ import {
   Type,
   UnaryExpr,
   UnionType,
-  VirtualDecorator,
 } from "./core/index.js";
 import { TypeCast } from "./core/expr/TypeCast.js";
 import { FunCall } from "./core/expr/FunCall.js";
