@@ -1,0 +1,14 @@
+type BikePath = unidirectional LandPath
+type PhysicalBikeSpace = physical mutable OpenSpace
+type Bike = physical mutable mobile SmartEntity
+type BikeSPG = physical SpacePathGraph
+
+BikePath bikePath = new unidirectional LandPath("bikePath1")
+PhysicalBikeSpace bikePathStart
+  = new physical mutable OpenSpace(Location {0, 0}, 10, "Start")
+PhysicalBikeSpace bikePathEnd
+  = new physical mutable OpenSpace(Location {10, 10}, 10, "End")
+BikeSPG bikeSPG
+  = new physical SpacePathGraph(bikePathStart)
+
+print(bikeSPG)

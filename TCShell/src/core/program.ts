@@ -11,6 +11,7 @@ import {
 import { Expr, Identifier } from "./expr/Expr.js";
 import { BinaryExpr } from "./expr/BinaryExpr.js";
 import { Type } from "./type/primitive-types.js";
+import { Path } from "../../../SpatialComputingEngine/src/frontend-objects.js";
 //A map variable declaration and their stack of assigned values
 export const varStacks = new Map<VarDeclaration | Parameter, unknown[]>();
 export const unresolved = [];
@@ -42,6 +43,8 @@ export type Assignment = VarDeclaration | BinaryExpr;
 export type RuntimeType = Type | Identifier;
 
 export type Location = { x: number; y: number };
+
+export type SPGStruct = { root: string; table: Map<string, string[]> };
 
 //Define all AST nodes
 export interface ASTNode {

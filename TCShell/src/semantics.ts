@@ -44,15 +44,18 @@ import {
   MotionDecorator,
   OpenSpaceType,
   PathType,
+  PhysicalDecorator,
   RecordLiteral,
   RecordType,
   SmartEntityType,
+  SpacePathGraphType,
   SpaceType,
   SpatialObjectInstantiationExpr,
   StaticEntityType,
   Type,
   UnaryExpr,
   UnionType,
+  VirtualDecorator,
 } from "./core/index.js";
 import { TypeCast } from "./core/expr/TypeCast.js";
 import { FunCall } from "./core/expr/FunCall.js";
@@ -574,6 +577,7 @@ const typeRuleApplicationDictionary: {
     while (isDecorator(baseObjectType))
       baseObjectType = baseObjectType.delegate;
     return (
+      baseObjectType instanceof SpacePathGraphType ||
       baseObjectType instanceof PathType ||
       baseObjectType instanceof EnclosedSpaceType ||
       baseObjectType instanceof OpenSpaceType ||
@@ -588,6 +592,7 @@ const typeRuleApplicationDictionary: {
   ): boolean =>
     isDecorator(objectInstantiation.type) &&
     (objectInstantiation.type.delegate instanceof DirectionDecorator ||
+      objectInstantiation.type.delegate instanceof SpacePathGraphType ||
       (objectInstantiation.type.delegate instanceof ControlDecorator &&
         (objectInstantiation.type.delegate.delegate instanceof SpaceType ||
           objectInstantiation.type.delegate.delegate instanceof
@@ -602,10 +607,29 @@ const typeRuleApplicationDictionary: {
     while (isDecorator(baseType)) baseType = baseType.delegate;
     if (
       objectInstantiation.args.length === 0 &&
-      !(baseType instanceof SpaceType)
+      !(baseType instanceof SpaceType || baseType instanceof SpacePathGraphType)
     )
       return true;
     if (objectInstantiation.args.length === 0) return false;
+    if (baseType instanceof SpacePathGraphType) {
+      if (objectInstantiation.args.length > 1) return false;
+      let argBaseType = checkType(objectInstantiation.args[0]);
+      const hasSameLocality =
+        objectInstantiation.type instanceof PhysicalDecorator
+          ? argBaseType instanceof PhysicalDecorator
+          : argBaseType instanceof VirtualDecorator;
+      if (!hasSameLocality) return false;
+      while (isDecorator(argBaseType)) argBaseType = argBaseType.delegate;
+      return argBaseType instanceof SpaceType;
+    }
+    if (!(baseType instanceof SpaceType))
+      return (
+        objectInstantiation.args.length === 1 &&
+        checkType(objectInstantiation.args[0]).equals(
+          DefaultBaseTypeInstance.STRING,
+        )
+      );
+
     let argumentsAreCompatible = checkType(objectInstantiation.args[0]).equals(
       libDeclarations[0].type,
     );
@@ -621,7 +645,7 @@ const typeRuleApplicationDictionary: {
         checkType(objectInstantiation.args[2]).equals(
           DefaultBaseTypeInstance.STRING,
         );
-    return argumentsAreCompatible && objectInstantiation.args.length < 3;
+    return argumentsAreCompatible && objectInstantiation.args.length < 4;
   },
 
   [TypeRule.ArrayLiteralDeclaredWithEntriesAllMatchingType]: (

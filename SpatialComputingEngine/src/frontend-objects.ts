@@ -14,6 +14,7 @@ const PATH_SCHEMA_DEF: SchemaDefinition = {
   _type: { type: "string" },
   locality: { type: "string" },
   direction: { type: "string" },
+  name: { type: "string" },
 };
 
 export const PATH_SCHEMA: Schema = new Schema("Path", PATH_SCHEMA_DEF, {
@@ -22,6 +23,7 @@ export const PATH_SCHEMA: Schema = new Schema("Path", PATH_SCHEMA_DEF, {
 
 export abstract class SpatialObject extends SpatialTypeEntity {
   isControlled: boolean;
+  name: string;
 
   constructor(locality: string, isControlled: boolean) {
     super(locality);
@@ -32,7 +34,6 @@ export abstract class SpatialObject extends SpatialTypeEntity {
 export abstract class Space extends SpatialObject {
   locationJSON: string;
   dimension: number;
-  name: string;
   constructor(locality: string, isControlled: boolean, locationJSON: string) {
     super(locality, isControlled);
     this.locationJSON = locationJSON;
@@ -45,9 +46,9 @@ const SPACE_SCHEMA_DEF: SchemaDefinition = {
   _type: { type: "string" },
   locality: { type: "string" },
   isControlled: { type: "boolean" },
+  name: { type: "string" },
   locationJSON: { type: "string" },
   dimension: { type: "string" },
-  name: { type: "string" },
 };
 
 export const SPACE_SCHEMA: Schema = new Schema("Space", SPACE_SCHEMA_DEF, {
@@ -67,10 +68,34 @@ const ENTITY_SCHEMA_DEF: SchemaDefinition = {
   _type: { type: "string" },
   locality: { type: "string" },
   isControlled: { type: "boolean" },
+  name: { type: "string" },
   motion: { type: "string" },
 };
 
 export const ENTITY_SCHEMA: Schema = new Schema("Entity", ENTITY_SCHEMA_DEF, {
+  dataStructure: "JSON",
+});
+
+export class SpacePathGraph extends SpatialTypeEntity {
+  structJSON: string;
+  stateJSON: string;
+  hazardJSON: string;
+
+  constructor(locality: string, structJSON: string) {
+    super(locality);
+    this.structJSON = structJSON;
+  }
+}
+
+const SPG_SCHEMA_DEF: SchemaDefinition = {
+  _type: { type: "string" },
+  locality: { type: "string" },
+  structJSON: { type: "string" },
+  stateJSON: { type: "string" },
+  hazardJSON: { type: "string" },
+};
+
+export const SPG_SCHEMA: Schema = new Schema("SpacePathGraph", SPG_SCHEMA_DEF, {
   dataStructure: "JSON",
 });
 
@@ -111,6 +136,7 @@ export class SmartEntity extends DynamicEntity {
 
 export class Path extends SpatialTypeEntity {
   direction: string;
+  name: string;
   constructor(locality: string, direction: string) {
     super(locality);
     this.direction = direction;
