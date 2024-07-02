@@ -20,7 +20,6 @@ import {
   Parameter,
   RecordDeclaration,
   Return,
-  SPGLibMethods,
   Stmt,
   UnionDeclaration,
   VarDeclaration,
@@ -704,7 +703,7 @@ const typeRuleApplicationDictionary: {
       const maybeStringType = new UnionType(new Identifier("MaybeString"));
       maybeStringType.identifier.declaration = libDeclarations[1];
       symbolAccess.type =
-        Array.from(SPGLibMethods.keys())
+        Array.from(SpacePathGraphType.libMethods.keys())
           .filter((methodName) => methodName === symbolAccess.symbol.value)
           .map((matchedMethod) => {
             if (matchedMethod === "setRoot")

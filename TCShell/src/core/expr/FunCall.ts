@@ -5,12 +5,12 @@ import {
   RuntimeType,
   varStacks,
 } from "../program.js";
-import { libFunctions, SPGLibMethods, VarDeclaration } from "../stmts.js";
+import { libFunctions , VarDeclaration } from "../stmts.js";
 import { getValueOfExpression, isDecorator } from "../../utils.js";
 import { FunDeclaration } from "./FunDeclaration.js";
 import { Expr, Identifier } from "./Expr.js";
 import { SymbolAccess } from "./SymbolAccess.js";
-import { SpacePathGraphType } from "../type/spatial-types.js";
+import { SpacePathGraphType } from "../type/index.js";
 
 export class FunCall extends Expr {
   identifier: Expr;
@@ -62,7 +62,7 @@ export class FunCall extends Expr {
       args.unshift(
         getValueOfExpression(await this.identifier.locationExpr.evaluate()),
       );
-      return await SPGLibMethods.get(this.identifier.symbol.value)(...args);
+      return await SpacePathGraphType.libMethods.get(this.identifier.symbol.value)(...args);
     }
     const identifier = await this.identifier.evaluate();
     if (

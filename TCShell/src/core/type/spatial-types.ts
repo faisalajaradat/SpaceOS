@@ -1,6 +1,19 @@
-import { ASTNode, dotString, newNodeId } from "../program.js";
+import {
+  ASTNode,
+  dotString,
+  jsonReplacer,
+  jsonReviver,
+  newNodeId,
+  SPGStruct,
+} from "../program.js";
 import { CompositionType, Type } from "./primitive-types.js";
 import { isAnyType, isDecorator } from "../../utils.js";
+import * as engine from "../../../../SpatialComputingEngine/src/frontend-objects.js";
+import {
+  fetchData,
+  saveData,
+} from "../../../../SpatialComputingEngine/src/spatial-computing-engine.js";
+import { SpacePathGraph } from "../../../../SpatialComputingEngine/src/frontend-objects.js";
 
 export class SpatialType extends CompositionType {
   constructor(line: number = -1, column: number = -1) {
@@ -722,8 +735,70 @@ export class StationaryDecorator extends MotionDecorator {
 }
 
 export class SpacePathGraphType extends SpatialType {
+  static libMethods: Map<string, (...args: unknown[]) => Promise<unknown>>;
+
   constructor(line: number = -1, column: number = -1) {
     super(line, column);
+  }
+
+  static {
+    this.libMethods = new Map<
+      string,
+      (...args: unknown[]) => Promise<unknown>
+    >();
+    SpacePathGraphType.libMethods.set("setRoot", async (...args) => {
+      const spg: engine.SpacePathGraph = (await fetchData(
+        engine.SPG_SCHEMA,
+        args[0] as string,
+      )) as engine.SpacePathGraph;
+      const struct: SPGStruct = JSON.parse(
+        spg.structJSON,
+        jsonReviver,
+      ) as SPGStruct;
+      if (!struct.table.has(args[1] as string))
+        return "Cannot delegate root to space not in graph!";
+      struct.root = args[1] as string;
+      spg.structJSON = JSON.stringify(struct, jsonReplacer, 4);
+      await saveData(engine.SPG_SCHEMA, spg);
+    });
+    SpacePathGraphType.libMethods.set("addPathSpace", async (...args) => {
+      const spg: engine.SpacePathGraph = (await fetchData(
+        engine.SPG_SCHEMA,
+        args[0] as string,
+      )) as engine.SpacePathGraph;
+      const struct: SPGStruct = JSON.parse(
+        spg.structJSON,
+        jsonReviver,
+      ) as SPGStruct;
+      const rootSpace: engine.Space = (await fetchData(
+        engine.SPACE_SCHEMA,
+        struct.root,
+      )) as engine.Space;
+      if (rootSpace.innerSpace === args[2])
+        return "Cannot path root space to its inner space!";
+      struct.table.get(struct.root).push(args[1] as string);
+      const destNodeNeighbours = struct.table.get(args[2] as string);
+      if (destNodeNeighbours !== undefined)
+        destNodeNeighbours.push(args[1] as string);
+      else struct.table.set(args[2] as string, [args[1] as string]);
+      spg.structJSON = JSON.stringify(struct, jsonReplacer, 4);
+      const path = (await fetchData(
+        engine.PATH_SCHEMA,
+        args[1] as string,
+      )) as engine.Path;
+      await saveData(engine.SPG_SCHEMA, spg);
+      path.direction === "unidirectional"
+        ? path.reachable.push(args[1] as string)
+        : path.reachable.push(args[1] as string, struct.root);
+      await saveData(engine.PATH_SCHEMA, path);
+    });
+    SpacePathGraphType.libMethods.set("getStructJSON", async (...args) => {
+      const spg: engine.SpacePathGraph = (await fetchData(
+        engine.SPG_SCHEMA,
+        args[0] as string,
+      )) as engine.SpacePathGraph;
+      return spg.structJSON;
+    });
   }
 
   children(): ASTNode[] {
