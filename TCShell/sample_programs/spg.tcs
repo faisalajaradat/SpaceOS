@@ -16,7 +16,9 @@ void{} Main = void(none) {
       print(s)
       return
     }
-    void v => {}
+    void v => {
+      print(bikeSPG.getStructJSON())
+    }
   }
 }
 

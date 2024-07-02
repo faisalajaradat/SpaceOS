@@ -963,7 +963,7 @@ SPGLibMethods.set("setRoot", async (...args) => {
   if (!struct.table.has(args[1] as string))
     return "Cannot delegate root to space not in graph!";
   struct.root = args[1] as string;
-  spg.structJSON = JSON.stringify(struct, jsonReplacer);
+  spg.structJSON = JSON.stringify(struct, jsonReplacer, 4);
   await saveData(engine.SPG_SCHEMA, spg);
 });
 SPGLibMethods.set("addPathSpace", async (...args) => {
@@ -986,6 +986,13 @@ SPGLibMethods.set("addPathSpace", async (...args) => {
   if (destNodeNeighbours !== undefined)
     destNodeNeighbours.push(args[1] as string);
   else struct.table.set(args[2] as string, [args[1] as string]);
-  spg.structJSON = JSON.stringify(struct, jsonReplacer);
+  spg.structJSON = JSON.stringify(struct, jsonReplacer, 4);
   await saveData(engine.SPG_SCHEMA, spg);
+});
+SPGLibMethods.set("getStructJSON", async (...args) => {
+  const spg: engine.SpacePathGraph = (await fetchData(
+    engine.SPG_SCHEMA,
+    args[0] as string,
+  )) as engine.SpacePathGraph;
+  return spg.structJSON;
 });

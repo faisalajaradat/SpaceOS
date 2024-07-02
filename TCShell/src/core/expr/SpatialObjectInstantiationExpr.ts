@@ -73,7 +73,7 @@ export class SpatialObjectInstantiationExpr extends Expr {
       };
       struct.table.set(rootSpaceId, new Array<string>());
       const newSPG = new engine.SpacePathGraph(
-        JSON.stringify(struct, jsonReplacer),
+        JSON.stringify(struct, jsonReplacer, 4),
       );
       return await saveData(engine.SPG_SCHEMA, newSPG);
     }

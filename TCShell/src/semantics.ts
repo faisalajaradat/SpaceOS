@@ -714,6 +714,8 @@ const typeRuleApplicationDictionary: {
                 new PathType(),
                 new SpaceType(),
               ]);
+            if (matchedMethod === "getStructJSON")
+              return new FunctionType(DefaultBaseTypeInstance.STRING, []);
           })[0] ?? DefaultBaseTypeInstance.NONE;
     } else if (symbolAccess.locationExpr.type instanceof RecordType) {
       symbolAccess.type =
