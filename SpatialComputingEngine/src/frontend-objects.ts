@@ -36,9 +36,12 @@ export abstract class SpatialObject extends SpatialTypeEntity {
 export abstract class Space extends SpatialObject {
   locationJSON: string;
   dimension: number;
+  innerSpace: string;
+  entities: string[];
   constructor(locality: string, isControlled: boolean, locationJSON: string) {
     super(locality, isControlled);
     this.locationJSON = locationJSON;
+    this.entities = new Array<string>();
   }
 }
 
@@ -51,6 +54,8 @@ const SPACE_SCHEMA_DEF: SchemaDefinition = {
   name: { type: "string" },
   locationJSON: { type: "string" },
   dimension: { type: "string" },
+  innerSpace: { type: "string" },
+  entities: { type: "string[]" },
 };
 
 export const SPACE_SCHEMA: Schema = new Schema("Space", SPACE_SCHEMA_DEF, {

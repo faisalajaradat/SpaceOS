@@ -376,7 +376,7 @@ const typeRuleApplicationDictionary: {
 
   [TypeRule.ReturnsFunctionType]: (returnStmt: Return): boolean => {
     hasReturned = true;
-    if (returnStmt.possibleValue === null)
+    if (returnStmt.possibleValue === undefined)
       return (
         returnFunction === undefined ||
         (returnFunction.type as FunctionType).returnType.equals(
@@ -555,6 +555,11 @@ const typeRuleApplicationDictionary: {
       if (spgType instanceof SpacePathGraphType) {
         if (funCall.identifier.symbol.value === "setRoot")
           return new SpaceType().contains(checkType(funCall.args[0]));
+        if (funCall.identifier.symbol.value === "addPathSpace")
+          return (
+            new PathType().contains(checkType(funCall.args[0])) &&
+            new SpaceType().contains(checkType(funCall.args[1]))
+          );
       }
     }
     if (
@@ -696,12 +701,17 @@ const typeRuleApplicationDictionary: {
           ? symbolAccess.symbol.declaration.type
           : DefaultBaseTypeInstance.NONE;
     } else if (symbolAccess.locationExpr.type instanceof SpacePathGraphType) {
+      const maybeStringType = new UnionType(new Identifier("MaybeString"));
+      maybeStringType.identifier.declaration = libDeclarations[1];
       symbolAccess.type =
         Array.from(SPGLibMethods.keys())
           .filter((methodName) => methodName === symbolAccess.symbol.value)
           .map((matchedMethod) => {
             if (matchedMethod === "setRoot")
-              return new FunctionType(DefaultBaseTypeInstance.NONE, [
+              return new FunctionType(maybeStringType, [new SpaceType()]);
+            if (matchedMethod === "addPathSpace")
+              return new FunctionType(maybeStringType, [
+                new PathType(),
                 new SpaceType(),
               ]);
           })[0] ?? DefaultBaseTypeInstance.NONE;
@@ -890,6 +900,7 @@ function enforceTypeRules(node: ExprStmt, rulesToEnforce: TypeRule[]) {
 //Performs type analysis to enforce typing rules
 function checkType(node: ASTNode): Type {
   const typeRulesToEnforce = new Array<TypeRule>();
+  if (node === undefined) return DefaultBaseTypeInstance.NONE;
   if (node instanceof Type) return node;
   if (node instanceof DeferDecorator) {
     const oldReturnFun = returnFunction;

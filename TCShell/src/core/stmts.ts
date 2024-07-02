@@ -545,7 +545,7 @@ export class Block extends Stmt {
       returnNode = await this.stmts[i].evaluate();
       if (returnNode instanceof Return) break;
     }
-    if (returnNode instanceof Return && returnNode.possibleValue !== null)
+    if (returnNode instanceof Return && returnNode.possibleValue !== undefined)
       returnNode = getValueOfExpression(
         await returnNode.possibleValue.evaluate(),
       );
@@ -593,7 +593,10 @@ export class CaseStmt extends Stmt {
       unresolved.push(this.stmt.evaluate());
     else {
       returnValue = await this.stmt.evaluate();
-      if (returnValue instanceof Return && returnValue.possibleValue !== null)
+      if (
+        returnValue instanceof Return &&
+        returnValue.possibleValue !== undefined
+      )
         returnValue = getValueOfExpression(
           await returnValue.possibleValue.evaluate(),
         );
@@ -840,6 +843,10 @@ export const libDeclarations: (
     new Parameter(new BaseType(BaseTypeKind.NUMBER), new Identifier("x")),
     new Parameter(new BaseType(BaseTypeKind.NUMBER), new Identifier("y")),
   ]),
+  new UnionDeclaration(new UnionType(new Identifier("MaybeString")), [
+    DefaultBaseTypeInstance.VOID,
+    DefaultBaseTypeInstance.STRING,
+  ]),
 ];
 
 //Dictionary of predefined functions implemented in TS to be called in TCShell
@@ -953,8 +960,32 @@ SPGLibMethods.set("setRoot", async (...args) => {
     spg.structJSON,
     jsonReviver,
   ) as SPGStruct;
+  if (!struct.table.has(args[1] as string))
+    return "Cannot delegate root to space not in graph!";
   struct.root = args[1] as string;
-  struct.table.set(args[1] as string, new Array<string>());
+  spg.structJSON = JSON.stringify(struct, jsonReplacer);
+  await saveData(engine.SPG_SCHEMA, spg);
+});
+SPGLibMethods.set("addPathSpace", async (...args) => {
+  const spg: engine.SpacePathGraph = (await fetchData(
+    engine.SPG_SCHEMA,
+    args[0] as string,
+  )) as engine.SpacePathGraph;
+  const struct: SPGStruct = JSON.parse(
+    spg.structJSON,
+    jsonReviver,
+  ) as SPGStruct;
+  const rootSpace: engine.Space = (await fetchData(
+    engine.SPACE_SCHEMA,
+    struct.root,
+  )) as engine.Space;
+  if (rootSpace.innerSpace === args[2])
+    return "Cannot path root space to its inner space!";
+  struct.table.get(struct.root).push(args[1] as string);
+  const destNodeNeighbours = struct.table.get(args[2] as string);
+  if (destNodeNeighbours !== undefined)
+    destNodeNeighbours.push(args[1] as string);
+  else struct.table.set(args[2] as string, [args[1] as string]);
   spg.structJSON = JSON.stringify(struct, jsonReplacer);
   await saveData(engine.SPG_SCHEMA, spg);
 });

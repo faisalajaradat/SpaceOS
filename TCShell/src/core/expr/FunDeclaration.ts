@@ -63,7 +63,10 @@ export class FunDeclaration extends Expr {
       unresolved.push(this._body.evaluate());
     else {
       returnValue = await this._body.evaluate();
-      if (returnValue instanceof Return && returnValue.possibleValue !== null)
+      if (
+        returnValue instanceof Return &&
+        returnValue.possibleValue !== undefined
+      )
         returnValue = getValueOfExpression(
           await returnValue.possibleValue.evaluate(),
         );
