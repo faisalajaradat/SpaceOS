@@ -550,8 +550,10 @@ const typeRuleApplicationDictionary: {
     funCall: FunCall,
   ): boolean => {
     if (funCall.identifier instanceof SymbolAccess) {
-      const spgType = checkType(funCall.identifier.locationExpr);
-      if (spgType instanceof SpacePathGraphType) {
+      let spatialBaseType = checkType(funCall.identifier.locationExpr);
+      while (isDecorator(spatialBaseType))
+        spatialBaseType = spatialBaseType.delegate;
+      if (spatialBaseType instanceof SpacePathGraphType) {
         if (funCall.identifier.symbol.value === "setRoot")
           return new SpaceType().contains(checkType(funCall.args[0]));
         if (funCall.identifier.symbol.value === "addPathSpace")
@@ -676,10 +678,12 @@ const typeRuleApplicationDictionary: {
       symbolAccess.locationExpr.declaration instanceof ImportDeclaration
     )
       return true;
-    const locationType = checkType(symbolAccess.locationExpr);
+    let locationType = checkType(symbolAccess.locationExpr);
+    while (isDecorator(locationType)) locationType = locationType.delegate;
     symbolAccess.locationExpr.type =
       locationType instanceof RecordType ||
-      locationType instanceof SpacePathGraphType
+      locationType instanceof SpacePathGraphType ||
+      locationType instanceof PathType
         ? locationType
         : DefaultBaseTypeInstance.NONE;
     return !symbolAccess.locationExpr.type.equals(DefaultBaseTypeInstance.NONE);
@@ -699,23 +703,27 @@ const typeRuleApplicationDictionary: {
         symbolAccess.symbol.declaration !== undefined
           ? symbolAccess.symbol.declaration.type
           : DefaultBaseTypeInstance.NONE;
-    } else if (symbolAccess.locationExpr.type instanceof SpacePathGraphType) {
-      const maybeStringType = new UnionType(new Identifier("MaybeString"));
-      maybeStringType.identifier.declaration = libDeclarations[1];
+    }
+    let spatialBaseType = symbolAccess.locationExpr.type;
+    while (isDecorator(spatialBaseType))
+      spatialBaseType = spatialBaseType.delegate;
+    if (
+      spatialBaseType instanceof SpacePathGraphType ||
+      spatialBaseType instanceof PathType
+    ) {
+      const isSPGType = spatialBaseType instanceof SpacePathGraphType;
       symbolAccess.type =
-        Array.from(SpacePathGraphType.libMethods.keys())
+        Array.from(
+          isSPGType
+            ? SpacePathGraphType.libMethods.keys()
+            : PathType.libMethods.keys(),
+        )
           .filter((methodName) => methodName === symbolAccess.symbol.value)
-          .map((matchedMethod) => {
-            if (matchedMethod === "setRoot")
-              return new FunctionType(maybeStringType, [new SpaceType()]);
-            if (matchedMethod === "addPathSpace")
-              return new FunctionType(maybeStringType, [
-                new PathType(),
-                new SpaceType(),
-              ]);
-            if (matchedMethod === "getStructJSON")
-              return new FunctionType(DefaultBaseTypeInstance.STRING, []);
-          })[0] ?? DefaultBaseTypeInstance.NONE;
+          .map(
+            isSPGType
+              ? SpacePathGraphType.mapMethodNameToMethodType
+              : PathType.mapMethodNameToMethodType,
+          )[0] ?? DefaultBaseTypeInstance.NONE;
     } else if (symbolAccess.locationExpr.type instanceof RecordType) {
       symbolAccess.type =
         (

@@ -20,6 +20,7 @@ void{} Main = void(none) {
       print(bikeSPG.getStructJSON())
     }
   }
+  print(bikePath.getReachableSpaces())
 }
 
 

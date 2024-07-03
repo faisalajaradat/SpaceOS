@@ -30,13 +30,13 @@ TCShell {
 
      Exp = AssignExp
      AssignExp = UnaryExp "=" AssignExp		--assign
-     					| LorExp
+     					  | LorExp
      LorExp = LorExp "||" LarExp		--lor
      				| LarExp
      LarExp = LarExp "&&" EqExp		--lar
      				| EqExp
      EqExp = EqExp ("==" | "!=") RelExp		--eq
-     			| RelExp
+     			  | RelExp
      RelExp = RelExp ( "<=" | "<" | ">=" | ">") AddExp		--rel
      				| AddExp
      AddExp = AddExp ("+" | "-") MultExp		--add
@@ -44,23 +44,23 @@ TCShell {
      MultExp = MultExp ( "*" | "/" | "%" ) UnaryExp		--mult
      				| UnaryExp
 	   UnaryExp = ("+" | "-" | "!") UnaryExp	--unary
-              | "(" Type ")" UnaryExp     --typecast
-              | new SpatialType "(" ListOf<Exp, ","> ")"    --new
-    				  | LeftExp
+            | "(" Type ")" UnaryExp     --typecast
+            | new SpatialType "(" ListOf<Exp, ","> ")"    --new
+    				| LeftExp
      LeftExp = LeftExp "(" ListOf<Exp, ","> ")"		--call
      				| LeftExp "[" Exp "]"		--array
             | LeftExp "." identifier    --access
             | PrimaryExp
 
     PrimaryExp = stringLiteral
-              | numberLiteral
-              | booleanLiteral
-              | noneLiteral
-              | Type "(" (noneLiteral | NonemptyListOf<Parameter, ",">) ")" Stmt  --function
-              | identifier "{" NonemptyListOf<Exp, ","> "}"    --record
-    					| identifier
-              | "(" Exp ")"		--group
-              | "[" ListOf<Exp, ","> "]"		--array
+            | numberLiteral
+            | booleanLiteral
+            | noneLiteral
+            | Type "(" (noneLiteral | NonemptyListOf<Parameter, ",">) ")" Stmt  --function
+            | identifier "{" NonemptyListOf<Exp, ","> "}"    --record
+    				| identifier
+            | "(" Exp ")"		--group
+            | "[" ListOf<Exp, ","> "]"		--array
 
     Block = "{" Stmt* "}"
 

@@ -6,7 +6,13 @@ import {
   newNodeId,
   SPGStruct,
 } from "../program.js";
-import { CompositionType, Type } from "./primitive-types.js";
+import {
+  ArrayType,
+  CompositionType,
+  DefaultBaseTypeInstance,
+  FunctionType,
+  Type,
+} from "./primitive-types.js";
 import { isAnyType, isDecorator } from "../../utils.js";
 import * as engine from "../../../../SpatialComputingEngine/src/frontend-objects.js";
 import {
@@ -14,6 +20,9 @@ import {
   saveData,
 } from "../../../../SpatialComputingEngine/src/spatial-computing-engine.js";
 import { SpacePathGraph } from "../../../../SpatialComputingEngine/src/frontend-objects.js";
+import { UnionType } from "./UnionType.js";
+import { Identifier } from "../expr/Expr.js";
+import { libDeclarations } from "../stmts.js";
 
 export class SpatialType extends CompositionType {
   constructor(line: number = -1, column: number = -1) {
@@ -136,8 +145,31 @@ export class VirtualDecorator extends LocalityDecorator {
 }
 
 export class PathType extends SpatialType {
+  static libMethods: Map<string, (...args: unknown[]) => Promise<unknown>>;
+
   constructor(line: number = -1, column: number = -1) {
     super(line, column);
+  }
+
+  static {
+    PathType.libMethods = new Map<
+      string,
+      (...args: unknown[]) => Promise<unknown>
+    >();
+    PathType.libMethods.set("getReachableSpaces", async (...args) => {
+      const path: engine.Path = (await fetchData(
+        engine.PATH_SCHEMA,
+        args[0] as string,
+      )) as engine.Path;
+      return path.reachable;
+    });
+  }
+
+  static mapMethodNameToMethodType(methodName): FunctionType {
+    switch (methodName) {
+      case "getReachableSpaces":
+        return new FunctionType(new ArrayType(new SpaceType()), []);
+    }
   }
 
   children(): ASTNode[] {
@@ -799,6 +831,22 @@ export class SpacePathGraphType extends SpatialType {
       )) as engine.SpacePathGraph;
       return spg.structJSON;
     });
+  }
+
+  static mapMethodNameToMethodType(methodName): FunctionType {
+    const maybeStringType = new UnionType(new Identifier("MaybeString"));
+    maybeStringType.identifier.declaration = libDeclarations[1];
+    switch (methodName) {
+      case "setRoot":
+        return new FunctionType(maybeStringType, [new SpaceType()]);
+      case "addPathSpace":
+        return new FunctionType(maybeStringType, [
+          new PathType(),
+          new SpaceType(),
+        ]);
+      case "getStructJSON":
+        return new FunctionType(DefaultBaseTypeInstance.STRING, []);
+    }
   }
 
   children(): ASTNode[] {
