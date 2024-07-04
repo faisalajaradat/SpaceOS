@@ -38,7 +38,9 @@
   "dependencies": {
     "@langchain/community": "^0.0.56",
     "@langchain/groq": "^0.0.10",
+    "@langchain/langgraph": "^0.0.25",
     "@langchain/openai": "^0.0.28",
+    "axios": "^1.7.2",
     "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.0",
     "dotenv": "^16.4.5",
