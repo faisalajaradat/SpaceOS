@@ -805,7 +805,7 @@ export class ImportDeclaration extends Stmt {
     line: number = -1,
     column: number = -1,
   ) {
-    super(new BaseType(BaseTypeKind.NONE, column, line), line, column);
+    super(new BaseType(BaseTypeKind.NONE, line, column), line, column);
     this.path = path;
     this.alias = alias;
   }
@@ -846,6 +846,16 @@ export const libDeclarations: (
   new UnionDeclaration(new UnionType(new Identifier("MaybeString")), [
     DefaultBaseTypeInstance.VOID,
     DefaultBaseTypeInstance.STRING,
+  ]),
+  new UnionDeclaration(new UnionType(new Identifier("NumberOrString")), [
+    DefaultBaseTypeInstance.NUMBER,
+    DefaultBaseTypeInstance.STRING,
+  ]),
+  new UnionDeclaration(new UnionType(new Identifier("AnyBaseType")), [
+    DefaultBaseTypeInstance.NUMBER,
+    DefaultBaseTypeInstance.BOOL,
+    DefaultBaseTypeInstance.STRING,
+    DefaultBaseTypeInstance.VOID,
   ]),
 ];
 

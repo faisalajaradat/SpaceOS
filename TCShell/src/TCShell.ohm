@@ -56,7 +56,7 @@ TCShell {
             | numberLiteral
             | booleanLiteral
             | noneLiteral
-            | Type "(" (noneLiteral | NonemptyListOf<Parameter, ",">) ")" Stmt  --function
+            | (Type | funKeyword) "(" (noneLiteral | NonemptyListOf<Parameter, ",">) ")" Stmt  --function
             | identifier "{" NonemptyListOf<Exp, ","> "}"    --record
     				| identifier
             | "(" Exp ")"		--group
@@ -70,7 +70,7 @@ TCShell {
     RecordDeclaration = RecordType "{" NonemptyListOf<Parameter, ","> "}"
     DeferDecorator = defer "(" ListOf<identifier, ","> ")"
 
-    Parameter = Type identifier
+    Parameter = (Type | varKeyword) identifier
 
     TypeSpecifier = "[]"   --array
                   |"{" ListOf<Type, ","> "}"    --function
@@ -142,6 +142,8 @@ TCShell {
             | import
             | as
             | record
+            | varKeyword
+            | funKeyword
 
     typeKeyword = "type" ~identPart
     while = "while" ~identPart
@@ -180,6 +182,8 @@ TCShell {
     import = "import" ~identPart
     as = "as" ~identPart
     record = "record" ~identPart
+    varKeyword = "var" ~identPart
+    funKeyword = "fun" ~identPart
 
 
 

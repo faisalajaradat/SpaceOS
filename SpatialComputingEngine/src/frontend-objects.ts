@@ -90,9 +90,11 @@ export class SpacePathGraph implements Entity {
   structJSON: string;
   stateJSON: string;
   hazardJSON: string;
+  final: boolean;
 
   constructor(structJSON: string) {
     this.structJSON = structJSON;
+    this.final = false;
   }
 }
 
@@ -100,6 +102,7 @@ const SPG_SCHEMA_DEF: SchemaDefinition = {
   structJSON: { type: "string" },
   stateJSON: { type: "string" },
   hazardJSON: { type: "string" },
+  final: { type: "boolean" },
 };
 
 export const SPG_SCHEMA: Schema = new Schema("SpacePathGraph", SPG_SCHEMA_DEF, {

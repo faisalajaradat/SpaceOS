@@ -45,7 +45,7 @@ export const astBaseTypeRuntimeDictionary: { [key in BaseTypeKind]: string } = {
 export class BaseType extends Type {
   kind: BaseTypeKind;
 
-  constructor(kind: BaseTypeKind, column: number = -1, line: number = -1) {
+  constructor(kind: BaseTypeKind, line: number = -1, column: number = -1) {
     super(line, column);
     this.kind = kind;
   }

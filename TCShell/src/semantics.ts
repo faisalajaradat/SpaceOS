@@ -6,7 +6,7 @@ import {
   Program,
   SymbolDeclaration,
 } from "./core/program.js";
-import { isDecorator, isPublic } from "./utils.js";
+import { isAnyType, isDecorator, isPublic } from "./utils.js";
 import {
   AliasTypeDeclaration,
   Block,
@@ -307,6 +307,27 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
 let returnFunction: FunDeclaration = undefined;
 let hasReturned = false;
 
+function constructType(originalExpr: Expr, baseType: Type) {
+  let baseExpr = originalExpr;
+  let constructedType = baseType;
+  while (baseExpr instanceof ArrayAccess || baseExpr instanceof FunCall) {
+    if (baseExpr instanceof ArrayAccess) {
+      const arrayType = checkType(baseExpr.arrayExpr) as ArrayType;
+      arrayType.type = constructedType;
+      constructedType = arrayType;
+      baseExpr = baseExpr.arrayExpr;
+    }
+    if (baseExpr instanceof FunCall) {
+      const funType = checkType(baseExpr.identifier) as FunctionType;
+      funType.returnType = constructedType;
+      constructedType = funType;
+      baseExpr = baseExpr.identifier;
+    }
+  }
+  if (baseExpr instanceof Identifier)
+    baseExpr.declaration.type = constructedType;
+}
+
 function assignArraySize(type1: ArrayType, type2: ArrayType) {
   while (type1.type instanceof ArrayType && type2.type instanceof ArrayType) {
     type1._size = type2._size;
@@ -320,6 +341,7 @@ export const enum TypeRule {
   ControlFlowConditionIsBool,
   AssignedToSameType,
   ReturnsFunctionType,
+  AllCasesAreExplicitlyTyped,
   AllCaseTypeAreCompatible,
   CompleteMatchUnionTypeCoverage,
   AssignedToLValue,
@@ -340,6 +362,7 @@ export const enum TypeRule {
   ArrayLiteralDeclaredWithEntriesAllMatchingType,
   OnlyAccessibleSymbolAccessed,
   AccessedFieldExists,
+  AllRecordFieldsAreExplicitlyTyped,
   RecordLiteralDeclaredWithEntriesMatchingFieldType,
   FunctionReturnsValueIfExpected,
 }
@@ -368,27 +391,46 @@ const typeRuleApplicationDictionary: {
     if (leftHandType instanceof ArrayType && rightHandType instanceof ArrayType)
       assignArraySize(leftHandType, rightHandType);
     assignment.type = isSameType
-      ? leftHandType
-      : new BaseType(BaseTypeKind.NONE, assignment.column, assignment.line);
+      ? rightHandType
+      : new BaseType(BaseTypeKind.NONE, assignment.line, assignment.column);
+    if (
+      assignment instanceof BinaryExpr &&
+      isAnyType(leftHandType) &&
+      !isAnyType(rightHandType)
+    )
+      constructType(assignment.leftExpr, rightHandType);
     return isSameType;
   },
 
   [TypeRule.ReturnsFunctionType]: (returnStmt: Return): boolean => {
     hasReturned = true;
-    if (returnStmt.possibleValue === undefined)
-      return (
+    let returnsProperType = false;
+    if (returnStmt.possibleValue === undefined) {
+      returnsProperType =
         returnFunction === undefined ||
         (returnFunction.type as FunctionType).returnType.equals(
           DefaultBaseTypeInstance.VOID,
-        )
-      );
-    return (
+        );
+      if (returnsProperType && returnFunction !== undefined)
+        (returnFunction.type as FunctionType).returnType =
+          DefaultBaseTypeInstance.VOID;
+      return returnsProperType;
+    }
+    const returnStmtType = checkType(returnStmt.possibleValue);
+    returnsProperType =
       returnFunction !== undefined &&
-      checkType(returnStmt.possibleValue).equals(
-        (returnFunction.type as FunctionType).returnType,
-      )
-    );
+      returnStmtType.equals((returnFunction.type as FunctionType).returnType);
+    if (returnsProperType)
+      (returnFunction.type as FunctionType).returnType = returnStmtType;
+    return returnsProperType;
   },
+
+  [TypeRule.AllCasesAreExplicitlyTyped]: (matchStmt: Match): boolean =>
+    matchStmt.caseStmts.filter(
+      (caseStmt) =>
+        caseStmt.matchCondition instanceof Parameter &&
+        isAnyType(caseStmt.matchCondition.type),
+    ).length === 0,
 
   [TypeRule.AllCaseTypeAreCompatible]: (matchStmt: Match): boolean => {
     const subjectType = checkType(matchStmt.subject);
@@ -436,6 +478,43 @@ const typeRuleApplicationDictionary: {
   ): boolean => {
     const leftHandType: Type = checkType(additionExpr.leftExpr);
     const rightHandType: Type = checkType(additionExpr.rightExpr);
+    const leftSideIsAny = isAnyType(leftHandType);
+    const rightSideIsAny = isAnyType(rightHandType);
+    if (leftSideIsAny || rightSideIsAny) {
+      if (leftSideIsAny && rightSideIsAny) {
+        const numberOrStringType = new UnionType(
+          new Identifier("NumberOrString"),
+        );
+        numberOrStringType.identifier.declaration = libDeclarations[2];
+        additionExpr.type = numberOrStringType;
+        constructType(additionExpr.leftExpr, numberOrStringType);
+        constructType(additionExpr.rightExpr, numberOrStringType);
+        return true;
+      }
+      if (leftSideIsAny) {
+        additionExpr.type =
+          rightHandType.equals(DefaultBaseTypeInstance.NUMBER) ||
+          rightHandType.equals(DefaultBaseTypeInstance.STRING)
+            ? rightHandType
+            : DefaultBaseTypeInstance.NONE;
+        const rightSideIsValid = !additionExpr.type.equals(
+          DefaultBaseTypeInstance.NONE,
+        );
+        if (rightSideIsValid)
+          constructType(additionExpr.leftExpr, rightHandType);
+        return rightSideIsValid;
+      }
+      additionExpr.type =
+        leftHandType.equals(DefaultBaseTypeInstance.NUMBER) ||
+        leftHandType.equals(DefaultBaseTypeInstance.STRING)
+          ? leftHandType
+          : DefaultBaseTypeInstance.NONE;
+      const leftSideIsValid = !additionExpr.type.equals(
+        DefaultBaseTypeInstance.NONE,
+      );
+      if (leftSideIsValid) constructType(additionExpr.rightExpr, leftHandType);
+      return leftSideIsValid;
+    }
     const eitherSideIsString =
       leftHandType.equals(DefaultBaseTypeInstance.STRING) ||
       rightHandType.equals(DefaultBaseTypeInstance.STRING);
@@ -451,8 +530,8 @@ const typeRuleApplicationDictionary: {
         : eitherSideIsString
           ? BaseTypeKind.STRING
           : BaseTypeKind.NUMBER,
-      additionExpr.column,
       additionExpr.line,
+      additionExpr.column,
     );
     return bothAreValid;
   },
@@ -460,26 +539,46 @@ const typeRuleApplicationDictionary: {
   [TypeRule.OnlyNumbersUsedForMathOperation]: (
     mathExpr: BinaryExpr | UnaryExpr,
   ): boolean => {
-    const bothSidesAreNumbers =
-      mathExpr instanceof UnaryExpr
-        ? checkType(mathExpr.expr).equals(DefaultBaseTypeInstance.NUMBER)
-        : checkType(mathExpr.leftExpr).equals(DefaultBaseTypeInstance.NUMBER) &&
-          checkType(mathExpr.rightExpr).equals(DefaultBaseTypeInstance.NUMBER);
     const operatorCreatesBool =
       mathExpr.operator === ">" ||
       mathExpr.operator === ">=" ||
       mathExpr.operator === "<" ||
       mathExpr.operator === "<=";
-
+    const leftHandType =
+      mathExpr instanceof UnaryExpr
+        ? checkType(mathExpr.expr)
+        : checkType(mathExpr.leftExpr);
+    const rightHandType =
+      mathExpr instanceof UnaryExpr ? undefined : checkType(mathExpr.rightExpr);
+    const bothSidesAreNumbers =
+      leftHandType.equals(DefaultBaseTypeInstance.NUMBER) &&
+      mathExpr instanceof UnaryExpr
+        ? true
+        : rightHandType.equals(DefaultBaseTypeInstance.NUMBER);
     mathExpr.type = new BaseType(
       !bothSidesAreNumbers
         ? BaseTypeKind.NONE
         : operatorCreatesBool
           ? BaseTypeKind.BOOL
           : BaseTypeKind.NUMBER,
-      mathExpr.column,
       mathExpr.line,
+      mathExpr.column,
     );
+    if (isAnyType(leftHandType)) {
+      const leftExpr =
+        mathExpr instanceof UnaryExpr ? mathExpr.expr : mathExpr.leftExpr;
+      constructType(
+        leftExpr,
+        new BaseType(BaseTypeKind.NUMBER, leftExpr.line, leftExpr.column),
+      );
+    }
+    if (rightHandType !== undefined && isAnyType(rightHandType)) {
+      const rightExpr = (mathExpr as BinaryExpr).rightExpr;
+      constructType(
+        rightExpr,
+        new BaseType(BaseTypeKind.NUMBER, rightExpr.line, rightExpr.column),
+      );
+    }
     return bothSidesAreNumbers;
   },
 
@@ -487,13 +586,55 @@ const typeRuleApplicationDictionary: {
     equalityExpr: BinaryExpr,
   ): boolean => {
     const leftHandType = checkType(equalityExpr.leftExpr);
+    const rightHandType = checkType(equalityExpr.rightExpr);
+    const leftIsAnyType = isAnyType(leftHandType);
+    const rightIsAnyType = isAnyType(rightHandType);
+    if (leftIsAnyType || rightIsAnyType) {
+      if (leftIsAnyType && rightIsAnyType) {
+        const anyBaseType = new UnionType(new Identifier("AnyBaseType"));
+        anyBaseType.identifier.declaration = libDeclarations[3];
+        equalityExpr.type = new BaseType(
+          BaseTypeKind.BOOL,
+          equalityExpr.line,
+          equalityExpr.column,
+        );
+        constructType(equalityExpr.leftExpr, anyBaseType);
+        constructType(equalityExpr.rightExpr, anyBaseType);
+        return true;
+      }
+      if (leftIsAnyType) {
+        equalityExpr.type = new BaseType(
+          rightHandType instanceof BaseType
+            ? BaseTypeKind.BOOL
+            : BaseTypeKind.NONE,
+          equalityExpr.line,
+          equalityExpr.column,
+        );
+        const rightIsValid = equalityExpr.type.equals(
+          DefaultBaseTypeInstance.BOOL,
+        );
+        if (rightIsValid) constructType(equalityExpr.leftExpr, rightHandType);
+        return rightIsValid;
+      }
+      equalityExpr.type = new BaseType(
+        leftHandType instanceof BaseType
+          ? BaseTypeKind.BOOL
+          : BaseTypeKind.NONE,
+        equalityExpr.line,
+        equalityExpr.column,
+      );
+      const leftIsValid = equalityExpr.type.equals(
+        DefaultBaseTypeInstance.BOOL,
+      );
+      if (leftIsValid) constructType(equalityExpr.rightExpr, leftHandType);
+      return leftIsValid;
+    }
     const bothSidesAreTheSamePrimitiveType =
-      leftHandType instanceof BaseType &&
-      leftHandType.equals(checkType(equalityExpr.rightExpr));
+      leftHandType instanceof BaseType && leftHandType.equals(rightHandType);
     equalityExpr.type = new BaseType(
       bothSidesAreTheSamePrimitiveType ? BaseTypeKind.BOOL : BaseTypeKind.NONE,
-      equalityExpr.column,
       equalityExpr.line,
+      equalityExpr.column,
     );
     return bothSidesAreTheSamePrimitiveType;
   },
@@ -501,50 +642,107 @@ const typeRuleApplicationDictionary: {
   [TypeRule.OnlyBoolsUsedForBooleanOperation]: (
     booleanExpr: BinaryExpr | UnaryExpr,
   ): boolean => {
-    const bothSidesAreBools =
+    const leftHandType =
       booleanExpr instanceof UnaryExpr
-        ? checkType(booleanExpr.expr).equals(DefaultBaseTypeInstance.BOOL)
-        : checkType(booleanExpr.leftExpr).equals(
-            DefaultBaseTypeInstance.BOOL,
-          ) &&
-          checkType(booleanExpr.rightExpr).equals(DefaultBaseTypeInstance.BOOL);
+        ? checkType(booleanExpr.expr)
+        : checkType(booleanExpr.leftExpr);
+    const rightHandType =
+      booleanExpr instanceof UnaryExpr
+        ? undefined
+        : checkType(booleanExpr.rightExpr);
+    const bothSidesAreBools =
+      leftHandType.equals(DefaultBaseTypeInstance.BOOL) &&
+      rightHandType === undefined
+        ? true
+        : rightHandType.equals(DefaultBaseTypeInstance.BOOL);
     booleanExpr.type = new BaseType(
       bothSidesAreBools ? BaseTypeKind.BOOL : BaseTypeKind.NONE,
-      booleanExpr.column,
       booleanExpr.line,
+      booleanExpr.column,
     );
+    if (isAnyType(leftHandType)) {
+      const leftExpr =
+        booleanExpr instanceof UnaryExpr
+          ? booleanExpr.expr
+          : booleanExpr.leftExpr;
+      constructType(
+        leftExpr,
+        new BaseType(BaseTypeKind.BOOL, leftExpr.line, leftExpr.column),
+      );
+      if (rightHandType !== undefined && isAnyType(rightHandType)) {
+        const rightExpr = (booleanExpr as BinaryExpr).rightExpr;
+        constructType(
+          rightExpr,
+          new BaseType(rightExpr.line, rightExpr.column),
+        );
+      }
+    }
     return bothSidesAreBools;
   },
 
-  [TypeRule.ArrayAccessIndexIsNumber]: (arrayAccess: ArrayAccess): boolean =>
-    checkType(arrayAccess.accessExpr).equals(DefaultBaseTypeInstance.NUMBER),
+  [TypeRule.ArrayAccessIndexIsNumber]: (arrayAccess: ArrayAccess): boolean => {
+    const accessExprType = checkType(arrayAccess.accessExpr);
+    if (isAnyType(accessExprType))
+      constructType(
+        arrayAccess.accessExpr,
+        new BaseType(
+          BaseTypeKind.NUMBER,
+          arrayAccess.accessExpr.line,
+          arrayAccess.accessExpr.column,
+        ),
+      );
+    return accessExprType.equals(DefaultBaseTypeInstance.NUMBER);
+  },
 
   [TypeRule.OnlyArrayTypesAreAccessedWithIndex]: (
     arrayAccess: ArrayAccess,
   ): boolean => {
     const arrayType = checkType(arrayAccess.arrayExpr);
+    if (isAnyType(arrayType)) {
+      constructType(arrayAccess.accessExpr, new ArrayType(arrayType));
+      arrayAccess.type = new BaseType(BaseTypeKind.ANY);
+      return true;
+    }
     const isArrayType = arrayType instanceof ArrayType;
     arrayAccess.type = isArrayType
       ? arrayType.type
-      : new BaseType(BaseTypeKind.NONE, arrayAccess.column, arrayAccess.line);
+      : new BaseType(BaseTypeKind.NONE, arrayAccess.line, arrayAccess.column);
     return isArrayType;
   },
 
   [TypeRule.FunctionCalledOnFunctionType]: (funCall: FunCall): boolean => {
     const calledSubjectType = checkType(funCall.identifier);
-    funCall.identifier.type = calledSubjectType;
+    if (isAnyType(calledSubjectType)) {
+      constructType(
+        funCall.identifier,
+        new FunctionType(calledSubjectType, []),
+      );
+      funCall.type = new BaseType(BaseTypeKind.ANY);
+      return true;
+    }
     const isFunctionType = calledSubjectType instanceof FunctionType;
     funCall.type = isFunctionType
       ? calledSubjectType.returnType
-      : new BaseType(BaseTypeKind.NONE, funCall.column, funCall.line);
+      : new BaseType(BaseTypeKind.NONE, funCall.line, funCall.column);
     return isFunctionType;
   },
 
   [TypeRule.FunctionCalledWithMatchingNumberOfArgs]: (
     funCall: FunCall,
-  ): boolean =>
-    funCall.args.length ===
-    (funCall.identifier.type as FunctionType).paramTypes.length,
+  ): boolean => {
+    const calledSubjectType = checkType(funCall.identifier) as FunctionType;
+    if (
+      calledSubjectType.paramTypes.length === 0 &&
+      isAnyType(calledSubjectType.returnType)
+    ) {
+      if (funCall.identifier instanceof Identifier)
+        (funCall.identifier.declaration.type as FunctionType).paramTypes =
+          funCall.args.map(checkType);
+      return true;
+    }
+
+    return funCall.args.length === calledSubjectType.paramTypes.length;
+  },
 
   [TypeRule.AllArgsInFunctionCallMatchParameter]: (
     funCall: FunCall,
@@ -615,6 +813,11 @@ const typeRuleApplicationDictionary: {
   [TypeRule.SpatialObjectInstantiatedWithCompatibleArguments]: (
     objectInstantiation: SpatialObjectInstantiationExpr,
   ): boolean => {
+    if (
+      objectInstantiation.args.filter((arg) => isAnyType(checkType(arg)))
+        .length > 0
+    )
+      return false;
     let baseType = objectInstantiation.type;
     while (isDecorator(baseType)) baseType = baseType.delegate;
     if (
@@ -656,16 +859,23 @@ const typeRuleApplicationDictionary: {
   [TypeRule.ArrayLiteralDeclaredWithEntriesAllMatchingType]: (
     arrayLiteral: ArrayLiteral,
   ): boolean => {
+    const elementTypes = arrayLiteral.value.map(checkType);
+    const allExplicitTypes = elementTypes.filter(
+      (elementType) => !isAnyType(elementType),
+    );
     arrayLiteral.type = new ArrayType(
-      checkType(arrayLiteral.value[0]),
+      allExplicitTypes[0],
       arrayLiteral.value.length,
       arrayLiteral.line,
       arrayLiteral.column,
     );
+    arrayLiteral.value
+      .filter((_, pos) => isAnyType(elementTypes[pos]))
+      .forEach((element) => constructType(element, allExplicitTypes[0]));
     return (
-      arrayLiteral.value.filter(
-        (expr) =>
-          !(arrayLiteral.type as ArrayType).type.equals(checkType(expr)),
+      allExplicitTypes.filter(
+        (elementType) =>
+          !(arrayLiteral.type as ArrayType).type.equals(elementType),
       ).length === 0
     );
   },
@@ -739,18 +949,32 @@ const typeRuleApplicationDictionary: {
     return !symbolAccess.type.equals(DefaultBaseTypeInstance.NONE);
   },
 
+  [TypeRule.AllRecordFieldsAreExplicitlyTyped]: (
+    recordDeclaration: RecordDeclaration,
+  ): boolean =>
+    recordDeclaration.fields.filter((field) => isAnyType(field.type)).length ===
+    0,
+
   [TypeRule.RecordLiteralDeclaredWithEntriesMatchingFieldType]: (
     recordLiteral: RecordLiteral,
   ): boolean =>
-    recordLiteral.fieldValues
-      .map(checkType)
-      .filter(
-        (fieldType, pos) =>
-          !(
+    recordLiteral.fieldValues.filter((fieldValue, pos) => {
+      const fieldType = checkType(fieldValue);
+      if (isAnyType(fieldType)) {
+        constructType(
+          fieldValue,
+          (
             (recordLiteral.type as RecordType).identifier
               .declaration as RecordDeclaration
-          ).fields[pos].type.equals(fieldType),
-      ).length === 0,
+          ).fields[pos].type,
+        );
+        return false;
+      }
+      return !(
+        (recordLiteral.type as RecordType).identifier
+          .declaration as RecordDeclaration
+      ).fields[pos].type.equals(fieldType);
+    }).length === 0,
 
   [TypeRule.FunctionReturnsValueIfExpected]: (
     funDeclaration: FunDeclaration,
@@ -765,9 +989,17 @@ const typeRuleApplicationDictionary: {
       (funDeclaration.type as FunctionType).returnType.equals(
         DefaultBaseTypeInstance.VOID,
       );
+    if (
+      localHasReturned &&
+      isAnyType((returnFunction.type as FunctionType).returnType)
+    )
+      (returnFunction.type as FunctionType).returnType =
+        DefaultBaseTypeInstance.VOID;
     hasReturned = oldHasReturn;
     returnFunction = oldReturnFun;
-    if (localHasReturned) funDeclaration.params.forEach(checkType);
+    if (localHasReturned)
+      (funDeclaration.type as FunctionType).paramTypes =
+        funDeclaration.params.map(checkType);
     return localHasReturned;
   },
 };
@@ -787,6 +1019,10 @@ const typeRuleFailureMessageDictionary: {
 
   [TypeRule.ReturnsFunctionType]: (returnStmt: Return): string =>
     returnStmt.getFilePos() + "Incorrect return type!",
+
+  [TypeRule.AllCasesAreExplicitlyTyped]: (matchStmt: Match): string =>
+    matchStmt.getFilePos() +
+    "Cannot use type inference for type pattern matching!",
 
   [TypeRule.AllCaseTypeAreCompatible]: (matchStmt: Match): string =>
     matchStmt.getFilePos() + "Case type incompatible with subject!",
@@ -885,6 +1121,12 @@ const typeRuleFailureMessageDictionary: {
   [TypeRule.AccessedFieldExists]: (symbolAccess: SymbolAccess): string =>
     symbolAccess.getFilePos() + "Symbol accesed does not exist!",
 
+  [TypeRule.AllRecordFieldsAreExplicitlyTyped]: (
+    recordDeclaration: RecordDeclaration,
+  ): string =>
+    recordDeclaration.getFilePos() +
+    "Cannot use type inference to declare record fields!",
+
   [TypeRule.RecordLiteralDeclaredWithEntriesMatchingFieldType]: (
     recordLiteral: RecordLiteral,
   ): string =>
@@ -945,6 +1187,7 @@ function checkType(node: ASTNode): Type {
   else if (node instanceof Match) {
     node.caseStmts.forEach((caseStmt) => checkType(caseStmt.stmt));
     typeRulesToEnforce.push(
+      TypeRule.AllCasesAreExplicitlyTyped,
       TypeRule.AllCaseTypeAreCompatible,
       TypeRule.CompleteMatchUnionTypeCoverage,
     );
@@ -992,6 +1235,8 @@ function checkType(node: ASTNode): Type {
       TypeRule.OnlyAccessibleSymbolAccessed,
       TypeRule.AccessedFieldExists,
     );
+  else if (node instanceof RecordDeclaration)
+    typeRulesToEnforce.push(TypeRule.AllRecordFieldsAreExplicitlyTyped);
   else if (node instanceof RecordLiteral)
     typeRulesToEnforce.push(
       TypeRule.RecordLiteralDeclaredWithEntriesMatchingFieldType,

@@ -501,8 +501,8 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     }
     return new BaseType(
       baseTypeKind,
-      lineAndColumn.colNum,
       lineAndColumn.lineNum,
+      lineAndColumn.colNum,
     );
   },
   UnionType(_union, identifier) {
@@ -732,6 +732,22 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     return new Parameter(
       new BaseType(BaseTypeKind.ANY),
       new Identifier("_", lineAndColumn.lineNum, lineAndColumn.colNum),
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
+    );
+  },
+  funKeyword(_funKeyword) {
+    const lineAndColumn = this.source.getLineAndColumn();
+    return new BaseType(
+      BaseTypeKind.ANY,
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
+    );
+  },
+  varKeyword(_varKeyword) {
+    const lineAndColumn = this.source.getLineAndColumn();
+    return new BaseType(
+      BaseTypeKind.ANY,
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
     );
