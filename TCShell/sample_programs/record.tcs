@@ -4,12 +4,12 @@ record Person {
   bool {Person, Person} isSameAge
 }
 
-bool {Person, Person} isSameAge = bool (Person first, Person second)
+var isSameAge = fun (Person first, Person second)
   return first.age == second.age
 
 print(Person {"Alex", 18, isSameAge})
 
-Person sam = Person {"Sam", 21, isSameAge}
+var sam = Person {"Sam", 21, isSameAge}
 
 print(sam.name + " is " + sam.age + " years old!")
 

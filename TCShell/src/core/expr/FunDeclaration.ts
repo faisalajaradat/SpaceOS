@@ -1,4 +1,4 @@
-import { DeferDecorator, Parameter, Return } from "../stmts.js";
+import { DeferDecorator, Parameter, Return, Stmt } from "../stmts.js";
 import {
   ASTNode,
   dotString,
@@ -16,6 +16,7 @@ export class FunDeclaration extends Expr {
   params: Parameter[];
   _body: ExprStmt;
   scope: Scope;
+  stmtsNeedingRevisiting: Array<Stmt>;
 
   constructor(
     type: RuntimeType,
@@ -32,6 +33,7 @@ export class FunDeclaration extends Expr {
     );
     this.params = params;
     this._body = body;
+    this.stmtsNeedingRevisiting = new Array<Stmt>();
   }
 
   children(): ASTNode[] {

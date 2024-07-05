@@ -167,6 +167,7 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
   } else if (node instanceof VarDeclaration || node instanceof Parameter) {
     if (node.identifier.value === "_") return;
     visitNameAnalyzer(node.children()[0], scope);
+    node.identifier.declaration = node;
     const paramSymbol = scope.lookupCurrent(node.identifier.value);
     if (paramSymbol !== null) {
       errors++;
@@ -383,6 +384,21 @@ const typeRuleApplicationDictionary: {
       assignment instanceof VarDeclaration
         ? assignment.type
         : checkType(assignment.leftExpr);
+    const rightExpr =
+      assignment instanceof VarDeclaration
+        ? assignment.value
+        : assignment.rightExpr;
+    if (
+      isAnyType(leftHandType) &&
+      rightExpr instanceof FunDeclaration &&
+      !isAnyType((rightExpr.type as FunctionType).returnType)
+    )
+      constructType(
+        assignment instanceof VarDeclaration
+          ? assignment.identifier
+          : assignment.leftExpr,
+        rightExpr.type,
+      );
     const rightHandType =
       assignment instanceof VarDeclaration
         ? checkType(assignment.value)
@@ -417,6 +433,15 @@ const typeRuleApplicationDictionary: {
       return returnsProperType;
     }
     const returnStmtType = checkType(returnStmt.possibleValue);
+    if (isAnyType(returnStmtType)) {
+      if (!isAnyType((returnFunction.type as FunctionType).returnType))
+        constructType(
+          returnStmt.possibleValue,
+          (returnFunction.type as FunctionType).returnType,
+        );
+      else returnFunction.stmtsNeedingRevisiting.push(returnStmt);
+      return true;
+    }
     returnsProperType =
       returnFunction !== undefined &&
       returnStmtType.equals((returnFunction.type as FunctionType).returnType);
@@ -435,6 +460,7 @@ const typeRuleApplicationDictionary: {
   [TypeRule.AllCaseTypeAreCompatible]: (matchStmt: Match): boolean => {
     const subjectType = checkType(matchStmt.subject);
     return (
+      !isAnyType(subjectType) &&
       matchStmt.caseStmts.filter((caseStmt) => {
         const caseType = checkType(caseStmt.matchCondition);
         caseStmt.type = caseType;
@@ -469,9 +495,18 @@ const typeRuleApplicationDictionary: {
     assignment instanceof VarDeclaration ||
     !(checkType(assignment.leftExpr) instanceof FunctionType),
 
-  [TypeRule.TypeCastToContainingType]: (typeCast: TypeCast): boolean =>
-    typeCast.type instanceof CompositionType &&
-    typeCast.type.contains(checkType(typeCast.castedExpr)),
+  [TypeRule.TypeCastToContainingType]: (typeCast: TypeCast): boolean => {
+    const castedExprType = checkType(typeCast.castedExpr);
+    if (isAnyType(castedExprType)) {
+      constructType(typeCast.castedExpr, typeCast.type);
+      return true;
+    }
+    return (
+      castedExprType.equals(typeCast.type) ||
+      (typeCast.type instanceof CompositionType &&
+        typeCast.type.contains(checkType(typeCast.castedExpr)))
+    );
+  },
 
   [TypeRule.OnlyNumbersAndStringForPlusOperation]: (
     additionExpr: BinaryExpr,
@@ -735,9 +770,8 @@ const typeRuleApplicationDictionary: {
       calledSubjectType.paramTypes.length === 0 &&
       isAnyType(calledSubjectType.returnType)
     ) {
-      if (funCall.identifier instanceof Identifier)
-        (funCall.identifier.declaration.type as FunctionType).paramTypes =
-          funCall.args.map(checkType);
+      calledSubjectType.paramTypes = funCall.args.map(checkType);
+      constructType(funCall.identifier, calledSubjectType);
       return true;
     }
 
@@ -776,7 +810,7 @@ const typeRuleApplicationDictionary: {
     const arg0Type = checkType(funCall.args[0]);
     return (
       arg0Type instanceof ArrayType &&
-      checkType(funCall.args[1]).equals(arg0Type.type)
+      checkType(funCall.args[1]).equals((arg0Type as ArrayType).type)
     );
   },
 
@@ -984,6 +1018,8 @@ const typeRuleApplicationDictionary: {
     const oldHasReturn = hasReturned;
     hasReturned = false;
     checkType(funDeclaration._body);
+    funDeclaration.stmtsNeedingRevisiting.forEach(checkType);
+    funDeclaration.stmtsNeedingRevisiting.length = 0;
     const localHasReturned =
       hasReturned ||
       (funDeclaration.type as FunctionType).returnType.equals(
@@ -1167,13 +1203,9 @@ function checkType(node: ASTNode): Type {
     (!(node._body instanceof Block) || node._body.stmts.length > 0)
   )
     typeRulesToEnforce.push(TypeRule.FunctionReturnsValueIfExpected);
-  else if (node instanceof If || node instanceof While) {
-    if (node instanceof If) {
-      checkType(node.ifStmt);
-      if (node.possibleElseStmt !== null) checkType(node.possibleElseStmt);
-    } else checkType(node.whileStmt);
+  else if (node instanceof If || node instanceof While)
     typeRulesToEnforce.push(TypeRule.ControlFlowConditionIsBool);
-  } else if (
+  else if (
     node instanceof VarDeclaration ||
     (node instanceof BinaryExpr && node.operator === "=")
   )
@@ -1184,14 +1216,13 @@ function checkType(node: ASTNode): Type {
     );
   else if (node instanceof Return)
     typeRulesToEnforce.push(TypeRule.ReturnsFunctionType);
-  else if (node instanceof Match) {
-    node.caseStmts.forEach((caseStmt) => checkType(caseStmt.stmt));
+  else if (node instanceof Match)
     typeRulesToEnforce.push(
       TypeRule.AllCasesAreExplicitlyTyped,
       TypeRule.AllCaseTypeAreCompatible,
       TypeRule.CompleteMatchUnionTypeCoverage,
     );
-  } else if (node instanceof TypeCast)
+  else if (node instanceof TypeCast)
     typeRulesToEnforce.push(TypeRule.TypeCastToContainingType);
   else if (node instanceof BinaryExpr) {
     typeRulesToEnforce.push(
@@ -1244,6 +1275,11 @@ function checkType(node: ASTNode): Type {
   else node.children().forEach(checkType);
   if (typeRulesToEnforce.length > 0)
     enforceTypeRules(node as ExprStmt, typeRulesToEnforce);
+  if (node instanceof If) {
+    checkType(node.ifStmt);
+    if (node.possibleElseStmt !== null) checkType(node.possibleElseStmt);
+  } else if (node instanceof While) checkType(node.whileStmt);
+  else if (node instanceof Match) node.caseStmts.forEach(checkType);
   if (node instanceof Expr || node instanceof Stmt) return node.type;
   else return DefaultBaseTypeInstance.NONE;
 }

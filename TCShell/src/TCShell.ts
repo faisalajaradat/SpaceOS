@@ -20,6 +20,10 @@ program
   .description("interpret tcs files")
   .option("-t, --trace", "output match trace in case of syntax errors")
   .option("-d, --dot <path>", "save DOT representation of AST to path")
+  .option(
+    "-i, --inference_test <path>",
+    "save DOT of pre and post type analysis",
+  )
   .action(async (path, options) => {
     try {
       const input = fs.readFileSync(path, "utf-8");
@@ -33,10 +37,31 @@ program
         return;
       }
       const astHead: core.Program = ast(match);
-      if (options.dot != undefined) {
+      if (options.inference_test !== undefined) {
+        astHead.print();
+        const preDot = core.dotString.join("");
+        core.dotString.length = 0;
+        graphviz
+          .dot(preDot, "svg")
+          .then((svg) =>
+            fs.writeFileSync(options.inference_test.concat("_pre.svg"), svg),
+          );
+        const semanticsErrors = analyze(astHead);
+        if (!semanticsErrors) {
+          astHead.print();
+          const postDot = core.dotString.join("");
+          graphviz
+            .dot(postDot, "svg")
+            .then((svg) =>
+              fs.writeFileSync(options.inference_test.concat("_post.svg"), svg),
+            );
+        } else console.log("Program has " + semanticsErrors + " error(s)!");
+        await disconnect();
+        return;
+      }
+      if (options.dot !== undefined) {
         astHead.print();
         const dotProg = core.dotString.join("");
-        console.log(dotProg);
         graphviz
           .dot(dotProg, "svg")
           .then((svg) => fs.writeFileSync(options.dot, svg));
