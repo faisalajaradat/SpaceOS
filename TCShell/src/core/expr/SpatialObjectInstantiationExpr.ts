@@ -14,6 +14,7 @@ import {
   dotString,
   jsonReplacer,
   newNodeId,
+  RuntimeType,
   SPGStruct,
 } from "../program.js";
 import {
@@ -29,7 +30,7 @@ export class SpatialObjectInstantiationExpr extends Expr {
   args: Expr[];
 
   constructor(
-    spatialType: SpatialType,
+    spatialType: RuntimeType,
     args: Expr[],
     line: number = -1,
     column: number = -1,
@@ -57,7 +58,7 @@ export class SpatialObjectInstantiationExpr extends Expr {
 
   async evaluate(): Promise<string> {
     const [propertiesRaw, delegateType] = parseSpatialTypeProperties(
-      <SpatialType>this._type,
+      this.type as SpatialType,
     );
     const properties: Map<string, string | boolean> = propertiesRaw as Map<
       string,

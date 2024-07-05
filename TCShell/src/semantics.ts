@@ -50,6 +50,7 @@ import {
   SpacePathGraphType,
   SpaceType,
   SpatialObjectInstantiationExpr,
+  SpatialType,
   StaticEntityType,
   Type,
   UnaryExpr,

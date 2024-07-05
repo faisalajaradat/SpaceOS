@@ -45,7 +45,7 @@ TCShell {
      				| UnaryExp
 	   UnaryExp = ("+" | "-" | "!") UnaryExp	--unary
             | "(" Type ")" UnaryExp     --typecast
-            | new SpatialType "(" ListOf<Exp, ","> ")"    --new
+            | new Type "(" ListOf<Exp, ","> ")"    --new
     				| LeftExp
      LeftExp = LeftExp "(" ListOf<Exp, ","> ")"		--call
      				| LeftExp "[" Exp "]"		--array

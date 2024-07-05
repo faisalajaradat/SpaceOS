@@ -1,75 +1,75 @@
-void{Space} handleSpace = void (Space s) {
+var handleSpace = fun (var s: Space) {
   print("Is Space")
   match s {
-    EnclosedSpace es => print("Is Enclosed")
-    OpenSpace os => print("Is Open")
+    var es: EnclosedSpace => print("Is Enclosed")
+    var os: OpenSpace => print("Is Open")
   }
 }
 
-void{Path} handlePath = void (Path p) {
+var handlePath = fun (var p: Path) {
   print("Is Path")
   match p {
-    AirPath ap => print("Is Air")
-    LandPath lp => print("Is Land")
+    var ap: AirPath => print("Is Air")
+    var lp: LandPath => print("Is Land")
   }
   match p {
-    unidirectional Path up => print("Is unidirectional")
-    bidirectional Path bp => print("Is bidirectional")
+    var up: unidirectional Path => print("Is unidirectional")
+    var bp: bidirectional Path => print("Is bidirectional")
   }
 }
 
-void{Entity} handleEntity = void (Entity e) {
+var handleEntity = fun (var e: Entity) {
   print("Is Entity")
   match e {
-    StaticEntity se => print("Is Static")
-    DynamicEntity de => {
+    var se: StaticEntity => print("Is Static")
+    var de: DynamicEntity => {
       match de {
-        mobile DynamicEntity mde => print("Is mobile")
-        stationary DynamicEntity sde => print("Is stationary")
+        var mde: mobile DynamicEntity => print("Is mobile")
+        var sde: stationary DynamicEntity => print("Is stationary")
       }
       match de {
-        AnimateEntity ae => print("Is Animate")
-        SmartEntity se => print("Is Smart")
+        var ae: AnimateEntity => print("Is Animate")
+        var se: SmartEntity => print("Is Smart")
       }
     }
   }
 }
 
-void{physical SpatialType} handlePhysicalSpatialType = void (physical SpatialType physicalSpatialType) {
+var handlePhysicalSpatialType = fun (var physicalSpatialType: physical SpatialType) {
   print("Is physical")
   match physicalSpatialType {
-    physical Space ps => handleSpace((Space) ps)
-    physical Path pp => handlePath((Path) pp)
-    physical Entity pe => handleEntity((Entity) pe)
+    var ps: physical Space => handleSpace((Space) ps)
+    var pp: physical Path => handlePath((Path) pp)
+    var pe: physical Entity => handleEntity((Entity) pe)
   }
 }
 
-void{virtual SpatialType} handleVirtualSpatialType = void (virtual SpatialType virtualSpatialType) {
+var handleVirtualSpatialType = fun (var virtualSpatialType: virtual SpatialType) {
   print("Is virtual")
   match virtualSpatialType {
-    virtual Space vs => handleSpace((Space) vs)
-    virtual Path vp => handlePath((Path) vp)
-    virtual Entity ve => handleEntity((Entity) ve)
+    var vs: virtual Space => handleSpace((Space) vs)
+    var vp: virtual Path => handlePath((Path) vp)
+    var ve: virtual Entity => handleEntity((Entity) ve)
   }
 }
 
-void{SpatialType[]} parseAndDescribeSpacialTypes = void (SpatialType[] listOfSpatialTypes) {
-  number iter = 0
-  number numOfSpatialType = len(listOfSpatialTypes)
+var parseAndDescribeSpacialTypes = fun (var listOfSpatialTypes: SpatialType[]) {
+  var iter = 0
+  var numOfSpatialType = len(listOfSpatialTypes)
   while iter < numOfSpatialType {
     print(listOfSpatialTypes[iter])
     match listOfSpatialTypes[iter] {
-      physical SpatialType pst => handlePhysicalSpatialType(pst)
-      virtual SpatialType vst => handleVirtualSpatialType(vst)
+      var pst: physical SpatialType => handlePhysicalSpatialType(pst)
+      var vst: virtual SpatialType => handleVirtualSpatialType(vst)
     }
     iter = iter + 1
   }
 }
 
-physical mutable mobile SmartEntity car = new physical mutable mobile SmartEntity()
-physical mutable OpenSpace parkingLot = new physical mutable OpenSpace(Location {50, 20})
-bidirectional LandPath street = new bidirectional LandPath()
+var car = new physical mutable mobile SmartEntity()
+var parkingLot = new physical mutable OpenSpace(Location {50, 20})
+var street = new bidirectional LandPath()
 
-SpatialType[] lotAndCars = [ (SpatialType)car, (SpatialType)parkingLot, (SpatialType)street ]
+var lotAndCars = [ (SpatialType)car, (SpatialType)parkingLot, (SpatialType)street ]
 
 parseAndDescribeSpacialTypes(lotAndCars)

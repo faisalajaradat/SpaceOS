@@ -285,10 +285,10 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       lineAndColumn.colNum,
     );
   },
-  UnaryExp_new(_new, spatialType, _leftParenthesis, args, _rightParenthesis) {
+  UnaryExp_new(_new, type, _leftParenthesis, args, _rightParenthesis) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new SpatialObjectInstantiationExpr(
-      spatialType.ast(),
+      type.ast(),
       args.asIteration().ast(),
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
