@@ -9,21 +9,15 @@ import {
   twoObjectsAreEquivalent,
 } from "../utils.js";
 import * as engine from "../../../SpatialComputingEngine/src/frontend-objects.js";
-import {
-  fetchData,
-  saveData,
-} from "../../../SpatialComputingEngine/src/spatial-computing-engine.js";
+import { fetchData } from "../../../SpatialComputingEngine/src/spatial-computing-engine.js";
 import {
   ArrayRepresentation,
   ASTNode,
   dotString,
   ExprStmt,
-  jsonReplacer,
-  jsonReviver,
   MatchCondition,
   newNodeId,
   RuntimeType,
-  SPGStruct,
   unresolved,
   varStacks,
 } from "./program.js";
