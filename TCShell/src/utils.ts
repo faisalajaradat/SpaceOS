@@ -126,3 +126,20 @@ export function parseSpatialTypeProperties(
   }
   return [properties, delegateType];
 }
+
+export function twoObjectsAreEquivalent(obj1: object, obj2: object): boolean {
+  const obj1Entries = Object.entries(obj1);
+  const obj2Entries = Object.entries(obj2);
+  if (obj1Entries.length !== obj2Entries.length) return false;
+  return (
+    obj1Entries.filter((entry1, pos) => {
+      if (entry1[0].toString() !== obj2Entries[pos][0]) return true;
+      if (
+        typeof entry1[1] === "object" &&
+        typeof obj2Entries[pos][1] === "object"
+      )
+        return !twoObjectsAreEquivalent(entry1[1], obj2Entries[pos][1]);
+      else return entry1[1] !== obj2Entries[pos][1];
+    }).length === 0
+  );
+}

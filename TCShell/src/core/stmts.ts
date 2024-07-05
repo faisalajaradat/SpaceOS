@@ -6,6 +6,7 @@ import {
   isWildcard,
   parseSpatialTypeProperties,
   popOutOfScopeVars,
+  twoObjectsAreEquivalent,
 } from "../utils.js";
 import * as engine from "../../../SpatialComputingEngine/src/frontend-objects.js";
 import {
@@ -49,6 +50,7 @@ import {
   PhysicalDecorator,
   RecordType,
   SmartEntityType,
+  SpacePathGraphType,
   SpaceType,
   SpatialObjectType,
   SpatialType,
@@ -622,9 +624,12 @@ export class Match extends Stmt {
   }
 
   async match(condition: MatchCondition, subject: unknown): Promise<boolean> {
-    if (condition instanceof Expr)
-      return subject === (await condition.evaluate());
-
+    if (condition instanceof Expr) {
+      const conditionValue = getValueOfExpression(await condition.evaluate());
+      if (typeof conditionValue !== "object") return subject === conditionValue;
+      if (typeof subject !== "object") return false;
+      return twoObjectsAreEquivalent(subject, conditionValue);
+    }
     if (isAnyType(condition.type)) return true;
     if (condition.type instanceof BaseType)
       return typeof subject === (await condition.type.evaluate());
@@ -647,6 +652,8 @@ export class Match extends Stmt {
         (await (conditionTypeBase as ArrayType).type.evaluate())
       );
     }
+    if (condition.type instanceof RecordType) {
+    }
     if (condition.type instanceof SpatialType && typeof subject === "string") {
       const [propertiesRaw, delegateTypeRaw] = parseSpatialTypeProperties(
         <SpatialType>condition.type,
@@ -657,11 +664,12 @@ export class Match extends Stmt {
         string | boolean
       >;
       let data = undefined;
-      if (delegateType.equals(new SpatialType(-1, -1))) {
+      if (delegateType.equals(new SpatialType())) {
         for (const schema of [
           engine.ENTITY_SCHEMA,
           engine.SPACE_SCHEMA,
           engine.PATH_SCHEMA,
+          engine.SPG_SCHEMA,
         ]) {
           const fetchedData = await fetchData(schema, subject);
           if (Object.keys(fetchedData).length > 0) data = fetchedData;
@@ -672,11 +680,15 @@ export class Match extends Stmt {
           ? engine.SPACE_SCHEMA
           : new EntityType().contains(delegateType)
             ? engine.ENTITY_SCHEMA
-            : engine.PATH_SCHEMA;
+            : new PathType().contains(delegateType)
+              ? engine.PATH_SCHEMA
+              : engine.SPG_SCHEMA;
         data = await fetchData(schema, subject);
         if (Object.keys(data).length === 0) return false;
       }
       let constructedType = undefined;
+      if (data instanceof engine.SpacePathGraph)
+        return condition.type.contains(new SpacePathGraphType());
       switch (data._type) {
         case "Path": {
           constructedType = new PathType();
