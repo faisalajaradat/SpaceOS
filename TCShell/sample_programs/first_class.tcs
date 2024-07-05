@@ -1,20 +1,20 @@
-number x = 0
+var x = 0
 
-void {number, number{number}[]} executeOperationsSequentialOnNumber = void (number x, number{number}[] operations) {
-  number numOfOperations = len(operations)
-  number iteration = 0
+var executeOperationsSequentialOnNumber = fun (var x: number, var operations) {
+  var numOfOperations = len(operations)
+  var iteration = 0
   while iteration < numOfOperations {
     x = operations[iteration](x)
     iteration = iteration + 1
   }
 }
 
-number{number} incrementAndLogNumber = number(number x) {
-  number incremented = x + 1
+var incrementAndLogNumber = fun (var x) {
+  var incremented = x + 1
   print(incremented)
   return incremented
 }
 
-number{number}[] operations = [incrementAndLogNumber, incrementAndLogNumber, incrementAndLogNumber, incrementAndLogNumber]
+var operations = [incrementAndLogNumber, incrementAndLogNumber, incrementAndLogNumber, incrementAndLogNumber]
 
 executeOperationsSequentialOnNumber(x, operations)

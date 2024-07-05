@@ -1,8 +1,0 @@
-type NumOrString = number | string
-
-NumOrString x = (NumOrString) 5
-
-match x {
-	number _x => print("Right!")
-  string _x => print("Wrong!")
-}

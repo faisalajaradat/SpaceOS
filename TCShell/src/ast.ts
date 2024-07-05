@@ -81,8 +81,7 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       lineAndColumn.colNum,
       stmts.ast(),
     );
-    _program.stmts.unshift(...libDeclarations);
-    libFunctions.forEach((_value, key) => _program.stmts.unshift(key));
+    _program.libStmts.push(...libDeclarations, ...libFunctions.keys());
     return _program;
   },
   Stmt_simple(simpleStatements, _newline) {
@@ -351,20 +350,22 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     );
   },
   PrimaryExp_function(
-    type,
+    _funKeyword,
     _leftParenthesis,
     listOfParameters,
     _rightParenthesis,
+    possibleExplicitType,
     stmt,
   ) {
     const lineAndColumn = this.source.getLineAndColumn();
-    const params =
-      listOfParameters.sourceString === "none"
-        ? []
-        : listOfParameters.asIteration().ast();
     return new FunDeclaration(
-      type.ast(),
-      params,
+      possibleExplicitType.ast()[0] ??
+        new BaseType(
+          BaseTypeKind.ANY,
+          lineAndColumn.lineNum,
+          lineAndColumn.colNum,
+        ),
+      listOfParameters.asIteration().ast(),
       stmt.ast(),
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
@@ -455,14 +456,22 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       lineAndColumn.colNum,
     );
   },
-  Parameter(type, identifier) {
+  Parameter(_varKeyword, identifier, possibleExplicitType) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new Parameter(
-      type.ast(),
+      possibleExplicitType.ast()[0] ??
+        new BaseType(
+          BaseTypeKind.ANY,
+          lineAndColumn.lineNum,
+          lineAndColumn.colNum,
+        ),
       identifier.ast(),
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
     );
+  },
+  ExplicitType(_colon, type) {
+    return type.ast();
   },
   Type(baseTypeDef, typeSpecifiers) {
     const baseType = baseTypeDef.ast();
@@ -732,22 +741,6 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     return new Parameter(
       new BaseType(BaseTypeKind.ANY),
       new Identifier("_", lineAndColumn.lineNum, lineAndColumn.colNum),
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
-    );
-  },
-  funKeyword(_funKeyword) {
-    const lineAndColumn = this.source.getLineAndColumn();
-    return new BaseType(
-      BaseTypeKind.ANY,
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
-    );
-  },
-  varKeyword(_varKeyword) {
-    const lineAndColumn = this.source.getLineAndColumn();
-    return new BaseType(
-      BaseTypeKind.ANY,
       lineAndColumn.lineNum,
       lineAndColumn.colNum,
     );

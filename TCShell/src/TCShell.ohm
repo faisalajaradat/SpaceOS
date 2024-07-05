@@ -56,7 +56,7 @@ TCShell {
             | numberLiteral
             | booleanLiteral
             | noneLiteral
-            | (Type | funKeyword) "(" (noneLiteral | NonemptyListOf<Parameter, ",">) ")" Stmt  --function
+            | funKeyword "(" ListOf<Parameter, ","> ")" ExplicitType? Stmt  --function
             | identifier "{" NonemptyListOf<Exp, ","> "}"    --record
     				| identifier
             | "(" Exp ")"		--group
@@ -70,7 +70,9 @@ TCShell {
     RecordDeclaration = RecordType "{" NonemptyListOf<Parameter, ","> "}"
     DeferDecorator = defer "(" ListOf<identifier, ","> ")"
 
-    Parameter = (Type | varKeyword) identifier
+    Parameter = varKeyword identifier ExplicitType?
+
+    ExplicitType = ":" Type
 
     TypeSpecifier = "[]"   --array
                   |"{" ListOf<Type, ","> "}"    --function

@@ -1,5 +1,0 @@
-number iter = 0
-while iter < 10 {
-  print(iter)
-  iter = iter + 1
-}

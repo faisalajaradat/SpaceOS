@@ -65,6 +65,7 @@ import { SymbolAccess } from "./core/expr/SymbolAccess.js";
 export default function analyze(astHead: Program): number {
   visitNameAnalyzer(astHead, null);
   checkType(astHead);
+  countAmbigousTypes(astHead);
   return errors;
 }
 //Defines symbols for symbol table
@@ -154,6 +155,7 @@ let errors = 0;
 function visitNameAnalyzer(node: ASTNode, scope: Scope) {
   if (node instanceof Program) {
     const curScope = new Scope(scope);
+    node.libStmts.forEach((child) => visitNameAnalyzer(child, curScope));
     node.children().forEach((child) => visitNameAnalyzer(child, curScope));
     node.scope = curScope;
   } else if (node instanceof FunDeclaration) {
@@ -409,12 +411,20 @@ const typeRuleApplicationDictionary: {
     assignment.type = isSameType
       ? rightHandType
       : new BaseType(BaseTypeKind.NONE, assignment.line, assignment.column);
-    if (
-      assignment instanceof BinaryExpr &&
-      isAnyType(leftHandType) &&
-      !isAnyType(rightHandType)
-    )
-      constructType(assignment.leftExpr, rightHandType);
+    if (isAnyType(leftHandType) && !isAnyType(rightHandType))
+      constructType(
+        assignment instanceof VarDeclaration
+          ? assignment.identifier
+          : assignment.leftExpr,
+        rightHandType,
+      );
+    if (isAnyType(rightHandType) && !isAnyType(leftHandType))
+      constructType(
+        assignment instanceof VarDeclaration
+          ? assignment.value
+          : assignment.rightExpr,
+        leftHandType,
+      );
     return isSameType;
   },
 
@@ -734,7 +744,7 @@ const typeRuleApplicationDictionary: {
   ): boolean => {
     const arrayType = checkType(arrayAccess.arrayExpr);
     if (isAnyType(arrayType)) {
-      constructType(arrayAccess.accessExpr, new ArrayType(arrayType));
+      constructType(arrayAccess.arrayExpr, new ArrayType(arrayType));
       arrayAccess.type = new BaseType(BaseTypeKind.ANY);
       return true;
     }
@@ -1282,4 +1292,11 @@ function checkType(node: ASTNode): Type {
   else if (node instanceof Match) node.caseStmts.forEach(checkType);
   if (node instanceof Expr || node instanceof Stmt) return node.type;
   else return DefaultBaseTypeInstance.NONE;
+}
+
+function countAmbigousTypes(node: ASTNode) {
+  if (node instanceof Type && isAnyType(node)) {
+    errors++;
+    console.log(node.getFilePos() + "Insufficient type information!");
+  } else node.children().forEach(countAmbigousTypes);
 }

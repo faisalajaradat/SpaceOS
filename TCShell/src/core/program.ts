@@ -11,7 +11,6 @@ import {
 import { Expr, Identifier } from "./expr/Expr.js";
 import { BinaryExpr } from "./expr/BinaryExpr.js";
 import { Type } from "./type/primitive-types.js";
-import { Path } from "../../../SpatialComputingEngine/src/frontend-objects.js";
 //A map variable declaration and their stack of assigned values
 export const varStacks = new Map<VarDeclaration | Parameter, unknown[]>();
 export const unresolved = [];
@@ -75,11 +74,13 @@ export class Program implements ASTNode {
   column: number;
   stmts: ASTNode[];
   scope: Scope;
+  libStmts: ASTNode[];
 
   constructor(line: number, column: number, stmts: ASTNode[]) {
     this.line = line;
     this.column = column;
     this.stmts = stmts;
+    this.libStmts = new Array<ASTNode>();
   }
 
   getFilePos(): string {
@@ -106,7 +107,7 @@ export class Program implements ASTNode {
   }
 
   async evaluate(): Promise<void> {
-    for (const stmt of this.children()) {
+    for (const stmt of [...this.libStmts, ...this.children()]) {
       if (stmt instanceof DeferDecorator) unresolved.push(stmt.evaluate());
       else await stmt.evaluate();
     }

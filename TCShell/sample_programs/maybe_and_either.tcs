@@ -6,60 +6,59 @@ type MaybeNumApplyFunctionType = MaybeNum {MaybeNum, MaybeNum {number}}
 
 type EitherNumOrStringApplyFunctionType = EitherNumOrString {EitherNumOrString, EitherNumOrString {number}}
 
-string{} voidError = string(none) {
+var voidError = fun () {
   return "Error: expected value is void!"
 }
 
-MaybeNumApplyFunctionType maybeApplyOperation = MaybeNum (MaybeNum maybe, MaybeNum{number} operation) {
+var maybeApplyOperation = fun (var maybe: MaybeNum, var operation) {
   match maybe {
-    number num => return operation(num)
-    void e => return (MaybeNum) none
+    var num: number => return operation(num)
+    var e: void => return (MaybeNum) none
   }
 }
 
-EitherNumOrStringApplyFunctionType eitherApplyOperationOrReturnAndLogError = EitherNumOrString(EitherNumOrString either,
-  EitherNumOrString{number} operation) {
+var eitherApplyOperationOrReturnAndLogError = fun (var either: EitherNumOrString, var operation) {
   match either {
-    number num => return operation(num)
-    string str => {
+    var num: number => return operation(num)
+    var str: string => {
       print(str)
       return (EitherNumOrString) str
     }
   }
 }
 
-MaybeNum{number} returnsOddNumbers = MaybeNum(number x) {
+var returnsOddNumbers = fun (var x) {
   match x % 2 {
     1 => return (MaybeNum) x
     0 => return (MaybeNum) none
   }
 }
 
-EitherNumOrString{MaybeNum} parseMaybeNumOrReturnError = EitherNumOrString(MaybeNum maybe) {
+var parseMaybeNumOrReturnError = fun (var maybe: MaybeNum) {
   match maybe {
-    number num => return (EitherNumOrString) num
-    void e => return (EitherNumOrString) voidError()
+    var num: number => return (EitherNumOrString) num
+    var e: void => return (EitherNumOrString) voidError()
   }
 }
 
-EitherNumOrString{number} printAndReturnOddNumber = EitherNumOrString(number oddNumber) {
+var printAndReturnOddNumber = fun (var oddNumber: number) {
   print("The following is Odd:")
   print(oddNumber)
   return (EitherNumOrString) oddNumber
 }
 
-number sum = 0
+var sum = 0
 
-void{} Main = void(none) {
-  EitherNumOrString{number} addToSum = EitherNumOrString(number x) {
+var Main = fun () {
+  var addToSum = fun (var x) {
     sum = sum + x
     return (EitherNumOrString) sum
   }
-  number iter = 0
+  var iter = 0
   while iter < 16 {
-    MaybeNum maybeOdd = (MaybeNum) iter
+    var maybeOdd = (MaybeNum) iter
     maybeOdd = maybeApplyOperation(maybeOdd, returnsOddNumbers)
-    EitherNumOrString numOrError = parseMaybeNumOrReturnError(maybeOdd)
+    var numOrError = parseMaybeNumOrReturnError(maybeOdd)
     numOrError = eitherApplyOperationOrReturnAndLogError(numOrError, printAndReturnOddNumber)
     eitherApplyOperationOrReturnAndLogError(numOrError, addToSum)
     iter = iter + 1
