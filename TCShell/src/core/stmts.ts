@@ -856,6 +856,10 @@ export const libDeclarations: (
     DefaultBaseTypeInstance.STRING,
     DefaultBaseTypeInstance.VOID,
   ]),
+  new UnionDeclaration(new UnionType(new Identifier("PathOrString")), [
+    new PathType(),
+    DefaultBaseTypeInstance.STRING,
+  ]),
 ];
 
 //Dictionary of predefined functions implemented in TS to be called in TCShell

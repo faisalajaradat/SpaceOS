@@ -787,6 +787,7 @@ export class SpacePathGraphType extends SpatialType {
       originalPath.target = intermediateSpaceId;
       originalPath.reachable.push(intermediateSpaceId);
       await saveData(engine.PATH_SCHEMA, originalPath);
+      return newPathId;
     });
     SpacePathGraphType.libMethods.set("getStructJSON", async (...args) => {
       const spg: engine.SpacePathGraph = (await fetchData(
@@ -800,6 +801,8 @@ export class SpacePathGraphType extends SpatialType {
   static mapMethodNameToMethodType(methodName: string): FunctionType {
     const maybeStringType = new UnionType(new Identifier("MaybeString"));
     maybeStringType.identifier.declaration = libDeclarations[1];
+    const pathOrStringType = new UnionType(new Identifier("PathOrString"));
+    pathOrStringType.identifier.declaration = libDeclarations[4];
     switch (methodName) {
       case "setRoot":
         return new FunctionType(maybeStringType, [new SpaceType()]);
@@ -809,7 +812,7 @@ export class SpacePathGraphType extends SpatialType {
           new SpaceType(),
         ]);
       case "splitPath":
-        return new FunctionType(maybeStringType, [new PathType()]);
+        return new FunctionType(pathOrStringType, [new PathType()]);
       case "getStructJSON":
         return new FunctionType(DefaultBaseTypeInstance.STRING, []);
     }
