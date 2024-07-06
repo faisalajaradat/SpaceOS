@@ -1,6 +1,6 @@
 var x = 0
 
-var executeOperationsSequentialOnNumber = fun (var x: number, var operations) {
+var executeOperationsSequentialOnNumber = fn (var x: number, var operations) {
   var numOfOperations = len(operations)
   var iteration = 0
   while iteration < numOfOperations {
@@ -9,7 +9,7 @@ var executeOperationsSequentialOnNumber = fun (var x: number, var operations) {
   }
 }
 
-var incrementAndLogNumber = fun (var x) {
+var incrementAndLogNumber = fn (var x) {
   var incremented = x + 1
   print(incremented)
   return incremented

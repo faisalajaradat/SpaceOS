@@ -1,4 +1,4 @@
-var handleSpace = fun (var s: Space) {
+var handleSpace = fn (var s: Space) {
   print("Is Space")
   match s {
     var es: EnclosedSpace => print("Is Enclosed")
@@ -6,7 +6,7 @@ var handleSpace = fun (var s: Space) {
   }
 }
 
-var handlePath = fun (var p: Path) {
+var handlePath = fn (var p: Path) {
   print("Is Path")
   match p {
     var ap: AirPath => print("Is Air")
@@ -14,7 +14,7 @@ var handlePath = fun (var p: Path) {
   }
 }
 
-var handleEntity = fun (var e: Entity) {
+var handleEntity = fn (var e: Entity) {
   print("Is Entity")
   match e {
     var se: StaticEntity => print("Is Static")
@@ -31,7 +31,7 @@ var handleEntity = fun (var e: Entity) {
   }
 }
 
-var handlePhysicalSpatialType = fun (var physicalSpatialType: physical SpatialType) {
+var handlePhysicalSpatialType = fn (var physicalSpatialType: physical SpatialType) {
   print("Is physical")
   match physicalSpatialType {
     var ps: physical Space => handleSpace((Space) ps)
@@ -40,7 +40,7 @@ var handlePhysicalSpatialType = fun (var physicalSpatialType: physical SpatialTy
   }
 }
 
-var handleVirtualSpatialType = fun (var virtualSpatialType: virtual SpatialType) {
+var handleVirtualSpatialType = fn (var virtualSpatialType: virtual SpatialType) {
   print("Is virtual")
   match virtualSpatialType {
     var vs: virtual Space => handleSpace((Space) vs)
@@ -49,7 +49,7 @@ var handleVirtualSpatialType = fun (var virtualSpatialType: virtual SpatialType)
   }
 }
 
-var parseAndDescribeSpacialTypes = fun (var listOfSpatialTypes: SpatialType[]) {
+var parseAndDescribeSpacialTypes = fn (var listOfSpatialTypes: SpatialType[]) {
   var iter = 0
   var numOfSpatialType = len(listOfSpatialTypes)
   while iter < numOfSpatialType {

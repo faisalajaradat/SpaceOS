@@ -6,18 +6,18 @@ type MaybeNumApplyFunctionType = MaybeNum {MaybeNum, MaybeNum {number}}
 
 type EitherNumOrStringApplyFunctionType = EitherNumOrString {EitherNumOrString, EitherNumOrString {number}}
 
-var voidError = fun () {
+var voidError = fn () {
   return "Error: expected value is void!"
 }
 
-var maybeApplyOperation = fun (var maybe: MaybeNum, var operation) {
+var maybeApplyOperation = fn (var maybe: MaybeNum, var operation) {
   match maybe {
     var num: number => return operation(num)
     var e: void => return (MaybeNum) none
   }
 }
 
-var eitherApplyOperationOrReturnAndLogError = fun (var either: EitherNumOrString, var operation) {
+var eitherApplyOperationOrReturnAndLogError = fn (var either: EitherNumOrString, var operation) {
   match either {
     var num: number => return operation(num)
     var str: string => {
@@ -27,21 +27,21 @@ var eitherApplyOperationOrReturnAndLogError = fun (var either: EitherNumOrString
   }
 }
 
-var returnsOddNumbers = fun (var x) {
+var returnsOddNumbers = fn (var x) {
   match x % 2 {
     1 => return (MaybeNum) x
     0 => return (MaybeNum) none
   }
 }
 
-var parseMaybeNumOrReturnError = fun (var maybe: MaybeNum) {
+var parseMaybeNumOrReturnError = fn (var maybe: MaybeNum) {
   match maybe {
     var num: number => return (EitherNumOrString) num
     var e: void => return (EitherNumOrString) voidError()
   }
 }
 
-var printAndReturnOddNumber = fun (var oddNumber: number) {
+var printAndReturnOddNumber = fn (var oddNumber: number) {
   print("The following is Odd:")
   print(oddNumber)
   return (EitherNumOrString) oddNumber
@@ -49,8 +49,8 @@ var printAndReturnOddNumber = fun (var oddNumber: number) {
 
 var sum = 0
 
-var Main = fun () {
-  var addToSum = fun (var x) {
+var Main = fn () {
+  var addToSum = fn (var x) {
     sum = sum + x
     return (EitherNumOrString) sum
   }

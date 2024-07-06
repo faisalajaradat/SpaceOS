@@ -4,7 +4,7 @@ record Person {
   bool {Person, Person} isSameAge
 }
 
-var isSameAge = fun (Person first, Person second)
+var isSameAge = fn (var first:Person, var second:Person)
   return first.age == second.age
 
 print(Person {"Alex", 18, isSameAge})

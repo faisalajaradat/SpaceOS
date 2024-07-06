@@ -29,7 +29,7 @@ export const mul_test = 'if 5 * 5 == 25\n\tprint("Right!")';
 export const unary_test = 'var no = false\nif !no\n\tprint("Right!")';
 export const array_literal_test = "print([1, 2, 3])";
 export const function_declaration_test =
-  "var concatStringArray = fun (var array, var len) {" +
+  "var concatStringArray = fn (var array, var len) {" +
   '\n\tvar iter = 0\n\tvar fullString = ""\n\twhile iter < len {' +
   "\n\t\tfullString = fullString + array[iter]\n\t\titer = iter + 1\n\t}\n\treturn fullString\n}" +
   '\nprint(concatStringArray(["R", "i", "g", "h", "t", "!"], 6))';

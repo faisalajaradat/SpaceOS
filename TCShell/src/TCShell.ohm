@@ -56,7 +56,7 @@ TCShell {
             | numberLiteral
             | booleanLiteral
             | noneLiteral
-            | funKeyword "(" ListOf<Parameter, ","> ")" ExplicitType? Stmt  --function
+            | fnKeyword "(" ListOf<Parameter, ","> ")" ExplicitType? Stmt  --function
             | identifier "{" NonemptyListOf<Exp, ","> "}"    --record
     				| identifier
             | "(" Exp ")"		--group
@@ -143,7 +143,7 @@ TCShell {
             | as
             | record
             | varKeyword
-            | funKeyword
+            | fnKeyword
 
     typeKeyword = "type" ~identPart
     while = "while" ~identPart
@@ -183,7 +183,7 @@ TCShell {
     as = "as" ~identPart
     record = "record" ~identPart
     varKeyword = "var" ~identPart
-    funKeyword = "fun" ~identPart
+    fnKeyword = "fn" ~identPart
 
 
 

@@ -1,4 +1,4 @@
-var Main = fun () {
+var Main = fn () {
   var nums = [7, 5, 3]
   var arraysOfStringArrays = [["hello!"], ["Hello"], [" "], ["World!"]]
   print(nums)

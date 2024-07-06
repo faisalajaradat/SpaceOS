@@ -2,7 +2,7 @@ type BikePath = LandPath
 type PhysicalBikeSpace = physical mutable OpenSpace
 type Bike = physical mutable mobile SmartEntity
 
-var Main = fun () {
+var Main = fn () {
   var bikePath = new BikePath("bikePath1")
   var bikePathStart
     = new PhysicalBikeSpace(Location {0, 0}, 10, "Start")
