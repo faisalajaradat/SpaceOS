@@ -789,16 +789,22 @@ const typeRuleApplicationDictionary: {
       let spatialBaseType = checkType(funCall.identifier.locationExpr);
       while (isDecorator(spatialBaseType))
         spatialBaseType = spatialBaseType.delegate;
-      if (spatialBaseType instanceof SpacePathGraphType) {
-        if (funCall.identifier.symbol.value === "setRoot")
-          return new SpaceType().contains(checkType(funCall.args[0]));
-        if (funCall.identifier.symbol.value === "addPathSpace")
-          return (
-            new PathType().contains(checkType(funCall.args[0])) &&
-            new SpaceType().contains(checkType(funCall.args[1]))
-          );
-        if (funCall.identifier.symbol.value === "splitPath")
-          return new PathType().contains(checkType(funCall.args[0]));
+      if (
+        spatialBaseType instanceof SpacePathGraphType ||
+        spatialBaseType instanceof PathType
+      ) {
+        const mapFunction =
+          spatialBaseType instanceof SpacePathGraphType
+            ? SpacePathGraphType.mapMethodNameToMethodType
+            : PathType.mapMethodNameToMethodType;
+        return (
+          mapFunction(funCall.identifier.symbol.value).paramTypes.filter(
+            (paramType, pos) =>
+              !(paramType as CompositionType).contains(
+                checkType(funCall.args[pos]),
+              ),
+          ).length === 0
+        );
       }
     }
     if (
