@@ -797,6 +797,8 @@ const typeRuleApplicationDictionary: {
             new PathType().contains(checkType(funCall.args[0])) &&
             new SpaceType().contains(checkType(funCall.args[1]))
           );
+        if (funCall.identifier.symbol.value === "splitPath")
+          return new PathType().contains(checkType(funCall.args[0]));
       }
     }
     if (

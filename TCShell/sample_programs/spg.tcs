@@ -21,6 +21,11 @@ var Main = fun () {
     }
   }
   print(bikePath.getReachableSpaces())
+  bikeSPG.splitPath(bikePath)
+
+  print(bikeSPG.getStructJSON())
+
+  print(bikePath.getReachableSpaces())
 }
 
 

@@ -17,6 +17,7 @@ const PATH_SCHEMA_DEF: SchemaDefinition = {
   locality: { type: "string" },
   name: { type: "string" },
   segment: { type: "number" },
+  target: { type: "string" },
   reachable: { type: "string[]" },
 };
 
@@ -39,7 +40,11 @@ export abstract class Space extends SpatialObject {
   dimension: number;
   innerSpace: string;
   entities: string[];
-  protected constructor(locality: string, isControlled: boolean, locationJSON: string) {
+  protected constructor(
+    locality: string,
+    isControlled: boolean,
+    locationJSON: string,
+  ) {
     super(locality, isControlled);
     this.locationJSON = locationJSON;
     this.entities = new Array<string>();
@@ -66,7 +71,11 @@ export const SPACE_SCHEMA: Schema = new Schema("Space", SPACE_SCHEMA_DEF, {
 export abstract class DynamicEntity extends SpatialEntity {
   motion: string;
 
-  protected constructor(locality: string, isControlled: boolean, motion: string) {
+  protected constructor(
+    locality: string,
+    isControlled: boolean,
+    motion: string,
+  ) {
     super(locality, isControlled);
     this.motion = motion;
   }
@@ -146,6 +155,7 @@ export class SmartEntity extends DynamicEntity {
 export class Path extends SpatialTypeEntity {
   name: string;
   segment: number;
+  target: string;
   reachable: string[];
 
   constructor(locality: string, segment: number = 0) {
