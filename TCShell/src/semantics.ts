@@ -471,7 +471,6 @@ const typeRuleApplicationDictionary: {
   [TypeRule.AllCaseTypeAreCompatible]: (matchStmt: Match): boolean => {
     const subjectType = checkType(matchStmt.subject);
     return (
-      !isAnyType(subjectType) &&
       matchStmt.caseStmts.filter((caseStmt) => {
         const caseType = checkType(caseStmt.matchCondition);
         caseStmt.type = caseType;
@@ -508,10 +507,6 @@ const typeRuleApplicationDictionary: {
 
   [TypeRule.TypeCastToContainingType]: (typeCast: TypeCast): boolean => {
     const castedExprType = checkType(typeCast.castedExpr);
-    if (isAnyType(castedExprType)) {
-      constructType(typeCast.castedExpr, typeCast.type);
-      return true;
-    }
     return (
       castedExprType.equals(typeCast.type) ||
       (typeCast.type instanceof CompositionType &&
@@ -858,11 +853,6 @@ const typeRuleApplicationDictionary: {
   [TypeRule.SpatialObjectInstantiatedWithCompatibleArguments]: (
     objectInstantiation: SpatialObjectInstantiationExpr,
   ): boolean => {
-    if (
-      objectInstantiation.args.filter((arg) => isAnyType(checkType(arg)))
-        .length > 0
-    )
-      return false;
     let baseType = objectInstantiation.type;
     while (isDecorator(baseType)) baseType = baseType.delegate;
     if (
@@ -1299,5 +1289,7 @@ function countAmbigousTypes(node: ASTNode) {
   if (node instanceof Type && isAnyType(node)) {
     errors++;
     console.log(node.getFilePos() + "Insufficient type information!");
-  } else node.children().forEach(countAmbigousTypes);
+    return true;
+  } else node.children().some(countAmbigousTypes);
+  return false;
 }
