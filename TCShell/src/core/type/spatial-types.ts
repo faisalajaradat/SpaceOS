@@ -19,7 +19,6 @@ import {
   fetchData,
   saveData,
 } from "../../../../SpatialComputingEngine/src/spatial-computing-engine.js";
-import { SpacePathGraph } from "../../../../SpatialComputingEngine/src/frontend-objects.js";
 import { UnionType } from "./UnionType.js";
 import { Identifier } from "../expr/Expr.js";
 import { libDeclarations } from "../stmts.js";
@@ -197,95 +196,6 @@ export class PathType extends SpatialType {
     );
   }
 }
-
-export abstract class DirectionDecorator
-  extends PathType
-  implements SpatialTypeDecorator
-{
-  delegate: PathType;
-
-  constructor(delegate: PathType, line: number = -1, column: number = -1) {
-    super(line, column);
-    this.delegate = delegate;
-  }
-}
-
-export class UnidirectionalDecorator extends DirectionDecorator {
-  children(): ASTNode[] {
-    return this.delegate.children();
-  }
-
-  print(): string {
-    const unidirectionalDecoratorNodeId = newNodeId();
-    dotString.push(
-      unidirectionalDecoratorNodeId + '[label=" unidirectional "];\n',
-    );
-    const delegateNodeId = this.delegate.print();
-    dotString.push(
-      unidirectionalDecoratorNodeId + "->" + delegateNodeId + ";\n",
-    );
-    return unidirectionalDecoratorNodeId;
-  }
-
-  async evaluate(): Promise<void> {
-    return undefined;
-  }
-
-  equals(_type: Type): boolean {
-    return (
-      isAnyType(_type) ||
-      (this.contains(_type) &&
-        this.delegate.equals((<UnidirectionalDecorator>_type).delegate))
-    );
-  }
-
-  contains(_type: Type): boolean {
-    return (
-      isAnyType(_type) ||
-      (_type instanceof UnidirectionalDecorator &&
-        this.delegate.contains(_type.delegate))
-    );
-  }
-}
-
-export class BidirectionalDecorator extends DirectionDecorator {
-  children(): ASTNode[] {
-    return this.delegate.children();
-  }
-
-  print(): string {
-    const bidirectionalDecoratorNodeId = newNodeId();
-    dotString.push(
-      bidirectionalDecoratorNodeId + '[label=" bidirectional "];\n',
-    );
-    const delegateNodeId = this.delegate.print();
-    dotString.push(
-      bidirectionalDecoratorNodeId + "->" + delegateNodeId + ";\n",
-    );
-    return bidirectionalDecoratorNodeId;
-  }
-
-  async evaluate(): Promise<void> {
-    return undefined;
-  }
-
-  equals(_type: Type): boolean {
-    return (
-      isAnyType(_type) ||
-      (this.contains(_type) &&
-        this.delegate.equals((<BidirectionalDecorator>_type).delegate))
-    );
-  }
-
-  contains(_type: Type): boolean {
-    return (
-      isAnyType(_type) ||
-      (_type instanceof BidirectionalDecorator &&
-        this.delegate.contains(_type.delegate))
-    );
-  }
-}
-
 export class LandPathType extends PathType {
   constructor(line: number = -1, column: number = -1) {
     super(line, column);
@@ -819,11 +729,10 @@ export class SpacePathGraphType extends SpatialType {
         args[1] as string,
       )) as engine.Path;
       await saveData(engine.SPG_SCHEMA, spg);
-      path.direction === "unidirectional"
-        ? path.reachable.push(args[1] as string)
-        : path.reachable.push(args[1] as string, struct.root);
+      path.reachable.push(args[1] as string);
       await saveData(engine.PATH_SCHEMA, path);
     });
+    SpacePathGraphType.libMethods.set("splitPath", async (...args) => {});
     SpacePathGraphType.libMethods.set("getStructJSON", async (...args) => {
       const spg: engine.SpacePathGraph = (await fetchData(
         engine.SPG_SCHEMA,
@@ -833,7 +742,7 @@ export class SpacePathGraphType extends SpatialType {
     });
   }
 
-  static mapMethodNameToMethodType(methodName): FunctionType {
+  static mapMethodNameToMethodType(methodName: string): FunctionType {
     const maybeStringType = new UnionType(new Identifier("MaybeString"));
     maybeStringType.identifier.declaration = libDeclarations[1];
     switch (methodName) {

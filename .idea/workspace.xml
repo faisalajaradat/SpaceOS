@@ -9,9 +9,11 @@
       <change beforePath="$PROJECT_DIR$/SpatialComputingEngine/src/frontend-objects.ts" beforeDir="false" afterPath="$PROJECT_DIR$/SpatialComputingEngine/src/frontend-objects.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TCShell/src/TCShell.ohm" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/TCShell.ohm" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TCShell/src/ast.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/ast.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/SpatialObjectInstantiationExpr.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/SpatialObjectInstantiationExpr.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TCShell/src/core/stmts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/stmts.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TCShell/src/core/type/primitive-types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/type/primitive-types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/type/spatial-types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/type/spatial-types.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TCShell/src/semantics.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/semantics.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/utils.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -107,6 +109,7 @@
       <workItem from="1719863766394" duration="3740000" />
       <workItem from="1719960610614" duration="290000" />
       <workItem from="1720108491163" duration="192000" />
+      <workItem from="1720279178740" duration="732000" />
     </task>
     <servers />
   </component>

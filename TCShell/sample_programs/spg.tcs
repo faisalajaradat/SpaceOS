@@ -1,4 +1,4 @@
-type BikePath = unidirectional LandPath
+type BikePath = LandPath
 type PhysicalBikeSpace = physical mutable OpenSpace
 type Bike = physical mutable mobile SmartEntity
 

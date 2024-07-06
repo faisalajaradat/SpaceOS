@@ -80,12 +80,12 @@ export class SpatialObjectInstantiationExpr extends Expr {
     }
     const newObject: engine.SpatialTypeEntity =
       delegateType instanceof AirPathType
-        ? new engine.AirPath(properties.get("direction") as string)
-        : delegateType instanceof LandPathType
-          ? new engine.LandPath(properties.get("direction") as string)
-          : delegateType instanceof PathType
-            ? new engine.Path("virtual", properties.get("direction") as string)
-            : delegateType instanceof OpenSpaceType
+        ? new engine.AirPath()
+          : delegateType instanceof LandPathType
+          ? new engine.LandPath()
+              : delegateType instanceof PathType
+            ? new engine.Path("virtual")
+                  : delegateType instanceof OpenSpaceType
               ? new engine.OpenSpace(
                   properties.get("locality") as string,
                   properties.get("isControlled") as boolean,

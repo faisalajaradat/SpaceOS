@@ -84,11 +84,9 @@ TCShell {
                 | entityFactory
                 | pathFactory
 
-    PhysicalPathType = (unidirectional | bidirectional)? (landPath | airPath)
+    PhysicalPathType = landPath | airPath
 
-    PathType = (unidirectional | bidirectional)? path
-
-    MaybeVirtualSpatialType = (physical | virtual)? (spatialTypeKeyword | PathType | MaybeImmutableSpatialType)
+    MaybeVirtualSpatialType = (physical | virtual)? (spatialTypeKeyword | path | MaybeImmutableSpatialType)
 
     MaybeImmutableSpatialType = (mutable | immutable)? (spaceKeyword | openSpace | enclosedSpace | entity | staticEntity | MaybeMobileSpatialType)
 

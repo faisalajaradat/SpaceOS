@@ -24,7 +24,6 @@ import {
   ArrayType,
   BaseType,
   BaseTypeKind,
-  BidirectionalDecorator,
   BinaryExpr,
   BoolLiteral,
   ControlledDecorator,
@@ -35,7 +34,6 @@ import {
   FunctionType,
   FunDeclaration,
   LandPathType,
-  LocalityDecorator,
   MobileDecorator,
   NoneLiteral,
   NotControlledDecorator,
@@ -57,7 +55,6 @@ import {
   StationaryDecorator,
   StringLiteral,
   UnaryExpr,
-  UnidirectionalDecorator,
   UnionType,
   VirtualDecorator,
 } from "./core/index.js";
@@ -546,42 +543,8 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   SpatialType(spatialType) {
     return spatialType.ast();
   },
-  PhysicalPathType(possibleDirection, airOrLandPath) {
-    const lineAndColumn = this.source.getLineAndColumn();
-    const directionDescriptor = possibleDirection.ast()[0];
-    const physicalPathType = airOrLandPath.ast();
-    if (directionDescriptor !== undefined)
-      (physicalPathType as LocalityDecorator).delegate =
-        directionDescriptor === "unidirectional"
-          ? new UnidirectionalDecorator(
-              (physicalPathType as LocalityDecorator).delegate as PathType,
-              lineAndColumn.lineNum,
-              lineAndColumn.colNum,
-            )
-          : new BidirectionalDecorator(
-              (physicalPathType as LocalityDecorator).delegate as PathType,
-              lineAndColumn.lineNum,
-              lineAndColumn.colNum,
-            );
-    return physicalPathType;
-  },
-  PathType(possibleDirection, path) {
-    const lineAndColumn = this.source.getLineAndColumn();
-    const directionDescriptor = possibleDirection.ast()[0];
-    const pathType = path.ast();
-    return directionDescriptor === undefined
-      ? pathType
-      : directionDescriptor === "unidirectional"
-        ? new UnidirectionalDecorator(
-            pathType,
-            lineAndColumn.lineNum,
-            lineAndColumn.colNum,
-          )
-        : new BidirectionalDecorator(
-            pathType,
-            lineAndColumn.lineNum,
-            lineAndColumn.colNum,
-          );
+  PhysicalPathType(airOrLandPath) {
+    return airOrLandPath.ast();
   },
   MaybeVirtualSpatialType(possibleVirtualOrPhysical, spatialType) {
     const maybeVirtualSpatialType: SpatialType = spatialType.ast();

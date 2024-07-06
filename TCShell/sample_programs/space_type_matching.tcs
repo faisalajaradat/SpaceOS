@@ -12,10 +12,6 @@ var handlePath = fun (var p: Path) {
     var ap: AirPath => print("Is Air")
     var lp: LandPath => print("Is Land")
   }
-  match p {
-    var up: unidirectional Path => print("Is unidirectional")
-    var bp: bidirectional Path => print("Is bidirectional")
-  }
 }
 
 var handleEntity = fun (var e: Entity) {
@@ -68,7 +64,7 @@ var parseAndDescribeSpacialTypes = fun (var listOfSpatialTypes: SpatialType[]) {
 
 var car = new physical mutable mobile SmartEntity()
 var parkingLot = new physical mutable OpenSpace(Location {50, 20})
-var street = new bidirectional LandPath()
+var street = new LandPath()
 
 var lotAndCars = [ (SpatialType)car, (SpatialType)parkingLot, (SpatialType)street ]
 

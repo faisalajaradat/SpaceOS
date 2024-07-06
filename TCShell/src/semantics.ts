@@ -37,7 +37,6 @@ import {
   CompositionType,
   ControlDecorator,
   DefaultBaseTypeInstance,
-  DirectionDecorator,
   EnclosedSpaceType,
   FunctionType,
   FunDeclaration,
@@ -50,7 +49,6 @@ import {
   SpacePathGraphType,
   SpaceType,
   SpatialObjectInstantiationExpr,
-  SpatialType,
   StaticEntityType,
   Type,
   UnaryExpr,
@@ -841,7 +839,7 @@ const typeRuleApplicationDictionary: {
     objectInstantiation: SpatialObjectInstantiationExpr,
   ): boolean =>
     (isDecorator(objectInstantiation.type) &&
-      (objectInstantiation.type.delegate instanceof DirectionDecorator ||
+      (objectInstantiation.type.delegate instanceof PathType ||
         (objectInstantiation.type.delegate instanceof ControlDecorator &&
           (objectInstantiation.type.delegate.delegate instanceof SpaceType ||
             objectInstantiation.type.delegate.delegate instanceof

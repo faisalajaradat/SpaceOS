@@ -7,7 +7,7 @@ export abstract class SpatialTypeEntity implements Entity {
   _type: string;
   locality: string;
 
-  constructor(locality: string) {
+  protected constructor(locality: string) {
     this.locality = locality;
   }
 }
@@ -15,7 +15,6 @@ export abstract class SpatialTypeEntity implements Entity {
 const PATH_SCHEMA_DEF: SchemaDefinition = {
   _type: { type: "string" },
   locality: { type: "string" },
-  direction: { type: "string" },
   name: { type: "string" },
   segment: { type: "number" },
   reachable: { type: "string[]" },
@@ -40,7 +39,7 @@ export abstract class Space extends SpatialObject {
   dimension: number;
   innerSpace: string;
   entities: string[];
-  constructor(locality: string, isControlled: boolean, locationJSON: string) {
+  protected constructor(locality: string, isControlled: boolean, locationJSON: string) {
     super(locality, isControlled);
     this.locationJSON = locationJSON;
     this.entities = new Array<string>();
@@ -67,7 +66,7 @@ export const SPACE_SCHEMA: Schema = new Schema("Space", SPACE_SCHEMA_DEF, {
 export abstract class DynamicEntity extends SpatialEntity {
   motion: string;
 
-  constructor(locality: string, isControlled: boolean, motion: string) {
+  protected constructor(locality: string, isControlled: boolean, motion: string) {
     super(locality, isControlled);
     this.motion = motion;
   }
@@ -145,13 +144,12 @@ export class SmartEntity extends DynamicEntity {
 }
 
 export class Path extends SpatialTypeEntity {
-  direction: string;
   name: string;
   segment: number;
   reachable: string[];
-  constructor(locality: string, direction: string, segment: number = 0) {
+
+  constructor(locality: string, segment: number = 0) {
     super(locality);
-    this.direction = direction;
     this.segment = segment;
     this.reachable = new Array<string>();
     this._type = "Path";
@@ -159,15 +157,15 @@ export class Path extends SpatialTypeEntity {
 }
 
 export class AirPath extends Path {
-  constructor(direction: string, segment: number = 0) {
-    super("physical", direction, segment);
+  constructor(segment: number = 0) {
+    super("physical", segment);
     this._type = "AirPath";
   }
 }
 
 export class LandPath extends Path {
-  constructor(direction: string, segment: number = 0) {
-    super("physical", direction, segment);
+  constructor(segment: number = 0) {
+    super("physical", segment);
     this._type = "LandPath";
   }
 }

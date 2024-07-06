@@ -28,7 +28,6 @@ import {
   ArrayType,
   BaseType,
   BaseTypeKind,
-  BidirectionalDecorator,
   CompositionType,
   ControlledDecorator,
   DefaultBaseTypeInstance,
@@ -51,7 +50,6 @@ import {
   StaticEntityType,
   StationaryDecorator,
   Type,
-  UnidirectionalDecorator,
   UnionType,
   VirtualDecorator,
 } from "./type/index.js";
@@ -729,11 +727,6 @@ export class Match extends Stmt {
             constructedType = (<engine.SpatialObject>data).isControlled
               ? new ControlledDecorator(<SpatialObjectType>constructedType)
               : new NotControlledDecorator(<SpatialObjectType>constructedType);
-          if (property === "direction")
-            constructedType =
-              (data as engine.Path).direction === "unidirectional"
-                ? new UnidirectionalDecorator(constructedType as PathType)
-                : new BidirectionalDecorator(constructedType as PathType);
           if (property === "locality")
             constructedType =
               data.locality === "physical"
