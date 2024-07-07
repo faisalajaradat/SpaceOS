@@ -62,6 +62,7 @@ const SPACE_SCHEMA_DEF: SchemaDefinition = {
   dimension: { type: "string" },
   innerSpace: { type: "string" },
   entities: { type: "string[]" },
+  controlSignal: { type: "boolean" },
 };
 
 export const SPACE_SCHEMA: Schema = new Schema("Space", SPACE_SCHEMA_DEF, {
@@ -128,6 +129,28 @@ export class EnclosedSpace extends Space {
   constructor(locality: string, isControlled: boolean, locationJSON: string) {
     super(locality, isControlled, locationJSON);
     this._type = "EnclosedSpace";
+  }
+}
+
+export interface ControlSpace {
+  controlSignal: boolean;
+}
+
+export class MergeSpace extends Space implements ControlSpace {
+  controlSignal: boolean;
+
+  constructor(locality: string, locationJSON: string) {
+    super(locality, true, locationJSON);
+    this._type = "MergeSpace";
+  }
+}
+
+export class SelectionSpace extends Space implements ControlSpace {
+  controlSignal: boolean;
+
+  constructor(locality: string, locationJSON: string) {
+    super(locality, true, locationJSON);
+    this._type = "SelectionSpace";
   }
 }
 

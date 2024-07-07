@@ -11,6 +11,8 @@ print(Person {"Alex", 18, isSameAge})
 
 var sam = Person {"Sam", 21, isSameAge}
 
+sam = Person {sam.name, 22, sam.isSameAge}
+
 print(sam.name + " is " + sam.age + " years old!")
 
 if sam.isSameAge(sam, Person {"Marc", 24, isSameAge})

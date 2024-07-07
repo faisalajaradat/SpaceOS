@@ -845,3 +845,31 @@ export class SpacePathGraphType extends SpatialType {
     );
   }
 }
+
+export abstract class ControlSpaceType extends SpaceType {}
+
+export class SelectionSpaceType extends ControlSpaceType {
+  equals(_type: Type): boolean {
+    return isAnyType(_type) || _type instanceof SelectionSpaceType;
+  }
+
+  contains(_type: Type): boolean {
+    return (
+      this.equals(_type) ||
+      (isDecorator(_type) && this.contains(_type.delegate))
+    );
+  }
+}
+
+export class MergeSpaceType extends ControlSpaceType {
+  equals(_type: Type): boolean {
+    return isAnyType(_type) || _type instanceof MergeSpaceType;
+  }
+
+  contains(_type: Type): boolean {
+    return (
+      this.equals(_type) ||
+      (isDecorator(_type) && this.contains(_type.delegate))
+    );
+  }
+}

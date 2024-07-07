@@ -21,7 +21,7 @@ var Main = fn () {
     }
   }
   print(bikePath.getReachableSpaces())
-  bikeSPG.splitPath(bikePath)
+  var bikePathSeg1 = bikeSPG.splitPath(bikePath)
 
   print(bikeSPG.getStructJSON())
 
