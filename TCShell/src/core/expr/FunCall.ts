@@ -90,7 +90,9 @@ export class FunCall extends Expr {
         args.push(
           getValueOfExpression(await arg.evaluate(varStacks), varStacks),
         );
-      return libFunctions.get(<VarDeclaration>identifier.declaration)(...args);
+      return await libFunctions.get(<VarDeclaration>identifier.declaration)(
+        ...args,
+      );
     }
     const funDecl = <FunDeclaration>getValueOfExpression(identifier, varStacks);
     for (let pos = 0; pos < this.args.length; pos++) {

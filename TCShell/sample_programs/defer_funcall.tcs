@@ -3,15 +3,16 @@ var counter = fn (var id: number, var start: number, var end: number) {
     while iter < end {
         print("Counter " + id + ": " + iter)
         iter = iter + 1
+        sleep(1000)
     }
 }
 
 var iter = 0
 
-defer counter(1, iter, 10)
+defer counter(1, iter, 6)
 iter = 1
 
-defer counter(2, iter, 10)
+defer counter(2, iter, 6)
 iter = 2
 
-counter(3, iter, 10)
+counter(3, iter, 6)

@@ -994,3 +994,17 @@ libFunctions.set(
   ),
   (...args) => (<unknown[]>args[0]).splice(<number>args[1], <number>args[2]),
 );
+libFunctions.set(
+  new VarDeclaration(
+    new FunctionType(DefaultBaseTypeInstance.VOID, [
+      DefaultBaseTypeInstance.NUMBER,
+    ]),
+    new Identifier("sleep"),
+    new FunDeclaration(
+      DefaultBaseTypeInstance.VOID,
+      [new Parameter(DefaultBaseTypeInstance.NUMBER, new Identifier("ms"))],
+      new Block(new Array<ExprStmt>()),
+    ),
+  ),
+  (...args) => new Promise((resolve) => setTimeout(resolve, args[0] as number)),
+);
