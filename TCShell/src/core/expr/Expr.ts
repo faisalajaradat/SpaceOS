@@ -28,7 +28,7 @@ export abstract class Expr implements ASTNode {
 
   abstract print(): string;
 
-  abstract evaluate(): Promise<unknown>;
+  abstract evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<unknown>;
 
   getFilePos(): string {
     return "line: " + this.line + ", column: " + this.column + ", ";
@@ -68,7 +68,8 @@ export class Identifier extends Expr {
     return identifierNodeId;
   }
 
-  async evaluate(): Promise<Identifier> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<Identifier> {
     return this;
   }
 }

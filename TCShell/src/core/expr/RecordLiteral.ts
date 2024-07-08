@@ -1,6 +1,7 @@
-import { ASTNode, dotString, newNodeId } from "../program.js";
+import {ASTNode, dotString, newNodeId, SymbolDeclaration} from "../program.js";
 import { RecordType } from "../type/index.js";
 import { Expr, Identifier } from "./Expr.js";
+import {getValueOfExpression} from "../../utils.js";
 
 export class RecordLiteral extends Expr {
   fieldValues: Expr[];
@@ -34,16 +35,17 @@ export class RecordLiteral extends Expr {
     return recordLiteralNodeId;
   }
 
-  async evaluate(): Promise<object> {
+  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<object> {
     const defaultRecord = (await (
       this.type as RecordType
-    ).identifier.declaration.evaluate()) as object;
+    ).identifier.declaration.evaluate(varStacks)) as object;
     const props = Object.keys(defaultRecord);
     (
       await Promise.all(
-        this.fieldValues.map(async (expr) => await expr.evaluate()),
+        this.fieldValues.map(async (expr) => await expr.evaluate(varStacks)),
       )
-    ).forEach((value, pos) => (defaultRecord[props[pos]] = value));
+    ).map(value => getValueOfExpression(value, varStacks))
+        .forEach((value, pos) => (defaultRecord[props[pos]] = value));
     return defaultRecord;
   }
 }

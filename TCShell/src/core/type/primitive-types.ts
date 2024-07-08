@@ -1,4 +1,4 @@
-import { ASTNode, dotString, newNodeId, RuntimeType } from "../program.js";
+import {ASTNode, dotString, newNodeId, RuntimeType, SymbolDeclaration} from "../program.js";
 import { getTypeDeclaration, isAnyType } from "../../utils.js";
 import { Identifier } from "../expr/Expr.js";
 
@@ -10,7 +10,10 @@ export abstract class Type implements ASTNode {
 
   abstract print(): string;
 
-  abstract evaluate(): Promise<unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<unknown> {
+    return undefined;
+  }
 
   abstract equals(_type: Type): boolean;
 
@@ -88,7 +91,8 @@ export class BaseType extends Type {
     return typeNodeId;
   }
 
-  async evaluate(): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<unknown> {
     return astBaseTypeRuntimeDictionary[this.kind];
   }
 }
@@ -152,10 +156,6 @@ export class FunctionType extends Type {
     return functionTypeNodeId;
   }
 
-  async evaluate(): Promise<void> {
-    return undefined;
-  }
-
   get returnType(): Type {
     if (this._returnType instanceof Identifier)
       return getTypeDeclaration(this._returnType);
@@ -211,10 +211,6 @@ export class ArrayType extends Type {
     const typeNodeId = this._type.print();
     dotString.push(arrayTypeNodeId + "->" + typeNodeId + ";\n");
     return arrayTypeNodeId;
-  }
-
-  async evaluate(): Promise<void> {
-    return undefined;
   }
 
   get type(): Type {

@@ -1,10 +1,7 @@
 import * as core from "./core/program.js";
-import { MatchCondition, Program, varStacks } from "./core/program.js";
+import {MatchCondition, SymbolDeclaration} from "./core/program.js";
 import {
   AliasTypeDeclaration,
-  Block,
-  CaseStmt,
-  DeferDecorator,
   Parameter,
   RecordDeclaration,
   Stmt,
@@ -19,7 +16,6 @@ import {
   BaseTypeKind,
   ControlledDecorator,
   DefaultBaseTypeInstance,
-  FunDeclaration,
   MobileDecorator,
   NotControlledDecorator,
   PhysicalDecorator,
@@ -33,9 +29,7 @@ import {
 } from "./core/index.js";
 import { Identifier } from "./core/expr/Expr.js";
 
-export function popOutOfScopeVars(
-  node: Program | FunDeclaration | Block | CaseStmt | DeferDecorator,
-) {
+export function popOutOfScopeVars(node: core.ScopedNode, varStacks: Map<SymbolDeclaration, unknown[]>) {
   node.scope.symbolTable.forEach((symbol) => {
     if (symbol instanceof VarSymbol) varStacks.get(symbol.varDeclaration).pop();
     if (symbol instanceof ImportSymbol)
@@ -45,7 +39,7 @@ export function popOutOfScopeVars(
   });
 }
 
-export function getValueOfExpression(value: unknown): unknown {
+export function getValueOfExpression(value: unknown, varStacks: Map<SymbolDeclaration, unknown[]>): unknown {
   if (value instanceof Identifier) {
     value = varStacks.get(<VarDeclaration | Parameter>value.declaration).at(-1);
   } else if (value instanceof core.ArrayRepresentation)
@@ -67,6 +61,10 @@ export function isDecorator(_type: Type): _type is SpatialTypeDecorator {
 
 export function isPublic(stmt: Stmt): boolean {
   return stmt instanceof VarDeclaration && stmt.isPublic;
+}
+
+export function isScopedNode(node: core.ASTNode): node is core.ScopedNode {
+  return "scope" in node;
 }
 
 export function getTypeDeclaration(identifier: Identifier): Type {

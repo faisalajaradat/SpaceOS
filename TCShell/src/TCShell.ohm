@@ -4,13 +4,13 @@ TCShell {
 
     Interactive = StmtNewline
 
-	  StmtNewline = DeferDecorator? CompoundStmt #newline	--compound
+	  StmtNewline = defer? CompoundStmt #newline	--compound
     						| SimpleStmts	--simple
                 | newline
                 | end
 
     Stmt = SimpleStmts #newline --simple
-    			| DeferDecorator? CompoundStmt  --compound
+    			| defer? CompoundStmt  --compound
 
     SimpleStmts = NonemptyListWithOptionalEndSep<SimpleStmt, ";">
 
@@ -68,8 +68,6 @@ TCShell {
     UnionDeclaration = UnionType "=" NonemptyListOf<Type, "|">
     ImportDeclaration = import stringLiteral as identifier
     RecordDeclaration = RecordType "{" NonemptyListOf<Parameter, ","> "}"
-    DeferDecorator = defer "(" ListOf<identifier, ","> ")"
-
     Parameter = varKeyword identifier ExplicitType?
 
     ExplicitType = ":" Type

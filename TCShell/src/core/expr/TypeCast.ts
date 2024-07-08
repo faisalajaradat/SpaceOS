@@ -1,5 +1,6 @@
-import { ASTNode, dotString, newNodeId, RuntimeType } from "../program.js";
+import {ASTNode, dotString, newNodeId, RuntimeType, SymbolDeclaration} from "../program.js";
 import { Expr } from "./Expr.js";
+import {getValueOfExpression} from "../../utils.js";
 
 export class TypeCast extends Expr {
   castedExpr: Expr;
@@ -31,7 +32,7 @@ export class TypeCast extends Expr {
     return typeCastNodeId;
   }
 
-  async evaluate(): Promise<unknown> {
-    return await this.castedExpr.evaluate();
+  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<unknown> {
+    return getValueOfExpression(await this.castedExpr.evaluate(varStacks), varStacks);
   }
 }

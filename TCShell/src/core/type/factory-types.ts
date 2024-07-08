@@ -1,4 +1,4 @@
-import { ASTNode, dotString, newNodeId, RuntimeType } from "../program.js";
+import {ASTNode, dotString, newNodeId, RuntimeType} from "../program.js";
 import { isAnyType } from "../../utils.js";
 
 import { Type } from "./primitive-types.js";
@@ -26,10 +26,6 @@ export class SpaceFactoryType extends FactoryType {
     return spaceFactoryTypeNodeId;
   }
 
-  async evaluate(): Promise<void> {
-    return undefined;
-  }
-
   equals(_type: Type): boolean {
     return isAnyType(_type) || _type instanceof SpaceFactoryType;
   }
@@ -52,10 +48,6 @@ export class EntityFactoryType extends FactoryType {
     return entityFactoryTypeNodeId;
   }
 
-  async evaluate(): Promise<void> {
-    return undefined;
-  }
-
   equals(_type: RuntimeType): boolean {
     return isAnyType(_type) || _type instanceof EntityFactoryType;
   }
@@ -74,10 +66,6 @@ export class PathFactoryType extends FactoryType {
     const pathFactoryTypeNodeId = newNodeId();
     dotString.push(pathFactoryTypeNodeId + '[label=" Path Factory Type "];\n');
     return pathFactoryTypeNodeId;
-  }
-
-  async evaluate(): Promise<void> {
-    return undefined;
   }
 
   equals(_type: RuntimeType): boolean {

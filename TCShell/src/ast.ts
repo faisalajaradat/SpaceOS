@@ -84,9 +84,9 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   Stmt_simple(simpleStatements, _newline) {
     return simpleStatements.ast()[0];
   },
-  Stmt_compound(possibleDeferDecorator, compoundStatement) {
+  Stmt_compound(possibleDefer, compoundStatement) {
     const compoundStmt = compoundStatement.ast();
-    const deferDecorator = possibleDeferDecorator.ast()[0];
+    const deferDecorator = possibleDefer.ast()[0];
     if (deferDecorator === undefined) return compoundStmt;
     (<DeferDecorator>deferDecorator).delegate = compoundStmt;
     return deferDecorator;
@@ -440,18 +440,9 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       lineAndColumn.colNum,
     );
   },
-  DeferDecorator(
-    _defer,
-    _leftParenthesis,
-    listOfIdentifiers,
-    _rightParenthesis,
-  ) {
+  defer(_defer) {
     const lineAndColumn = this.source.getLineAndColumn();
-    return new DeferDecorator(
-      listOfIdentifiers.asIteration().ast(),
-      lineAndColumn.lineNum,
-      lineAndColumn.colNum,
-    );
+    return new DeferDecorator(lineAndColumn.lineNum, lineAndColumn.colNum);
   },
   Parameter(_varKeyword, identifier, possibleExplicitType) {
     const lineAndColumn = this.source.getLineAndColumn();

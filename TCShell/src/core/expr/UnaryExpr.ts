@@ -1,5 +1,5 @@
 import { Type } from "../type/index.js";
-import { ASTNode, dotString, newNodeId } from "../program.js";
+import {ASTNode, dotString, newNodeId, SymbolDeclaration} from "../program.js";
 import { getValueOfExpression } from "../../utils.js";
 import { Expr } from "./Expr.js";
 
@@ -33,8 +33,8 @@ export class UnaryExpr extends Expr {
     return opNodeId;
   }
 
-  async evaluate(): Promise<number | boolean> {
-    const expression = getValueOfExpression(await this.expr.evaluate());
+  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<unknown> {
+    const expression = getValueOfExpression(await this.expr.evaluate(varStacks), varStacks);
     switch (this.operator) {
       case "+":
         return +(<number>expression);

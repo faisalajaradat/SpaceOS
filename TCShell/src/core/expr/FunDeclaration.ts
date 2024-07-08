@@ -1,11 +1,11 @@
 import { DeferDecorator, Parameter, Return, Stmt } from "../stmts.js";
 import {
-  ASTNode,
-  dotString,
-  ExprStmt,
-  newNodeId,
-  RuntimeType,
-  unresolved,
+    ASTNode,
+    dotString,
+    ExprStmt,
+    newNodeId,
+    RuntimeType, SymbolDeclaration,
+    unresolved,
 } from "../program.js";
 import { Scope } from "../../semantics.js";
 import { FunctionType } from "../type/index.js";
@@ -59,21 +59,22 @@ export class FunDeclaration extends Expr {
     return funDeclNodeId;
   }
 
-  async evaluate(): Promise<unknown> {
+  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<unknown> {
     let returnValue = undefined;
     if (this._body instanceof DeferDecorator)
-      unresolved.push(this._body.evaluate());
+      unresolved.push(this._body.evaluate(varStacks));
     else {
-      returnValue = await this._body.evaluate();
+      returnValue = await this._body.evaluate(varStacks);
       if (
         returnValue instanceof Return &&
         returnValue.possibleValue !== undefined
       )
         returnValue = getValueOfExpression(
-          await returnValue.possibleValue.evaluate(),
+          await returnValue.possibleValue.evaluate(varStacks),
+            varStacks
         );
     }
-    popOutOfScopeVars(this);
+    popOutOfScopeVars(this, varStacks);
     return returnValue;
   }
 }

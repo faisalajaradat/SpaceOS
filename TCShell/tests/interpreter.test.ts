@@ -5,6 +5,7 @@ import { ast } from "../src/ast.js";
 import analyze from "../src/semantics.js";
 import * as test_cases from "./test_cases.js";
 import { disconnect } from "../../SpatialComputingEngine/src/spatial-computing-engine.js";
+import {SymbolDeclaration} from "../src/core/program.js";
 /*import {
   DockerComposeEnvironment,
   StartedDockerComposeEnvironment,
@@ -27,7 +28,7 @@ afterAll(async () => {
 
 async function executeTestCase(testCase: string) {
   const program: core.Program = ast(grammar.match(testCase));
-  if (analyze(program) === 0) await program.evaluate();
+  if (analyze(program) === 0) await program.evaluate(new Map<SymbolDeclaration, unknown[]>());
 }
 
 test("newline as statement seperator", async () => {

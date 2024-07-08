@@ -1,6 +1,8 @@
 import { Scope } from "../semantics.js";
 import { popOutOfScopeVars } from "../utils.js";
 import {
+  Block,
+  CaseStmt,
   DeferDecorator,
   If,
   Parameter,
@@ -9,10 +11,10 @@ import {
   While,
 } from "./stmts.js";
 import { Expr, Identifier } from "./expr/Expr.js";
-import { BinaryExpr } from "./expr/BinaryExpr.js";
-import { Type } from "./type/primitive-types.js";
+import { BinaryExpr } from "./expr/index.js";
+import { Type } from "./type/index.js";
+import { FunDeclaration } from "./expr/index.js";
 //A map variable declaration and their stack of assigned values
-export const varStacks = new Map<VarDeclaration | Parameter, unknown[]>();
 export const unresolved = [];
 export class ArrayRepresentation {
   array: unknown[];
@@ -45,6 +47,13 @@ export type Location = { x: number; y: number };
 
 export type SPGStruct = { root: string; table: Map<string, string[]> };
 
+export type ScopedNode =
+  | Program
+  | FunDeclaration
+  | Block
+  | CaseStmt
+  | DeferDecorator;
+
 export function jsonReplacer(key, value) {
   if (value instanceof Map) return { dataType: "Map", value: [...value] };
   return value;
@@ -66,7 +75,7 @@ export interface ASTNode {
   //Implement dot printer behaviour for node
   print(): string;
   //Implement tree walker behaviour for node
-  evaluate(): Promise<unknown>;
+  evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<unknown>;
 }
 
 export class Program implements ASTNode {
@@ -106,12 +115,12 @@ export class Program implements ASTNode {
     return programNodeId;
   }
 
-  async evaluate(): Promise<void> {
+  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<void> {
     for (const stmt of [...this.libStmts, ...this.children()]) {
-      if (stmt instanceof DeferDecorator) unresolved.push(stmt.evaluate());
-      else await stmt.evaluate();
+      if (stmt instanceof DeferDecorator) unresolved.push(stmt.evaluate(varStacks));
+      else await stmt.evaluate(varStacks);
     }
-    popOutOfScopeVars(this);
+    popOutOfScopeVars(this, varStacks);
     await Promise.all(unresolved);
   }
 }

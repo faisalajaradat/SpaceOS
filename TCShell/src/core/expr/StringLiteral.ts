@@ -1,5 +1,5 @@
 import { BaseType, BaseTypeKind } from "../type/index.js";
-import { ASTNode, dotString, newNodeId } from "../program.js";
+import {ASTNode, dotString, newNodeId, SymbolDeclaration} from "../program.js";
 import { Expr } from "./Expr.js";
 
 export class StringLiteral extends Expr {
@@ -20,7 +20,8 @@ export class StringLiteral extends Expr {
     return stringLiteralNodeId;
   }
 
-  async evaluate(): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<string> {
     return this.value;
   }
 }

@@ -15,7 +15,6 @@ import {
   If,
   ImportDeclaration,
   libDeclarations,
-  libFunctions,
   Match,
   Parameter,
   RecordDeclaration,
@@ -276,15 +275,8 @@ function visitNameAnalyzer(node: ASTNode, scope: Scope) {
     node.children().forEach((child) => visitNameAnalyzer(child, curScope));
     node.scope = curScope;
   } else if (node instanceof DeferDecorator) {
-    node.scopeArgs.forEach((arg) => visitNameAnalyzer(arg, scope));
-    node.scopeParams = node.scopeArgs.map(
-      (arg) => new Parameter(arg.declaration.type, arg, arg.line, arg.column),
-    );
-    const newScope = new Scope(null);
-    libFunctions.forEach((_value, key) => visitNameAnalyzer(key, newScope));
-    node.scopeParams.forEach((param) => visitNameAnalyzer(param, newScope));
-    visitNameAnalyzer(node.delegate, newScope);
-    node.scope = newScope;
+    node.scope = new Scope(scope);
+    visitNameAnalyzer(node.delegate, node.scope);
   } else if (node instanceof Identifier) {
     const programSymbol = scope.lookup(node.value);
     if (programSymbol === null) {

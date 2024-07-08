@@ -2,8 +2,7 @@ import {
   ASTNode,
   dotString,
   newNodeId,
-  RuntimeType,
-  varStacks,
+  RuntimeType, SymbolDeclaration,
 } from "../program.js";
 import { libFunctions, VarDeclaration } from "../stmts.js";
 import { getValueOfExpression, isDecorator } from "../../utils.js";
@@ -48,7 +47,7 @@ export class FunCall extends Expr {
     return funCallNodeId;
   }
 
-  async evaluate(): Promise<unknown> {
+  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<unknown> {
     if (this.identifier instanceof SymbolAccess) {
       let spatialBaseType = this.identifier.locationExpr.type;
       while (isDecorator(spatialBaseType))
@@ -59,9 +58,9 @@ export class FunCall extends Expr {
       ) {
         const args = new Array<unknown>();
         for (const arg of this.args)
-          args.push(getValueOfExpression(await arg.evaluate()));
+          args.push(getValueOfExpression(await arg.evaluate(varStacks), varStacks));
         args.unshift(
-          getValueOfExpression(await this.identifier.locationExpr.evaluate()),
+          getValueOfExpression(await this.identifier.locationExpr.evaluate(varStacks), varStacks),
         );
         return await (
           spatialBaseType instanceof SpacePathGraphType
@@ -70,25 +69,25 @@ export class FunCall extends Expr {
         ).get(this.identifier.symbol.value)(...args);
       }
     }
-    const identifier = await this.identifier.evaluate();
+    const identifier = await this.identifier.evaluate(varStacks);
     if (
       identifier instanceof Identifier &&
       libFunctions.has(<VarDeclaration>identifier.declaration)
     ) {
       const args = new Array<unknown>();
       for (const arg of this.args)
-        args.push(getValueOfExpression(await arg.evaluate()));
+        args.push(getValueOfExpression(await arg.evaluate(varStacks), varStacks));
       return libFunctions.get(<VarDeclaration>identifier.declaration)(...args);
     }
-    const funDecl = <FunDeclaration>getValueOfExpression(identifier);
+    const funDecl = <FunDeclaration>getValueOfExpression(identifier, varStacks);
     for (let pos = 0; pos < this.args.length; pos++) {
       const arg = this.args[pos];
-      const value = getValueOfExpression(await arg.evaluate());
+      const value = getValueOfExpression(await arg.evaluate(varStacks), varStacks);
       const paramStack = varStacks.get((<FunDeclaration>funDecl).params[pos]);
       if (paramStack === undefined)
         varStacks.set((<FunDeclaration>funDecl).params[pos], [value]);
       else paramStack.push(value);
     }
-    return await funDecl.evaluate();
+    return await funDecl.evaluate(varStacks);
   }
 }

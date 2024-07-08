@@ -4,7 +4,6 @@ import {
   dotString,
   newNodeId,
   SymbolDeclaration,
-  varStacks,
 } from "../program.js";
 import { getValueOfExpression } from "../../utils.js";
 import { Expr, Identifier } from "./Expr.js";
@@ -41,12 +40,12 @@ export class ArrayAccess extends Expr {
     return arrayAccessNodeId;
   }
 
-  async evaluate(): Promise<ArrayRepresentation> {
+  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<unknown> {
     const indices = new Array<number>();
     let arrayBase = <ArrayAccess>this;
     while (true) {
       indices.push(
-        <number>getValueOfExpression(await arrayBase.accessExpr.evaluate()),
+        <number>getValueOfExpression(await arrayBase.accessExpr.evaluate(varStacks), varStacks),
       );
       if (!((<ArrayAccess>arrayBase).arrayExpr instanceof ArrayAccess)) break;
       arrayBase = <ArrayAccess>arrayBase.arrayExpr;

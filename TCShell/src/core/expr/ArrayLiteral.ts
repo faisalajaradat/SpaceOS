@@ -1,5 +1,5 @@
 import { ArrayType, BaseType, BaseTypeKind } from "../type/index.js";
-import { ASTNode, dotString, newNodeId } from "../program.js";
+import {ASTNode, dotString, newNodeId, SymbolDeclaration} from "../program.js";
 import { getValueOfExpression } from "../../utils.js";
 import { Expr } from "./Expr.js";
 
@@ -30,10 +30,10 @@ export class ArrayLiteral extends Expr {
     return arrayNodeId;
   }
 
-  async evaluate(): Promise<unknown[]> {
+  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<unknown> {
     const array = new Array<unknown>();
     for (const exp of this.value)
-      array.push(getValueOfExpression(await exp.evaluate()));
+      array.push(getValueOfExpression(await exp.evaluate(varStacks), varStacks));
     return array;
   }
 }

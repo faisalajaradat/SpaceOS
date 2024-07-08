@@ -1,5 +1,5 @@
 import { BaseType, BaseTypeKind } from "../type/index.js";
-import { ASTNode, dotString, newNodeId } from "../program.js";
+import {ASTNode, dotString, newNodeId, SymbolDeclaration} from "../program.js";
 import { Expr } from "./Expr.js";
 
 export class BoolLiteral extends Expr {
@@ -20,7 +20,8 @@ export class BoolLiteral extends Expr {
     return boolLiteralNodeId;
   }
 
-  async evaluate(): Promise<boolean> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<boolean> {
     return this.value;
   }
 }

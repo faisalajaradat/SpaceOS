@@ -1,4 +1,4 @@
-import { ASTNode, dotString, newNodeId } from "../program.js";
+import {ASTNode, dotString, newNodeId} from "../program.js";
 import { Type } from "./primitive-types.js";
 import { Identifier } from "../expr/Expr.js";
 import { isAnyType } from "../../utils.js";
@@ -21,10 +21,6 @@ export class RecordType extends Type {
     const identifierNodeId = this.identifier.print();
     dotString.push(recordTypeNodeId + "->" + identifierNodeId + ";\n");
     return recordTypeNodeId;
-  }
-
-  evaluate(): Promise<unknown> {
-    return undefined;
   }
 
   equals(_type: Type): boolean {

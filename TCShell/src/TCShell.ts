@@ -6,6 +6,7 @@ import { Command } from "commander";
 import { graphviz } from "node-graphviz";
 import analyze from "./semantics.js";
 import { disconnect } from "../../SpatialComputingEngine/src/spatial-computing-engine.js";
+import {SymbolDeclaration} from "./core/program.js";
 //Entrypoint and CLI for using TCShell interpreter
 
 const program = new Command();
@@ -72,7 +73,7 @@ program
         await disconnect();
         return;
       }
-      await astHead.evaluate();
+      await astHead.evaluate(new Map<SymbolDeclaration, unknown[]>);
       await disconnect();
     } catch (err) {
       console.error(err);

@@ -18,8 +18,8 @@ import {
   MatchCondition,
   newNodeId,
   RuntimeType,
+  SymbolDeclaration,
   unresolved,
-  varStacks,
 } from "./program.js";
 import { Expr, Identifier } from "./expr/Expr.js";
 import {
@@ -60,7 +60,9 @@ export abstract class Stmt implements ASTNode {
 
   abstract print(): string;
 
-  abstract evaluate(): Promise<unknown>;
+  abstract evaluate(
+    varStacks: Map<SymbolDeclaration, unknown[]>,
+  ): Promise<unknown>;
 
   line: number;
   column: number;
@@ -88,18 +90,14 @@ export abstract class Stmt implements ASTNode {
 
 export class DeferDecorator extends Stmt {
   delegate: ExprStmt;
-  scopeArgs: Identifier[];
-  scopeParams: Parameter[];
   scope: Scope;
 
-  constructor(scopeArgs: Identifier[], line: number = -1, column: number = -1) {
+  constructor(line: number = -1, column: number = -1) {
     super(new BaseType(BaseTypeKind.NONE), line, column);
-    this.scopeArgs = scopeArgs;
   }
 
   children(): ASTNode[] {
     const children = new Array<ASTNode>();
-    children.push(...this.scopeArgs);
     children.push(this.delegate);
     return children;
   }
@@ -110,27 +108,16 @@ export class DeferDecorator extends Stmt {
     const scopeArgsNodeId = newNodeId();
     dotString.push(scopeArgsNodeId + '[label=" scope args "];\n');
     dotString.push(deferNodeId + "->" + scopeArgsNodeId + ";\n");
-    this.scopeArgs
-      .map((exp) => exp.print())
-      .forEach((nodeId) =>
-        dotString.push(scopeArgsNodeId + "->" + nodeId + ";\n"),
-      );
     const delegateNodeId = this.delegate.print();
     dotString.push(deferNodeId + "->" + delegateNodeId + ";\n");
     return deferNodeId;
   }
 
-  async evaluate(): Promise<unknown> {
-    for (let pos = 0; pos < this.scopeArgs.length; pos++) {
-      const arg = this.scopeArgs[pos];
-      const value = getValueOfExpression(await arg.evaluate());
-      const paramStack = varStacks.get(this.scopeParams[pos]);
-      if (paramStack === undefined)
-        varStacks.set(this.scopeParams[pos], [value]);
-      else paramStack.push(value);
-    }
-    await this.delegate.evaluate();
-    popOutOfScopeVars(this);
+  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<void> {
+    const varStacksCopy = new Map<SymbolDeclaration, unknown[]>();
+    for (const [key, value] of varStacks) varStacksCopy.set(key, [...value]);
+    await this.delegate.evaluate(varStacksCopy);
+    popOutOfScopeVars(this, varStacksCopy);
     return undefined;
   }
 }
@@ -165,7 +152,8 @@ export class Parameter extends Stmt {
     return paramNodeId;
   }
 
-  async evaluate(): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<void> {
     return undefined;
   }
 
@@ -217,11 +205,11 @@ export class VarDeclaration extends Stmt {
     return varDeclNodeId;
   }
 
-  async evaluate(): Promise<void> {
+  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<void> {
     const value =
       this.value instanceof FunDeclaration
         ? this.value
-        : getValueOfExpression(await this.value.evaluate());
+        : getValueOfExpression(await this.value.evaluate(varStacks), varStacks);
     const varStack = varStacks.get(this);
     if (varStack === undefined) varStacks.set(this, [value]);
     else varStack.push(value);
@@ -258,7 +246,8 @@ export class UnionDeclaration extends Stmt {
     return unionDeclNodeId;
   }
 
-  async evaluate(): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<void> {
     return undefined;
   }
 
@@ -299,7 +288,8 @@ export class AliasTypeDeclaration extends Stmt {
     return aliasTypeDeclarationNodeId;
   }
 
-  evaluate(): Promise<unknown> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<void> {
     return undefined;
   }
 }
@@ -340,7 +330,10 @@ export class RecordDeclaration extends Stmt {
     return recordDeclarationNodeId;
   }
 
-  async fieldDefaultImplementation(field: Parameter): Promise<object> {
+  async fieldDefaultImplementation(
+    field: Parameter,
+    varStacks: Map<SymbolDeclaration, unknown[]>,
+  ): Promise<object> {
     const value = field.type.equals(DefaultBaseTypeInstance.NUMBER)
       ? 0
       : field.type.equals(DefaultBaseTypeInstance.BOOL)
@@ -348,18 +341,21 @@ export class RecordDeclaration extends Stmt {
         : field.type instanceof ArrayType
           ? []
           : field.type instanceof RecordType
-            ? await field.type.identifier.declaration.evaluate()
+            ? await field.type.identifier.declaration.evaluate(varStacks)
             : "";
     return { [field.identifier.value]: { value: value, writable: true } };
   }
 
-  async evaluate(): Promise<object> {
+  async evaluate(
+    varStacks: Map<SymbolDeclaration, unknown[]>,
+  ): Promise<object> {
     if (this.defaultRecordImplementation === undefined)
       this.defaultRecordImplementation = Object.assign(
         {},
         ...(await Promise.all(
           this.fields.map(
-            async (field) => await this.fieldDefaultImplementation(field),
+            async (field) =>
+              await this.fieldDefaultImplementation(field, varStacks),
           ),
         )),
       );
@@ -390,7 +386,10 @@ export class Return extends Stmt {
     return returnNodeId;
   }
 
-  async evaluate(): Promise<Return> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async evaluate(
+    varStacks: Map<SymbolDeclaration, unknown[]>,
+  ): Promise<Return> {
     return this;
   }
 }
@@ -442,19 +441,28 @@ export class If extends Stmt {
     return ifNodeId;
   }
 
-  async evaluate(): Promise<unknown> {
-    if (<boolean>getValueOfExpression(await this.condition.evaluate())) {
+  async evaluate(
+    varStacks: Map<SymbolDeclaration, unknown[]>,
+  ): Promise<unknown> {
+    if (
+      <boolean>(
+        getValueOfExpression(
+          await this.condition.evaluate(varStacks),
+          varStacks,
+        )
+      )
+    ) {
       if (this.ifStmt instanceof DeferDecorator) {
-        unresolved.push(this.ifStmt.evaluate());
+        unresolved.push(this.ifStmt.evaluate(varStacks));
         return undefined;
       }
-      return await this.ifStmt.evaluate();
+      return await this.ifStmt.evaluate(varStacks);
     } else if (this.possibleElseStmt !== null) {
       if (this.possibleElseStmt instanceof DeferDecorator) {
-        unresolved.push(this.possibleElseStmt.evaluate());
+        unresolved.push(this.possibleElseStmt.evaluate(varStacks));
         return undefined;
       }
-      return await this.possibleElseStmt.evaluate();
+      return await this.possibleElseStmt.evaluate(varStacks);
     }
   }
 }
@@ -491,13 +499,22 @@ export class While extends Stmt {
     return whileNodeId;
   }
 
-  async evaluate(): Promise<unknown> {
+  async evaluate(
+    varStacks: Map<SymbolDeclaration, unknown[]>,
+  ): Promise<unknown> {
     let returnValue = undefined;
-    while (<boolean>getValueOfExpression(await this.condition.evaluate())) {
+    while (
+      <boolean>(
+        getValueOfExpression(
+          await this.condition.evaluate(varStacks),
+          varStacks,
+        )
+      )
+    ) {
       if (this.whileStmt instanceof DeferDecorator) {
-        unresolved.push(this.whileStmt.evaluate());
+        unresolved.push(this.whileStmt.evaluate(varStacks));
         returnValue = undefined;
-      } else returnValue = await this.whileStmt.evaluate();
+      } else returnValue = await this.whileStmt.evaluate(varStacks);
     }
     return returnValue;
   }
@@ -529,21 +546,24 @@ export class Block extends Stmt {
     return blockNodeId;
   }
 
-  async evaluate(): Promise<unknown> {
+  async evaluate(
+    varStacks: Map<SymbolDeclaration, unknown[]>,
+  ): Promise<unknown> {
     let returnNode = undefined;
     for (let i = 0; i < this.stmts.length; i++) {
       if (this.stmts[i] instanceof DeferDecorator) {
-        unresolved.push(this.stmts[i].evaluate());
+        unresolved.push(this.stmts[i].evaluate(varStacks));
         continue;
       }
-      returnNode = await this.stmts[i].evaluate();
+      returnNode = await this.stmts[i].evaluate(varStacks);
       if (returnNode instanceof Return) break;
     }
     if (returnNode instanceof Return && returnNode.possibleValue !== undefined)
       returnNode = getValueOfExpression(
-        await returnNode.possibleValue.evaluate(),
+        await returnNode.possibleValue.evaluate(varStacks),
+        varStacks,
       );
-    popOutOfScopeVars(this);
+    popOutOfScopeVars(this, varStacks);
     return returnNode;
   }
 }
@@ -581,21 +601,24 @@ export class CaseStmt extends Stmt {
     return caseStmtNodeId;
   }
 
-  async evaluate(): Promise<unknown> {
+  async evaluate(
+    varStacks: Map<SymbolDeclaration, unknown[]>,
+  ): Promise<unknown> {
     let returnValue = undefined;
     if (this.stmt instanceof DeferDecorator)
-      unresolved.push(this.stmt.evaluate());
+      unresolved.push(this.stmt.evaluate(varStacks));
     else {
-      returnValue = await this.stmt.evaluate();
+      returnValue = await this.stmt.evaluate(varStacks);
       if (
         returnValue instanceof Return &&
         returnValue.possibleValue !== undefined
       )
         returnValue = getValueOfExpression(
-          await returnValue.possibleValue.evaluate(),
+          await returnValue.possibleValue.evaluate(varStacks),
+          varStacks,
         );
     }
-    popOutOfScopeVars(this);
+    popOutOfScopeVars(this, varStacks);
     return returnValue;
   }
 }
@@ -615,16 +638,23 @@ export class Match extends Stmt {
     this.caseStmts = caseStmts;
   }
 
-  async match(condition: MatchCondition, subject: unknown): Promise<boolean> {
+  async match(
+    condition: MatchCondition,
+    subject: unknown,
+    varStacks: Map<SymbolDeclaration, unknown[]>,
+  ): Promise<boolean> {
     if (condition instanceof Expr) {
-      const conditionValue = getValueOfExpression(await condition.evaluate());
+      const conditionValue = getValueOfExpression(
+        await condition.evaluate(varStacks),
+        varStacks,
+      );
       if (typeof conditionValue !== "object") return subject === conditionValue;
       if (typeof subject !== "object") return false;
       return twoObjectsAreEquivalent(subject, conditionValue);
     }
     if (isAnyType(condition.type)) return true;
     if (condition.type instanceof BaseType)
-      return typeof subject === (await condition.type.evaluate());
+      return typeof subject === (await condition.type.evaluate(varStacks));
     if (
       condition.type instanceof ArrayType &&
       subject instanceof ArrayRepresentation
@@ -641,7 +671,7 @@ export class Match extends Stmt {
       }
       return (
         typeof subjectBase[0] ===
-        (await (conditionTypeBase as ArrayType).type.evaluate())
+        (await (conditionTypeBase as ArrayType).type.evaluate(varStacks))
       );
     }
     if (condition.type instanceof RecordType) {
@@ -756,8 +786,13 @@ export class Match extends Stmt {
     return matchNodeId;
   }
 
-  async evaluate(): Promise<unknown> {
-    const subjectValue = getValueOfExpression(await this.subject.evaluate());
+  async evaluate(
+    varStacks: Map<SymbolDeclaration, unknown[]>,
+  ): Promise<unknown> {
+    const subjectValue = getValueOfExpression(
+      await this.subject.evaluate(varStacks),
+      varStacks,
+    );
     const sortedMatchCases = this.caseStmts.sort((a, b) => {
       if (
         (a.matchCondition instanceof Expr &&
@@ -776,7 +811,7 @@ export class Match extends Stmt {
     });
     const matchedCases = new Array<CaseStmt>();
     for (const caseStmt of sortedMatchCases) {
-      if (await this.match(caseStmt.matchCondition, subjectValue))
+      if (await this.match(caseStmt.matchCondition, subjectValue, varStacks))
         matchedCases.push(caseStmt);
     }
     const matchedCase = matchedCases[0];
@@ -789,7 +824,7 @@ export class Match extends Stmt {
         varStacks.set(matchedCase.matchCondition, [subjectValue]);
       else paramStack.push(subjectValue);
     }
-    return await matchedCase.evaluate();
+    return await matchedCase.evaluate(varStacks);
   }
 }
 
@@ -826,8 +861,9 @@ export class ImportDeclaration extends Stmt {
     return importDeclarationNodeId;
   }
 
-  async evaluate(): Promise<void> {
-    for (const varDecl of this.importedSymbols) await varDecl.evaluate();
+  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<void> {
+    for (const varDecl of this.importedSymbols)
+      await varDecl.evaluate(varStacks);
   }
 }
 

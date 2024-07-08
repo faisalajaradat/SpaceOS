@@ -5,7 +5,6 @@ import {
   newNodeId,
   RuntimeType,
   SymbolDeclaration,
-  varStacks,
 } from "../program.js";
 import { getValueOfExpression } from "../../utils.js";
 import { Expr, Identifier } from "./Expr.js";
@@ -47,12 +46,12 @@ export class BinaryExpr extends Expr {
     return opNodeId;
   }
 
-  async evaluate(): Promise<unknown> {
-    let leftHandExp = await this.leftExpr.evaluate();
+  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<unknown> {
+    let leftHandExp = await this.leftExpr.evaluate(varStacks);
     const rightHandExp =
       this.rightExpr instanceof FunDeclaration
         ? this.rightExpr
-        : getValueOfExpression(await this.rightExpr.evaluate());
+        : getValueOfExpression(await this.rightExpr.evaluate(varStacks), varStacks);
     if (this.operator === "=") {
       if (leftHandExp instanceof Identifier) {
         const varStack = varStacks.get(
@@ -63,7 +62,7 @@ export class BinaryExpr extends Expr {
         leftHandExp.array[leftHandExp.index] = rightHandExp;
       return rightHandExp;
     }
-    leftHandExp = getValueOfExpression(leftHandExp);
+    leftHandExp = getValueOfExpression(leftHandExp, varStacks);
     switch (this.operator) {
       case "||":
         return <boolean>leftHandExp || <boolean>rightHandExp;

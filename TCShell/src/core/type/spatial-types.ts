@@ -4,7 +4,7 @@ import {
   jsonReplacer,
   jsonReviver,
   newNodeId,
-  SPGStruct,
+  SPGStruct
 } from "../program.js";
 import {
   ArrayType,
@@ -36,10 +36,6 @@ export class SpatialType extends CompositionType {
     const spatialTypeNodeId = newNodeId();
     dotString.push(spatialTypeNodeId + '[label=" Spatial Type "];\n');
     return spatialTypeNodeId;
-  }
-
-  async evaluate(): Promise<void> {
-    return undefined;
   }
 
   equals(_type: Type): boolean {
@@ -88,10 +84,6 @@ export class PhysicalDecorator extends LocalityDecorator {
     return physicalNodeId;
   }
 
-  async evaluate(): Promise<void> {
-    return undefined;
-  }
-
   equals(_type: Type): boolean {
     return (
       isAnyType(_type) ||
@@ -120,10 +112,6 @@ export class VirtualDecorator extends LocalityDecorator {
     const delegateNodeId = this.delegate.print();
     dotString.push(virtualNodeId + "->" + delegateNodeId + ";\n");
     return virtualNodeId;
-  }
-
-  async evaluate(): Promise<void> {
-    return undefined;
   }
 
   equals(_type: Type): boolean {
@@ -181,10 +169,6 @@ export class PathType extends SpatialType {
     return pathNodeId;
   }
 
-  async evaluate(): Promise<void> {
-    return undefined;
-  }
-
   equals(_type: Type): boolean {
     return isAnyType(_type) || _type instanceof PathType;
   }
@@ -209,10 +193,6 @@ export class LandPathType extends PathType {
     const landPathNodeId = newNodeId();
     dotString.push(landPathNodeId + '[label=" Land Path "];\n');
     return landPathNodeId;
-  }
-
-  async evaluate(): Promise<void> {
-    return undefined;
   }
 
   equals(_type: Type): boolean {
@@ -240,10 +220,6 @@ export class AirPathType extends PathType {
     const airPathNodeId = newNodeId();
     dotString.push(airPathNodeId + '[label=" Air Path "];\n');
     return airPathNodeId;
-  }
-
-  async evaluate(): Promise<void> {
-    return undefined;
   }
 
   equals(_type: Type): boolean {
@@ -289,10 +265,6 @@ export class ControlledDecorator extends ControlDecorator {
     return controlledNodeId;
   }
 
-  async evaluate(): Promise<void> {
-    return undefined;
-  }
-
   equals(_type: Type): boolean {
     return (
       isAnyType(_type) ||
@@ -321,10 +293,6 @@ export class NotControlledDecorator extends ControlDecorator {
     const delegateNodeId = this.delegate.print();
     dotString.push(notControlledNodeId + "->" + delegateNodeId + ";\n");
     return notControlledNodeId;
-  }
-
-  async evaluate(): Promise<void> {
-    return undefined;
   }
 
   equals(_type: Type): boolean {
@@ -359,10 +327,6 @@ export class SpaceType extends SpatialObjectType {
     return spaceNodeId;
   }
 
-  async evaluate(): Promise<void> {
-    return undefined;
-  }
-
   equals(_type: Type): boolean {
     return isAnyType(_type) || _type instanceof SpaceType;
   }
@@ -388,10 +352,6 @@ export class OpenSpaceType extends SpaceType {
     const openSpaceNodeId = newNodeId();
     dotString.push(openSpaceNodeId + '[label=" Open Space "];\n');
     return openSpaceNodeId;
-  }
-
-  async evaluate(): Promise<void> {
-    return undefined;
   }
 
   equals(_type: Type): boolean {
@@ -421,10 +381,6 @@ export class EnclosedSpaceType extends SpaceType {
     return enclosedSpaceNodeId;
   }
 
-  async evaluate(): Promise<void> {
-    return undefined;
-  }
-
   equals(_type: Type): boolean {
     return isAnyType(_type) || _type instanceof EnclosedSpaceType;
   }
@@ -450,10 +406,6 @@ export class EntityType extends SpatialObjectType {
     const entityNodeId = newNodeId();
     dotString.push(entityNodeId + '[label=" Entity "];\n');
     return entityNodeId;
-  }
-
-  async evaluate(): Promise<void> {
-    return undefined;
   }
 
   equals(_type: Type): boolean {
@@ -483,10 +435,6 @@ export class StaticEntityType extends EntityType {
     return staticEntityNodeId;
   }
 
-  async evaluate(): Promise<void> {
-    return undefined;
-  }
-
   equals(_type: Type): boolean {
     return isAnyType(_type) || _type instanceof StaticEntityType;
   }
@@ -512,10 +460,6 @@ export class DynamicEntityType extends EntityType {
     const dynamicEntityNodeId = newNodeId();
     dotString.push(dynamicEntityNodeId + '[label=" Dynamic Entity "];\n');
     return dynamicEntityNodeId;
-  }
-
-  async evaluate(): Promise<void> {
-    return undefined;
   }
 
   equals(_type: Type): boolean {
@@ -545,10 +489,6 @@ export class AnimateEntityType extends DynamicEntityType {
     return animateEntityNodeId;
   }
 
-  async evaluate(): Promise<void> {
-    return undefined;
-  }
-
   equals(_type: Type): boolean {
     return isAnyType(_type) || _type instanceof AnimateEntityType;
   }
@@ -574,10 +514,6 @@ export class SmartEntityType extends DynamicEntityType {
     const smartEntityNodeId = newNodeId();
     dotString.push(smartEntityNodeId + '[label=" Smart Entity "];\n');
     return smartEntityNodeId;
-  }
-
-  async evaluate(): Promise<void> {
-    return undefined;
   }
 
   equals(_type: Type): boolean {
@@ -621,10 +557,6 @@ export class MobileDecorator extends MotionDecorator {
     return mobileNodeId;
   }
 
-  async evaluate(): Promise<void> {
-    return undefined;
-  }
-
   equals(_type: Type): boolean {
     return (
       isAnyType(_type) ||
@@ -653,10 +585,6 @@ export class StationaryDecorator extends MotionDecorator {
     const delegateNodeId = this.delegate.print();
     dotString.push(stationaryNodeId + "->" + delegateNodeId + ";\n");
     return stationaryNodeId;
-  }
-
-  async evaluate(): Promise<void> {
-    return undefined;
   }
 
   equals(_type: Type): boolean {
@@ -828,10 +756,6 @@ export class SpacePathGraphType extends SpatialType {
       spacePathGraphTypeNodeId + '[label=" Space Path Graph Type "];\n',
     );
     return spacePathGraphTypeNodeId;
-  }
-
-  async evaluate(): Promise<void> {
-    return undefined;
   }
 
   equals(_type: Type): boolean {

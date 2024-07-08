@@ -10,12 +10,12 @@ import {
   StaticEntityType,
 } from "../type/index.js";
 import {
-  ASTNode,
-  dotString,
-  jsonReplacer,
-  newNodeId,
-  RuntimeType,
-  SPGStruct,
+    ASTNode,
+    dotString,
+    jsonReplacer,
+    newNodeId,
+    RuntimeType,
+    SPGStruct, SymbolDeclaration,
 } from "../program.js";
 import {
   getSpatialTypeSchema,
@@ -56,7 +56,7 @@ export class SpatialObjectInstantiationExpr extends Expr {
     return spatialObjectInstantiationNodeId;
   }
 
-  async evaluate(): Promise<string> {
+  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<unknown> {
     const [propertiesRaw, delegateType] = parseSpatialTypeProperties(
       this.type as SpatialType,
     );
@@ -66,7 +66,8 @@ export class SpatialObjectInstantiationExpr extends Expr {
     >;
     if (delegateType instanceof SpacePathGraphType) {
       const rootSpaceId = getValueOfExpression(
-        await this.args[0].evaluate(),
+        await this.args[0].evaluate(varStacks),
+          varStacks
       ) as string;
       const struct: SPGStruct = {
         root: rootSpaceId,
@@ -90,7 +91,7 @@ export class SpatialObjectInstantiationExpr extends Expr {
                   properties.get("locality") as string,
                   properties.get("isControlled") as boolean,
                   JSON.stringify(
-                    getValueOfExpression(await this.args[0].evaluate()),
+                    getValueOfExpression(await this.args[0].evaluate(varStacks), varStacks),
                     jsonReplacer,
                   ),
                 )
@@ -99,7 +100,7 @@ export class SpatialObjectInstantiationExpr extends Expr {
                     properties.get("locality") as string,
                     properties.get("isControlled") as boolean,
                     JSON.stringify(
-                      getValueOfExpression(await this.args[0].evaluate()),
+                      getValueOfExpression(await this.args[0].evaluate(varStacks), varStacks),
                       jsonReplacer,
                     ),
                   )
@@ -122,15 +123,17 @@ export class SpatialObjectInstantiationExpr extends Expr {
     if (newObject instanceof engine.Space) {
       if (this.args.length > 1)
         newObject.dimension = getValueOfExpression(
-          await this.args[1].evaluate(),
+          await this.args[1].evaluate(varStacks),
+            varStacks
         ) as number;
       if (this.args.length > 2)
         newObject.name = getValueOfExpression(
-          await this.args[2].evaluate(),
+          await this.args[2].evaluate(varStacks),
+            varStacks
         ) as string;
     } else if (this.args.length > 0)
       (newObject as engine.SpatialObject | engine.Path).name =
-        getValueOfExpression(await this.args[0].evaluate()) as string;
+        getValueOfExpression(await this.args[0].evaluate(varStacks), varStacks) as string;
     return await saveData(getSpatialTypeSchema(newObject), newObject);
   }
 }

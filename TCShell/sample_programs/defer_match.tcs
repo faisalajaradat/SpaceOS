@@ -1,7 +1,7 @@
-number iter = 0
+var iter = 0
 
-defer (iter) match iter {
-  _ => {
+defer match iter {
+  0 => {
     while iter < 10 {
       print("match 1 loop!")
       print(iter)
@@ -11,8 +11,8 @@ defer (iter) match iter {
 }
 
 iter = 1
-defer (iter) match iter {
-  _ => {
+defer match iter {
+  1 => {
     while iter < 10 {
       print("match 2 loop!")
       print(iter)
