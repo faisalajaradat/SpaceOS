@@ -1,7 +1,7 @@
 var iter = 0
 
 defer match iter {
-  0 => {
+  _ => {
     while iter < 10 {
       print("match 1 loop!")
       print(iter)
@@ -12,7 +12,7 @@ defer match iter {
 
 iter = 1
 defer match iter {
-  1 => {
+  _ => {
     while iter < 10 {
       print("match 2 loop!")
       print(iter)

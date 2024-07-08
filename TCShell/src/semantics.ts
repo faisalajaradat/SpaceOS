@@ -455,7 +455,8 @@ const typeRuleApplicationDictionary: {
     matchStmt.caseStmts.filter(
       (caseStmt) =>
         caseStmt.matchCondition instanceof Parameter &&
-        isAnyType(caseStmt.matchCondition.type),
+        isAnyType(caseStmt.matchCondition.type) &&
+        caseStmt.matchCondition.identifier.value !== "_",
     ).length === 0,
 
   [TypeRule.AllCaseTypeAreCompatible]: (matchStmt: Match): boolean => {
@@ -1294,6 +1295,8 @@ function countAmbigousTypes(node: ASTNode) {
     errors++;
     console.log(node.getFilePos() + "Insufficient type information!");
     return true;
-  } else node.children().some(countAmbigousTypes);
+  } else if (node instanceof Parameter && node.identifier.value === "_")
+    return false;
+  else node.children().some(countAmbigousTypes);
   return false;
 }
