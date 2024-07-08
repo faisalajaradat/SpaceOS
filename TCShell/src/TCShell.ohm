@@ -5,11 +5,11 @@ TCShell {
     Interactive = StmtNewline
 
 	  StmtNewline = defer? CompoundStmt #newline	--compound
-    						| SimpleStmts	--simple
+    						| defer? SimpleStmts	--simple
                 | newline
                 | end
 
-    Stmt = SimpleStmts #newline --simple
+    Stmt = defer? SimpleStmts #newline --simple
     			| defer? CompoundStmt  --compound
 
     SimpleStmts = NonemptyListWithOptionalEndSep<SimpleStmt, ";">

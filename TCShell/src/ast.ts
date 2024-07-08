@@ -81,8 +81,12 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
     _program.libStmts.push(...libDeclarations, ...libFunctions.keys());
     return _program;
   },
-  Stmt_simple(simpleStatements, _newline) {
-    return simpleStatements.ast()[0];
+  Stmt_simple(possibleDefer, simpleStatements, _newline) {
+    const simpleStmt = simpleStatements.ast()[0];
+    const deferDecorator = possibleDefer.ast()[0];
+    if (deferDecorator === undefined) return simpleStmt;
+    (<DeferDecorator>deferDecorator).delegate = simpleStmt;
+    return deferDecorator;
   },
   Stmt_compound(possibleDefer, compoundStatement) {
     const compoundStmt = compoundStatement.ast();
