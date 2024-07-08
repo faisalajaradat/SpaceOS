@@ -788,13 +788,12 @@ const typeRuleApplicationDictionary: {
         const mapFunction =
           spatialBaseType instanceof SpacePathGraphType
             ? SpacePathGraphType.mapMethodNameToMethodType
-            : PathType.mapMethodNameToMethodType;
+            : spatialBaseType instanceof SpaceType
+              ? SpaceType.mapMethodNameToMethodType
+              : PathType.mapMethodNameToMethodType;
         return (
           mapFunction(funCall.identifier.symbol.value).paramTypes.filter(
-            (paramType, pos) =>
-              !(paramType as CompositionType).contains(
-                checkType(funCall.args[pos]),
-              ),
+            (paramType, pos) => !paramType.equals(checkType(funCall.args[pos])),
           ).length === 0
         );
       }
@@ -926,6 +925,7 @@ const typeRuleApplicationDictionary: {
     symbolAccess.locationExpr.type =
       locationType instanceof RecordType ||
       locationType instanceof SpacePathGraphType ||
+      locationType instanceof SpaceType ||
       locationType instanceof PathType
         ? locationType
         : DefaultBaseTypeInstance.NONE;
@@ -952,20 +952,26 @@ const typeRuleApplicationDictionary: {
       spatialBaseType = spatialBaseType.delegate;
     if (
       spatialBaseType instanceof SpacePathGraphType ||
+      spatialBaseType instanceof SpaceType ||
       spatialBaseType instanceof PathType
     ) {
       const isSPGType = spatialBaseType instanceof SpacePathGraphType;
+      const isSpaceType = spatialBaseType instanceof SpaceType;
       symbolAccess.type =
         Array.from(
           isSPGType
             ? SpacePathGraphType.libMethods.keys()
-            : PathType.libMethods.keys(),
+            : isSpaceType
+              ? SpaceType.libMethods.keys()
+              : PathType.libMethods.keys(),
         )
           .filter((methodName) => methodName === symbolAccess.symbol.value)
           .map(
             isSPGType
               ? SpacePathGraphType.mapMethodNameToMethodType
-              : PathType.mapMethodNameToMethodType,
+              : isSpaceType
+                ? SpaceType.mapMethodNameToMethodType
+                : PathType.mapMethodNameToMethodType,
           )[0] ?? DefaultBaseTypeInstance.NONE;
     } else if (symbolAccess.locationExpr.type instanceof RecordType) {
       symbolAccess.type =

@@ -2,14 +2,15 @@ import {
   ASTNode,
   dotString,
   newNodeId,
-  RuntimeType, SymbolDeclaration,
+  RuntimeType,
+  SymbolDeclaration,
 } from "../program.js";
 import { libFunctions, VarDeclaration } from "../stmts.js";
 import { getValueOfExpression, isDecorator } from "../../utils.js";
 import { FunDeclaration } from "./FunDeclaration.js";
 import { Expr, Identifier } from "./Expr.js";
 import { SymbolAccess } from "./SymbolAccess.js";
-import { PathType, SpacePathGraphType } from "../type/index.js";
+import { PathType, SpacePathGraphType, SpaceType } from "../type/index.js";
 
 export class FunCall extends Expr {
   identifier: Expr;
@@ -47,25 +48,35 @@ export class FunCall extends Expr {
     return funCallNodeId;
   }
 
-  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<unknown> {
+  async evaluate(
+    varStacks: Map<SymbolDeclaration, unknown[]>,
+  ): Promise<unknown> {
     if (this.identifier instanceof SymbolAccess) {
       let spatialBaseType = this.identifier.locationExpr.type;
       while (isDecorator(spatialBaseType))
         spatialBaseType = spatialBaseType.delegate;
       if (
         spatialBaseType instanceof SpacePathGraphType ||
+        spatialBaseType instanceof SpaceType ||
         spatialBaseType instanceof PathType
       ) {
         const args = new Array<unknown>();
         for (const arg of this.args)
-          args.push(getValueOfExpression(await arg.evaluate(varStacks), varStacks));
+          args.push(
+            getValueOfExpression(await arg.evaluate(varStacks), varStacks),
+          );
         args.unshift(
-          getValueOfExpression(await this.identifier.locationExpr.evaluate(varStacks), varStacks),
+          getValueOfExpression(
+            await this.identifier.locationExpr.evaluate(varStacks),
+            varStacks,
+          ),
         );
         return await (
           spatialBaseType instanceof SpacePathGraphType
             ? SpacePathGraphType.libMethods
-            : PathType.libMethods
+            : spatialBaseType instanceof SpaceType
+              ? SpaceType.libMethods
+              : PathType.libMethods
         ).get(this.identifier.symbol.value)(...args);
       }
     }
@@ -76,13 +87,18 @@ export class FunCall extends Expr {
     ) {
       const args = new Array<unknown>();
       for (const arg of this.args)
-        args.push(getValueOfExpression(await arg.evaluate(varStacks), varStacks));
+        args.push(
+          getValueOfExpression(await arg.evaluate(varStacks), varStacks),
+        );
       return libFunctions.get(<VarDeclaration>identifier.declaration)(...args);
     }
     const funDecl = <FunDeclaration>getValueOfExpression(identifier, varStacks);
     for (let pos = 0; pos < this.args.length; pos++) {
       const arg = this.args[pos];
-      const value = getValueOfExpression(await arg.evaluate(varStacks), varStacks);
+      const value = getValueOfExpression(
+        await arg.evaluate(varStacks),
+        varStacks,
+      );
       const paramStack = varStacks.get((<FunDeclaration>funDecl).params[pos]);
       if (paramStack === undefined)
         varStacks.set((<FunDeclaration>funDecl).params[pos], [value]);

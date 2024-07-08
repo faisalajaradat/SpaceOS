@@ -8,10 +8,16 @@ var Main = fn () {
     = new PhysicalBikeSpace(Location {0, 0}, 10, "Start")
   var bikePathEnd
     = new PhysicalBikeSpace(Location {10, 10}, 10, "End")
+  var bike = new Bike()
   var bikeSPG
     = new SpacePathGraph(bikePathStart)
 
-  match bikeSPG.addPathSpace(bikePath, bikePathEnd) {
+  bikePathStart.addEntities([(Entity) bike])
+
+  print(bikePathStart.getEntities())
+  print(bikePathEnd.getEntities())
+
+  match bikeSPG.addPathSpace((Path) bikePath, (Space) bikePathEnd) {
     var s: string => {
       print(s)
       return
@@ -21,7 +27,7 @@ var Main = fn () {
     }
   }
   print(bikePath.getReachableSpaces())
-  var bikePathSeg1 = bikeSPG.splitPath(bikePath)
+  var bikePathSeg1 = bikeSPG.splitPath((Path) bikePath)
 
   print(bikeSPG.getStructJSON())
 

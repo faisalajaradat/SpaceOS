@@ -4,7 +4,7 @@ import {
   jsonReplacer,
   jsonReviver,
   newNodeId,
-  SPGStruct
+  SPGStruct,
 } from "../program.js";
 import {
   ArrayType,
@@ -313,8 +313,68 @@ export class NotControlledDecorator extends ControlDecorator {
 }
 
 export class SpaceType extends SpatialObjectType {
+  static libMethods: Map<string, (...args: unknown[]) => Promise<unknown>>;
   constructor(line: number = -1, column: number = -1) {
     super(line, column);
+  }
+
+  static {
+    SpaceType.libMethods = new Map<
+      string,
+      (...args: unknown[]) => Promise<unknown>
+    >();
+    SpaceType.libMethods.set(
+      "addEntities",
+      async (...args): Promise<string | void> => {
+        const space: engine.Space = (await fetchData(
+          engine.SPACE_SCHEMA,
+          args[0] as string,
+        )) as engine.Space;
+        if (
+          (
+            await Promise.all(
+              space.entities.map(
+                async (entityId) =>
+                  (await fetchData(
+                    engine.ENTITY_SCHEMA,
+                    entityId,
+                  )) as engine.SpatialEntity,
+              ),
+            )
+          ).filter(
+            (entity) =>
+              entity.locality !== space.locality ||
+              entity.isControlled !== space.isControlled,
+          ).length > 0
+        )
+          return "Input entities are not all compatible with space";
+        space.entities.push(...(args[1] as string[]));
+        await saveData(engine.SPACE_SCHEMA, space);
+      },
+    );
+    SpaceType.libMethods.set(
+      "getEntities",
+      async (...args): Promise<string[]> => {
+        const space: engine.Space = (await fetchData(
+          engine.SPACE_SCHEMA,
+          args[0] as string,
+        )) as engine.Space;
+        return space.entities;
+      },
+    );
+  }
+
+  static mapMethodNameToMethodType(methodName: string): FunctionType {
+    const maybeStringType = new UnionType(new Identifier("MaybeString"));
+    maybeStringType.identifier.declaration = libDeclarations[1];
+    switch (methodName) {
+      case "addEntities":
+        return new FunctionType(maybeStringType, [
+          new ArrayType(new EntityType()),
+        ]);
+      case "getEntities":
+        return new FunctionType(new ArrayType(new EntityType()), []);
+    }
   }
 
   children(): ASTNode[] {
