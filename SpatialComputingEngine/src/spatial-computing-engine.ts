@@ -7,7 +7,7 @@ const client = await createClient({ url: process.env.REDIS_URL })
   .on("error", (err) => console.log("Redis Client Error", err))
   .connect();
 
-async function connectAndGetRepo(schema: Schema): Promise<Repository> {
+export async function connectAndGetRepo(schema: Schema): Promise<Repository> {
   const repo: Repository = new Repository(schema, client);
   await repo.createIndex();
   return repo;

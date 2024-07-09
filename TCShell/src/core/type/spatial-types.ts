@@ -17,6 +17,7 @@ import {
 import { isAnyType, isDecorator } from "../../utils.js";
 import * as engine from "../../../../SpatialComputingEngine/src/frontend-objects.js";
 import {
+  connectAndGetRepo,
   fetchData,
   saveData,
 } from "../../../../SpatialComputingEngine/src/spatial-computing-engine.js";
@@ -777,6 +778,20 @@ export class SpacePathGraphType extends SpatialType {
         engine.PATH_SCHEMA,
         args[1] as string,
       )) as engine.Path;
+      Promise.all(
+        (
+          (await (await connectAndGetRepo(engine.PATH_SCHEMA))
+            .search()
+            .where("name")
+            .equals(originalPath.name)
+            .and("segment")
+            .greaterThan(originalPath.segment)
+            .returnAll()) as engine.Path[]
+        ).map(async (path) => {
+          path.segment++;
+          return await saveData(engine.PATH_SCHEMA, path);
+        }),
+      );
       const struct: SPGStruct = JSON.parse(spg.structJSON, jsonReviver);
       const endSpace = originalPath.target;
       const intermediateSpaceLocation = JSON.stringify(

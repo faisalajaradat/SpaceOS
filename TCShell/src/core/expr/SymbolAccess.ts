@@ -1,5 +1,10 @@
 import { getValueOfExpression } from "../../utils.js";
-import {ASTNode, dotString, newNodeId, SymbolDeclaration} from "../program.js";
+import {
+  ASTNode,
+  dotString,
+  newNodeId,
+  SymbolDeclaration,
+} from "../program.js";
 import { ImportDeclaration } from "../stmts.js";
 import { BaseType, BaseTypeKind } from "../type/index.js";
 import { Expr, Identifier } from "./Expr.js";
@@ -37,14 +42,20 @@ export class SymbolAccess extends Expr {
     return symbolAccessNodeId;
   }
 
-  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<unknown> {
+  async evaluate(
+    varStacks: Map<SymbolDeclaration, unknown[]>,
+  ): Promise<unknown> {
     if (
       this.locationExpr instanceof Identifier &&
       this.locationExpr.declaration instanceof ImportDeclaration
     )
-      return getValueOfExpression(await this.symbol.evaluate(varStacks), varStacks);
-    return getValueOfExpression(await this.locationExpr.evaluate(varStacks), varStacks)[
-      this.symbol.value
-    ];
+      return getValueOfExpression(
+        await this.symbol.evaluate(varStacks),
+        varStacks,
+      );
+    return getValueOfExpression(
+      await this.locationExpr.evaluate(varStacks),
+      varStacks,
+    )[this.symbol.value];
   }
 }
