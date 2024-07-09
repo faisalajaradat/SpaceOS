@@ -230,7 +230,7 @@ export class SendEntityRequestMessage extends RequestMessage {
 }
 
 const SendEntityRequestMessageSchemaDef: SchemaDefinition = {
-  timestamp: { type: "date" },
+  timestamp: { type: "date", sortable: true },
   status: { type: "string" },
   errorMsg: { type: "string" },
   space: { type: "string" },
@@ -256,7 +256,7 @@ export class EnterSpaceRequestMessage extends RequestMessage {
 }
 
 const EnterSpaceRequestMessageSchemaDef: SchemaDefinition = {
-  timestamp: { type: "date" },
+  timestamp: { type: "date", sortable: true },
   status: { type: "string" },
   errorMsg: { type: "string" },
   entity: { type: "string" },

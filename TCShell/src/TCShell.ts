@@ -6,7 +6,8 @@ import { Command } from "commander";
 import { graphviz } from "node-graphviz";
 import analyze from "./semantics.js";
 import { disconnect } from "../../SpatialComputingEngine/src/spatial-computing-engine.js";
-import {SymbolDeclaration} from "./core/program.js";
+import { SymbolDeclaration } from "./core/program.js";
+import { begin } from "../../SpatialComputingEngine/src/dummy-driver.js";
 //Entrypoint and CLI for using TCShell interpreter
 
 const program = new Command();
@@ -24,6 +25,10 @@ program
   .option(
     "-i, --inference_test <path>",
     "save DOT of pre and post type analysis",
+  )
+  .option(
+    "-f, --fake",
+    "launch a fake driver to handle redis messages for testing",
   )
   .action(async (path, options) => {
     try {
@@ -73,7 +78,8 @@ program
         await disconnect();
         return;
       }
-      await astHead.evaluate(new Map<SymbolDeclaration, unknown[]>);
+      if (options.fake !== undefined) begin();
+      await astHead.evaluate(new Map<SymbolDeclaration, unknown[]>());
       await disconnect();
     } catch (err) {
       console.error(err);

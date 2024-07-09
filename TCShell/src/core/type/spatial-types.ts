@@ -938,9 +938,9 @@ export class SpacePathGraphType extends SpatialType {
         journeyStack.push(journeyEndNode.spaceId);
         journeyEndNode = journeyEndNode.parent;
       }
-      while (journeyStack.length > 0) {
+      while (journeyStack.length > 1) {
         const curSpace = journeyStack.pop();
-        const targetSpace = journeyStack.at(-1) ?? (args[3] as string);
+        const targetSpace = journeyStack.at(-1);
         const pathId = (
           (
             await Promise.all(
