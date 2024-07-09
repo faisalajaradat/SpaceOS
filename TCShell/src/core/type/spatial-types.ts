@@ -24,6 +24,7 @@ import {
 import { UnionType } from "./UnionType.js";
 import { Identifier } from "../expr/Expr.js";
 import { libDeclarations } from "../stmts.js";
+import { Entity, EntityId } from "redis-om";
 
 export class SpatialType extends CompositionType {
   constructor(line: number = -1, column: number = -1) {
@@ -364,6 +365,83 @@ export class SpaceType extends SpatialObjectType {
         return space.entities;
       },
     );
+    SpaceType.libMethods.set(
+      "sendEntity",
+      async (...args): Promise<string | void> => {
+        const space: engine.Space = (await fetchData(
+          engine.SPACE_SCHEMA,
+          args[0] as string,
+        )) as engine.Space;
+        if (
+          space.entities === undefined ||
+          !space.entities.includes(args[1] as string)
+        )
+          return "Space does not contain inputted entity!";
+        let message: engine.SendEntityRequestMessage =
+          new engine.SendEntityRequestMessage(
+            args[0] as string,
+            args[1] as string,
+            args[2] as string,
+          );
+        const msgId = await saveData(engine.SEND_ENTITY_SCHEMA, message);
+        while (message.status !== "PROCESSED") {
+          await new Promise((r) => setTimeout(r, args[3] as number));
+          message = (await fetchData(
+            engine.SEND_ENTITY_SCHEMA,
+            msgId,
+          )) as engine.SendEntityRequestMessage;
+          if (message.status === "ERROR") return message.errorMsg as string;
+        }
+      },
+    );
+    SpaceType.libMethods.set(
+      "receiveEntity",
+      async (...args): Promise<string | void> => {
+        const space: engine.Space = (await fetchData(
+          engine.SPACE_SCHEMA,
+          args[0] as string,
+        )) as engine.Space;
+        if (space.entities === undefined) return "Space cannot be found!";
+        if (space.entities.includes(args[1] as string))
+          return "Space already contains entity!";
+        let message: engine.EnterSpaceRequestMessage = (await (
+          await connectAndGetRepo(engine.ENTER_SPACE_SCHEMA)
+        )
+          .search()
+          .where("space")
+          .equals(args[0] as string)
+          .and("entity")
+          .equals(args[1] as string)
+          .and((search) =>
+            search
+              .where("status")
+              .not.equals("ACCEPTED")
+              .and("status")
+              .not.equals("DENIED"),
+          )
+          .sortAscending("timestamp")
+          .return.first()) as engine.EnterSpaceRequestMessage;
+        if (message === null) return "Entity is not attempting to enter space!";
+        while (message.status !== "ARRIVED") {
+          if (message.status === "ERROR") {
+            message.status = "DECLINED";
+            message.timestamp = new Date(Date.now());
+            await saveData(engine.ENTER_SPACE_SCHEMA, message);
+            return message.errorMsg;
+          }
+          await new Promise((r) => setTimeout(r, args[2] as number));
+          message = (await fetchData(
+            engine.ENTER_SPACE_SCHEMA,
+            (message as Entity)[EntityId],
+          )) as engine.EnterSpaceRequestMessage;
+        }
+        message.status = "ACCEPTED";
+        message.timestamp = new Date(Date.now());
+        await saveData(engine.ENTER_SPACE_SCHEMA, message);
+        space.entities.push(args[1] as string);
+        await saveData(engine.SPACE_SCHEMA, space);
+      },
+    );
   }
 
   static mapMethodNameToMethodType(methodName: string): FunctionType {
@@ -376,6 +454,17 @@ export class SpaceType extends SpatialObjectType {
         ]);
       case "getEntities":
         return new FunctionType(new ArrayType(new EntityType()), []);
+      case "sendEntity":
+        return new FunctionType(maybeStringType, [
+          new EntityType(),
+          new PathType(),
+          DefaultBaseTypeInstance.NUMBER,
+        ]);
+      case "receiveEntity":
+        return new FunctionType(maybeStringType, [
+          new EntityType(),
+          DefaultBaseTypeInstance.NUMBER,
+        ]);
     }
   }
 
@@ -789,7 +878,7 @@ export class SpacePathGraphType extends SpatialType {
             .returnAll()) as engine.Path[]
         ).map(async (path) => {
           path.segment++;
-          return await saveData(engine.PATH_SCHEMA, path);
+          await saveData(engine.PATH_SCHEMA, path);
         }),
       );
       const struct: SPGStruct = JSON.parse(spg.structJSON, jsonReviver);
@@ -849,7 +938,38 @@ export class SpacePathGraphType extends SpatialType {
         journeyStack.push(journeyEndNode.spaceId);
         journeyEndNode = journeyEndNode.parent;
       }
-      while (journeyStack.length > 0) console.log(journeyStack.pop());
+      while (journeyStack.length > 0) {
+        const curSpace = journeyStack.pop();
+        const targetSpace = journeyStack.at(-1) ?? (args[3] as string);
+        const pathId = (
+          (
+            await Promise.all(
+              struct.table
+                .get(curSpace)
+                .map(
+                  async (pathId) =>
+                    (await fetchData(
+                      engine.PATH_SCHEMA,
+                      pathId,
+                    )) as engine.Path,
+                ),
+            )
+          ).filter((path) => path.reachable.includes(targetSpace))[0] as Entity
+        )[EntityId];
+        const sendError = await SpaceType.libMethods.get("sendEntity")(
+          curSpace,
+          args[1],
+          pathId,
+          args[4],
+        );
+        if (sendError !== undefined) return sendError;
+        const receiveError = await SpaceType.libMethods.get("receiveEntity")(
+          targetSpace,
+          args[1],
+          args[4],
+        );
+        if (receiveError !== undefined) return receiveError;
+      }
     });
   }
 
@@ -875,6 +995,7 @@ export class SpacePathGraphType extends SpatialType {
           new EntityType(),
           new SpaceType(),
           new SpaceType(),
+          DefaultBaseTypeInstance.NUMBER,
         ]);
     }
   }

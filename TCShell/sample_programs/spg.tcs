@@ -42,7 +42,7 @@ var Main = fn () {
 
   print(bikeSPG.getStructJSON())
 
-  bikeSPG.sendEntity((Entity) bike, (Space) bikePathStart, (Space) bikePathEnd)
+  bikeSPG.sendEntity((Entity) bike, (Space) bikePathStart, (Space) bikePathEnd, 5000)
 }
 
 

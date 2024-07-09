@@ -1,6 +1,6 @@
 import { Entity, EntityDataValue, Schema, SchemaDefinition } from "redis-om";
 
-export type EngineEntity = SpatialTypeEntity | SpacePathGraph;
+export type EngineEntity = SpatialTypeEntity | SpacePathGraph | RequestMessage;
 
 export abstract class SpatialTypeEntity implements Entity {
   [index: string]: EntityDataValue;
@@ -205,26 +205,35 @@ export class LandPath extends Path {
 
 export abstract class RequestMessage implements Entity {
   [index: string]: EntityDataValue;
-  processed: boolean;
+  timestamp: Date;
+  status: string;
+  errorMsg: string | undefined;
 
   constructor() {
-    this.completed = false;
+    this.timestamp = new Date(Date.now());
+    this.status = "POSTED";
+    this.errorMsg = undefined;
   }
 }
 
 export class SendEntityRequestMessage extends RequestMessage {
+  space: string;
   entity: string;
   path: string;
 
-  constructor(entity: string, path: string) {
+  constructor(space: string, entity: string, path: string) {
     super();
+    this.space = space;
     this.entity = entity;
     this.path = path;
   }
 }
 
 const SendEntityRequestMessageSchemaDef: SchemaDefinition = {
-  processed: { type: "boolean" },
+  timestamp: { type: "date" },
+  status: { type: "string" },
+  errorMsg: { type: "string" },
+  space: { type: "string" },
   entity: { type: "string" },
   path: { type: "string" },
 };
@@ -247,7 +256,9 @@ export class EnterSpaceRequestMessage extends RequestMessage {
 }
 
 const EnterSpaceRequestMessageSchemaDef: SchemaDefinition = {
-  processed: { type: "boolean" },
+  timestamp: { type: "date" },
+  status: { type: "string" },
+  errorMsg: { type: "string" },
   entity: { type: "string" },
   space: { type: "string" },
 };
