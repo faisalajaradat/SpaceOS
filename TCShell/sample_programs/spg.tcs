@@ -14,24 +14,35 @@ var Main = fn () {
 
   bikePathStart.addEntities([(Entity) bike])
 
-  print(bikePathStart.getEntities())
-  print(bikePathEnd.getEntities())
-
   match bikeSPG.addPathSpace((Path) bikePath, (Space) bikePathEnd) {
     var s: string => {
       print(s)
       return
     }
     var v: void => {
-      print(bikeSPG.getStructJSON())
     }
   }
-  print(bikePath.getReachableSpaces())
-  var bikePathSeg1 = bikeSPG.splitPath((Path) bikePath)
+
+  var bikePathSegments = [(Path) bikePath]
+
+  var index = 0
+
+  while index < 3 {
+    match bikeSPG.splitPath(bikePathSegments[index]) {
+      var p: Path => push(bikePathSegments, p)
+      var s: string => {
+        print(s)
+        return
+      }
+    }
+    index = index + 1
+  }
+
+  print(bikePathSegments)
 
   print(bikeSPG.getStructJSON())
 
-  print(bikePath.getReachableSpaces())
+  bikeSPG.sendEntity((Entity) bike, (Space) bikePathStart, (Space) bikePathEnd)
 }
 
 

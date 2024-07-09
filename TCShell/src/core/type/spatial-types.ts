@@ -1,6 +1,7 @@
 import {
   ASTNode,
   dotString,
+  JourneyNode,
   jsonReplacer,
   jsonReviver,
   newNodeId,
@@ -683,6 +684,39 @@ async function addPathSpaceFunctionality(
   await saveData(engine.PATH_SCHEMA, path);
 }
 
+async function searchSPG(
+  struct: SPGStruct,
+  start: string,
+  end: string,
+): Promise<JourneyNode> {
+  const queue = new Array<JourneyNode>();
+  const explored = new Set<string>();
+  const startNode: JourneyNode = { parent: null, spaceId: start };
+  explored.add(start);
+  queue.push(startNode);
+  while (queue.length > 0) {
+    const nextSpace: JourneyNode = queue.shift();
+    if (nextSpace.spaceId === end) return nextSpace;
+    (
+      await Promise.all(
+        struct.table
+          .get(nextSpace.spaceId)
+          .map(
+            async (pathId) =>
+              (await fetchData(engine.PATH_SCHEMA, pathId)) as engine.Path,
+          ),
+      )
+    )
+      .filter(
+        (path) => path.reachable.includes(end) && !explored.has(path.target),
+      )
+      .forEach((path) => {
+        explored.add(path.target);
+        queue.push({ parent: nextSpace, spaceId: path.target });
+      });
+  }
+}
+
 export class SpacePathGraphType extends SpatialType {
   static libMethods: Map<string, (...args: unknown[]) => Promise<unknown>>;
 
@@ -784,6 +818,24 @@ export class SpacePathGraphType extends SpatialType {
       )) as engine.SpacePathGraph;
       return spg.structJSON;
     });
+    SpacePathGraphType.libMethods.set("sendEntity", async (...args) => {
+      const spg: engine.SpacePathGraph = (await fetchData(
+        engine.SPG_SCHEMA,
+        args[0] as string,
+      )) as engine.SpacePathGraph;
+      const struct: SPGStruct = JSON.parse(spg.structJSON, jsonReviver);
+      let journeyEndNode = await searchSPG(
+        struct,
+        args[2] as string,
+        args[3] as string,
+      );
+      const journeyStack = new Array<string>();
+      while (journeyEndNode !== null) {
+        journeyStack.push(journeyEndNode.spaceId);
+        journeyEndNode = journeyEndNode.parent;
+      }
+      while (journeyStack.length > 0) console.log(journeyStack.pop());
+    });
   }
 
   static mapMethodNameToMethodType(methodName: string): FunctionType {
@@ -803,6 +855,12 @@ export class SpacePathGraphType extends SpatialType {
         return new FunctionType(pathOrStringType, [new PathType()]);
       case "getStructJSON":
         return new FunctionType(DefaultBaseTypeInstance.STRING, []);
+      case "sendEntity":
+        return new FunctionType(DefaultBaseTypeInstance.VOID, [
+          new EntityType(),
+          new SpaceType(),
+          new SpaceType(),
+        ]);
     }
   }
 

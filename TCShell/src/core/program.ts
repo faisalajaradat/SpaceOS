@@ -54,6 +54,8 @@ export type ScopedNode =
   | CaseStmt
   | DeferDecorator;
 
+export type JourneyNode = { parent: JourneyNode | null; spaceId: string };
+
 export function jsonReplacer(key, value) {
   if (value instanceof Map) return { dataType: "Map", value: [...value] };
   return value;
@@ -117,7 +119,8 @@ export class Program implements ASTNode {
 
   async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<void> {
     for (const stmt of [...this.libStmts, ...this.children()]) {
-      if (stmt instanceof DeferDecorator) unresolved.push(stmt.evaluate(varStacks));
+      if (stmt instanceof DeferDecorator)
+        unresolved.push(stmt.evaluate(varStacks));
       else await stmt.evaluate(varStacks);
     }
     popOutOfScopeVars(this, varStacks);

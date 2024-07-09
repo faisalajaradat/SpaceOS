@@ -36,12 +36,14 @@ import {
   EntityType,
   FunctionType,
   LandPathType,
+  MergeSpaceType,
   MobileDecorator,
   NotControlledDecorator,
   OpenSpaceType,
   PathType,
   PhysicalDecorator,
   RecordType,
+  SelectionSpaceType,
   SmartEntityType,
   SpacePathGraphType,
   SpaceType,
@@ -730,6 +732,14 @@ export class Match extends Stmt {
         }
         case "EnclosedSpace": {
           constructedType = new EnclosedSpaceType();
+          break;
+        }
+        case "MergeSpace": {
+          constructedType = new MergeSpaceType();
+          break;
+        }
+        case "SelectionSpace": {
+          constructedType = new SelectionSpaceType();
           break;
         }
         case "StaticEntity": {

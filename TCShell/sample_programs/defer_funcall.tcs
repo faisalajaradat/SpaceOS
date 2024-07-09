@@ -9,10 +9,11 @@ var counter = fn (var id: number, var start: number, var end: number) {
 
 var iter = 0
 
-defer counter(1, iter, 6)
+defer counter(1, iter, 12)
 iter = 1
 
-defer counter(2, iter, 6)
+defer counter(2, iter, 12)
 iter = 2
 
 counter(3, iter, 6)
+counter(4, iter, 6)

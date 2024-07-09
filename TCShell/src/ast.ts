@@ -34,6 +34,7 @@ import {
   FunctionType,
   FunDeclaration,
   LandPathType,
+  MergeSpaceType,
   MobileDecorator,
   NoneLiteral,
   NotControlledDecorator,
@@ -44,6 +45,7 @@ import {
   PhysicalDecorator,
   RecordLiteral,
   RecordType,
+  SelectionSpaceType,
   SmartEntityType,
   SpaceFactoryType,
   SpacePathGraphType,
@@ -669,6 +671,14 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   enclosedSpace(_enclosedSpace) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new EnclosedSpaceType(lineAndColumn.lineNum, lineAndColumn.colNum);
+  },
+  mergeSpace(_mergeSpace) {
+    const lineAndColumn = this.source.getLineAndColumn();
+    return new MergeSpaceType(lineAndColumn.lineNum, lineAndColumn.colNum);
+  },
+  selectionSpace(_selectionSpace) {
+    const lineAndColumn = this.source.getLineAndColumn();
+    return new SelectionSpaceType(lineAndColumn.lineNum, lineAndColumn.colNum);
   },
   entity(_entity) {
     const lineAndColumn = this.source.getLineAndColumn();

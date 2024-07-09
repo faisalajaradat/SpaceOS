@@ -84,7 +84,7 @@ TCShell {
 
     PhysicalPathType = landPath | airPath
 
-    MaybeVirtualSpatialType = (physical | virtual)? (spatialTypeKeyword | path | MaybeImmutableSpatialType)
+    MaybeVirtualSpatialType = (physical | virtual)? (spatialTypeKeyword | path | MaybeImmutableSpatialType | selectionSpace | mergeSpace)
 
     MaybeImmutableSpatialType = (mutable | immutable)? (spaceKeyword | openSpace | enclosedSpace | entity | staticEntity | MaybeMobileSpatialType)
 
@@ -121,6 +121,8 @@ TCShell {
             | spaceKeyword
             | openSpace
             | enclosedSpace
+            | mergeSpace
+            | selectionSpace
             | entity
             | staticEntity
             | dynamicEntity
@@ -161,6 +163,8 @@ TCShell {
     spaceKeyword = "Space" ~identPart
     openSpace = "OpenSpace" ~identPart
     enclosedSpace = "EnclosedSpace" ~identPart
+    mergeSpace = "MergeSpace" ~identPart
+    selectionSpace = "SelectionSpace" ~identPart
     entity = "Entity" ~identPart
     staticEntity = "StaticEntity" ~identPart
     dynamicEntity = "DynamicEntity" ~identPart

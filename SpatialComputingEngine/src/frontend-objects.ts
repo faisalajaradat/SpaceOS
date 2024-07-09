@@ -202,3 +202,58 @@ export class LandPath extends Path {
     this._type = "LandPath";
   }
 }
+
+export abstract class RequestMessage implements Entity {
+  [index: string]: EntityDataValue;
+  processed: boolean;
+
+  constructor() {
+    this.completed = false;
+  }
+}
+
+export class SendEntityRequestMessage extends RequestMessage {
+  entity: string;
+  path: string;
+
+  constructor(entity: string, path: string) {
+    super();
+    this.entity = entity;
+    this.path = path;
+  }
+}
+
+const SendEntityRequestMessageSchemaDef: SchemaDefinition = {
+  processed: { type: "boolean" },
+  entity: { type: "string" },
+  path: { type: "string" },
+};
+
+export const SEND_ENTITY_SCHEMA = new Schema(
+  "SendEntityRequestMessage",
+  SendEntityRequestMessageSchemaDef,
+  { dataStructure: "JSON" },
+);
+
+export class EnterSpaceRequestMessage extends RequestMessage {
+  entity: string;
+  space: string;
+
+  constructor(entity: string, space: string) {
+    super();
+    this.entity = entity;
+    this.space = space;
+  }
+}
+
+const EnterSpaceRequestMessageSchemaDef: SchemaDefinition = {
+  processed: { type: "boolean" },
+  entity: { type: "string" },
+  space: { type: "string" },
+};
+
+export const ENTER_SPACE_SCHEMA = new Schema(
+  "EnterSpaceRequestMessage",
+  EnterSpaceRequestMessageSchemaDef,
+  { dataStructure: "JSON" },
+);
