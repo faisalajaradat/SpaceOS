@@ -39,6 +39,8 @@ async function acceptSendEntityMessage() {
       sendEntityMessage.entity +
       " from space: " +
       sendEntityMessage.space +
+      " down path: " +
+      sendEntityMessage.path +
       " to space: " +
       spaceId,
   );
