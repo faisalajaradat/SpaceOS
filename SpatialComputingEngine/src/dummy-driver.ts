@@ -27,29 +27,52 @@ async function acceptSendEntityMessage() {
     (await fetchData(PATH_SCHEMA, sendEntityMessage.path)) as Path
   ).target;
   const enterSpaceMessage = new EnterSpaceRequestMessage(
-    sendEntityMessage.entity,
     spaceId,
+    sendEntityMessage.entity,
+    sendEntityMessage.path,
   );
   const space = (await fetchData(
     SPACE_SCHEMA,
     sendEntityMessage.space,
   )) as Space;
-  console.log(
-    "Sending entity: " +
-      sendEntityMessage.entity +
-      " from space: " +
-      sendEntityMessage.space +
-      " down path: " +
-      sendEntityMessage.path +
-      " to space: " +
-      spaceId,
+
+  enterSpaceMessage.status = "QUEUED";
+  const enterSpaceMessageId = await saveData(
+    ENTER_SPACE_SCHEMA,
+    enterSpaceMessage,
   );
   space.entities.splice(space.entities.indexOf(sendEntityMessage.entity), 1);
   await saveData(SPACE_SCHEMA, space);
-  enterSpaceMessage.status = "ARRIVED";
-  await saveData(ENTER_SPACE_SCHEMA, enterSpaceMessage);
+  sendEntity(sendEntityMessage.path, enterSpaceMessageId);
   sendEntityMessage.status = "PROCESSED";
   await saveData(SEND_ENTITY_SCHEMA, sendEntityMessage);
+}
+
+async function sendEntity(
+  pathId: string,
+  enterSpaceMessageId: string,
+): Promise<void> {
+  let path = (await fetchData(PATH_SCHEMA, pathId)) as Path;
+  while (path.isFull) {
+    await new Promise((r) => setTimeout(r, 500));
+    path = (await fetchData(PATH_SCHEMA, pathId)) as Path;
+  }
+  path.isFull = true;
+  await saveData(PATH_SCHEMA, path);
+  const enterSpaceMessage: EnterSpaceRequestMessage = (await fetchData(
+    ENTER_SPACE_SCHEMA,
+    enterSpaceMessageId,
+  )) as EnterSpaceRequestMessage;
+  console.log(
+    "Sending entity: " +
+      enterSpaceMessage.entity +
+      " down path: " +
+      enterSpaceMessage.path +
+      " to space: " +
+      enterSpaceMessage.space,
+  );
+  enterSpaceMessage.status = "ARRIVED";
+  await saveData(ENTER_SPACE_SCHEMA, enterSpaceMessage);
 }
 
 export async function begin(): Promise<void> {

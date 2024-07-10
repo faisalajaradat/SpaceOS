@@ -906,6 +906,14 @@ export const libDeclarations: (
     new PathType(),
     DefaultBaseTypeInstance.STRING,
   ]),
+  new UnionDeclaration(new UnionType(new Identifier("MergeSpaceOrString")), [
+    new MergeSpaceType(),
+    DefaultBaseTypeInstance.STRING,
+  ]),
+  new UnionDeclaration(
+    new UnionType(new Identifier("SelectionSpaceOrString")),
+    [new SelectionSpaceType(), DefaultBaseTypeInstance.STRING],
+  ),
 ];
 
 //Dictionary of predefined functions implemented in TS to be called in TCShell

@@ -438,8 +438,14 @@ export class SpaceType extends SpatialObjectType {
         message.status = "ACCEPTED";
         message.timestamp = new Date(Date.now());
         await saveData(engine.ENTER_SPACE_SCHEMA, message);
-        space.entities.push(args[1] as string);
+        space.entities.push(message.entity);
         await saveData(engine.SPACE_SCHEMA, space);
+        const path: engine.Path = (await fetchData(
+          engine.PATH_SCHEMA,
+          message.path,
+        )) as engine.Path;
+        path.isFull = false;
+        await saveData(engine.PATH_SCHEMA, path);
       },
     );
   }
@@ -849,6 +855,8 @@ export class SpacePathGraphType extends SpatialType {
       )) as engine.Space;
       if (rootSpace.innerSpace === (args[2] as string))
         return "Cannot path root space to its inner space!";
+      if (engine.isControlSpace(rootSpace))
+        return "Cannot extend control space!";
 
       await addPathSpaceFunctionality(
         spg,
@@ -938,14 +946,15 @@ export class SpacePathGraphType extends SpatialType {
         journeyStack.push(journeyEndNode.spaceId);
         journeyEndNode = journeyEndNode.parent;
       }
+      let fromTruePath = true;
       while (journeyStack.length > 1) {
-        const curSpace = journeyStack.pop();
-        const targetSpace = journeyStack.at(-1);
+        const curSpaceId = journeyStack.pop();
+        const targetSpaceId = journeyStack.at(-1);
         const pathId = (
           (
             await Promise.all(
               struct.table
-                .get(curSpace)
+                .get(curSpaceId)
                 .map(
                   async (pathId) =>
                     (await fetchData(
@@ -954,22 +963,77 @@ export class SpacePathGraphType extends SpatialType {
                     )) as engine.Path,
                 ),
             )
-          ).filter((path) => path.reachable.includes(targetSpace))[0] as Entity
+          ).filter((path) =>
+            path.reachable.includes(targetSpaceId),
+          )[0] as Entity
         )[EntityId];
+        const curSpace: engine.Space = (await fetchData(
+          engine.SPACE_SCHEMA,
+          curSpaceId,
+        )) as engine.Space;
+        const targetSpace: engine.Space = (await fetchData(
+          engine.SPACE_SCHEMA,
+          targetSpaceId,
+        )) as engine.Space;
+        if (
+          engine.isControlSpace(targetSpace) &&
+          targetSpace._type === "MergeSpace"
+        )
+          fromTruePath = targetSpace.truePath === pathId;
+        if (
+          engine.isControlSpace(curSpace) &&
+          curSpace._type === "MergeSpace" &&
+          ((curSpace.controlSignal && !fromTruePath) ||
+            (!curSpace.controlSignal && fromTruePath))
+        )
+          return "Entity stopped at merge space!";
+
         const sendError = await SpaceType.libMethods.get("sendEntity")(
-          curSpace,
+          curSpaceId,
           args[1],
           pathId,
           args[4],
         );
         if (sendError !== undefined) return sendError;
         const receiveError = await SpaceType.libMethods.get("receiveEntity")(
-          targetSpace,
+          targetSpaceId,
           args[1],
           args[4],
         );
         if (receiveError !== undefined) return receiveError;
       }
+    });
+    SpacePathGraphType.libMethods.set("createMergeSpace", async (...args) => {
+      const spg: engine.SpacePathGraph = (await fetchData(
+        engine.SPG_SCHEMA,
+        args[0] as string,
+      )) as engine.SpacePathGraph;
+      const struct: SPGStruct = JSON.parse(spg.structJSON, jsonReviver);
+      const mergeSpaceId = await saveData(
+        engine.SPACE_SCHEMA,
+        new engine.MergeSpace(
+          false,
+          args[2] as string,
+          args[4] as string,
+          "virtual",
+          JSON.stringify({ x: 0, y: 0 }, jsonReplacer),
+        ),
+      );
+      await addPathSpaceFunctionality(
+        spg,
+        struct,
+        args[1] as string,
+        args[2] as string,
+        mergeSpaceId,
+      );
+      await addPathSpaceFunctionality(
+        spg,
+        struct,
+        args[3] as string,
+        args[4] as string,
+        mergeSpaceId,
+      );
+      return mergeSpaceId;
     });
   }
 
@@ -978,6 +1042,14 @@ export class SpacePathGraphType extends SpatialType {
     maybeStringType.identifier.declaration = libDeclarations[1];
     const pathOrStringType = new UnionType(new Identifier("PathOrString"));
     pathOrStringType.identifier.declaration = libDeclarations[4];
+    const mergeSpaceOrStringType = new UnionType(
+      new Identifier("MergeSpaceOrString"),
+    );
+    mergeSpaceOrStringType.identifier.declaration = libDeclarations[5];
+    const selectionSpaceOrStringType = new UnionType(
+      new Identifier("SelectionSpaceOrString"),
+    );
+    selectionSpaceOrStringType.identifier.declaration = libDeclarations[6];
     switch (methodName) {
       case "setRoot":
         return new FunctionType(maybeStringType, [new SpaceType()]);
@@ -991,11 +1063,25 @@ export class SpacePathGraphType extends SpatialType {
       case "getStructJSON":
         return new FunctionType(DefaultBaseTypeInstance.STRING, []);
       case "sendEntity":
-        return new FunctionType(DefaultBaseTypeInstance.VOID, [
+        return new FunctionType(maybeStringType, [
           new EntityType(),
           new SpaceType(),
           new SpaceType(),
           DefaultBaseTypeInstance.NUMBER,
+        ]);
+      case "createMergeSpace":
+        return new FunctionType(mergeSpaceOrStringType, [
+          new SpaceType(),
+          new PathType(),
+          new SpaceType(),
+          new PathType(),
+        ]);
+      case "createSelectionSpace":
+        return new FunctionType(selectionSpaceOrStringType, [
+          new SpaceType(),
+          new PathType(),
+          new SpaceType(),
+          new PathType(),
         ]);
     }
   }
@@ -1024,7 +1110,37 @@ export class SpacePathGraphType extends SpatialType {
   }
 }
 
-export abstract class ControlSpaceType extends SpaceType {}
+export abstract class ControlSpaceType extends SpaceType {
+  static libMethods: Map<string, (...args: unknown[]) => Promise<unknown>>;
+
+  static {
+    ControlSpaceType.libMethods = new Map<
+      string,
+      (...args: unknown[]) => Promise<unknown>
+    >();
+    ControlSpaceType.libMethods.set("setControl", async (...args) => {
+      const space: engine.Space = (await fetchData(
+        engine.SPACE_SCHEMA,
+        args[0] as string,
+      )) as engine.Space;
+      if (!engine.isControlSpace(space))
+        return "Can only set control signal on control space!";
+      space.controlSignal = args[1] as boolean;
+      await saveData(engine.SPACE_SCHEMA, space);
+    });
+  }
+
+  static mapMethodNameToMethodType(methodName: string): FunctionType {
+    const maybeStringType = new UnionType(new Identifier("MaybeString"));
+    maybeStringType.identifier.declaration = libDeclarations[1];
+    switch (methodName) {
+      case "setControl":
+        return new FunctionType(maybeStringType, [
+          DefaultBaseTypeInstance.BOOL,
+        ]);
+    }
+  }
+}
 
 export class SelectionSpaceType extends ControlSpaceType {
   equals(_type: Type): boolean {

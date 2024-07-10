@@ -19,6 +19,7 @@ const PATH_SCHEMA_DEF: SchemaDefinition = {
   segment: { type: "number" },
   target: { type: "string" },
   reachable: { type: "string[]" },
+  isFull: { type: "boolean" },
 };
 
 export const PATH_SCHEMA: Schema = new Schema("Path", PATH_SCHEMA_DEF, {
@@ -63,6 +64,8 @@ const SPACE_SCHEMA_DEF: SchemaDefinition = {
   innerSpace: { type: "string" },
   entities: { type: "string[]" },
   controlSignal: { type: "boolean" },
+  truePath: { type: "string" },
+  falsePath: { type: "string" },
 };
 
 export const SPACE_SCHEMA: Schema = new Schema("Space", SPACE_SCHEMA_DEF, {
@@ -134,23 +137,53 @@ export class EnclosedSpace extends Space {
 
 export interface ControlSpace {
   controlSignal: boolean;
+  truePath: string;
+  falsePath: string;
+}
+
+export function isControlSpace(space: Space): space is Space & ControlSpace {
+  return (
+    "controlSignal" in space && "truePath" in space && "falsePath" in space
+  );
 }
 
 export class MergeSpace extends Space implements ControlSpace {
   controlSignal: boolean;
+  truePath: string;
+  falsePath: string;
 
-  constructor(locality: string, locationJSON: string) {
+  constructor(
+    controlSignal: boolean,
+    truePath: string,
+    falsePath: string,
+    locality: string,
+    locationJSON: string,
+  ) {
     super(locality, true, locationJSON);
     this._type = "MergeSpace";
+    this.controlSignal = controlSignal;
+    this.truePath = truePath;
+    this.falsePath = falsePath;
   }
 }
 
 export class SelectionSpace extends Space implements ControlSpace {
   controlSignal: boolean;
+  truePath: string;
+  falsePath: string;
 
-  constructor(locality: string, locationJSON: string) {
+  constructor(
+    controlSignal: boolean,
+    truePath: string,
+    falsePath: string,
+    locality: string,
+    locationJSON: string,
+  ) {
     super(locality, true, locationJSON);
     this._type = "SelectionSpace";
+    this.controlSignal = controlSignal;
+    this.truePath = truePath;
+    this.falsePath = falsePath;
   }
 }
 
@@ -180,12 +213,14 @@ export class Path extends SpatialTypeEntity {
   segment: number;
   target: string;
   reachable: string[];
+  isFull: boolean;
 
   constructor(locality: string, segment: number = 0) {
     super(locality);
     this.segment = segment;
     this.reachable = new Array<string>();
     this._type = "Path";
+    this.isFull = false;
   }
 }
 
@@ -220,6 +255,7 @@ export class SendEntityRequestMessage extends RequestMessage {
   space: string;
   entity: string;
   path: string;
+  isTruePath: boolean;
 
   constructor(space: string, entity: string, path: string) {
     super();
@@ -236,6 +272,7 @@ const SendEntityRequestMessageSchemaDef: SchemaDefinition = {
   space: { type: "string" },
   entity: { type: "string" },
   path: { type: "string" },
+  isTruePath: { type: "boolean" },
 };
 
 export const SEND_ENTITY_SCHEMA = new Schema(
@@ -245,13 +282,16 @@ export const SEND_ENTITY_SCHEMA = new Schema(
 );
 
 export class EnterSpaceRequestMessage extends RequestMessage {
-  entity: string;
   space: string;
+  entity: string;
+  path: string;
+  isTruePath: boolean;
 
-  constructor(entity: string, space: string) {
+  constructor(space: string, entity: string, path: string) {
     super();
     this.entity = entity;
     this.space = space;
+    this.path = path;
   }
 }
 
@@ -259,8 +299,10 @@ const EnterSpaceRequestMessageSchemaDef: SchemaDefinition = {
   timestamp: { type: "date", sortable: true },
   status: { type: "string" },
   errorMsg: { type: "string" },
-  entity: { type: "string" },
   space: { type: "string" },
+  entity: { type: "string" },
+  path: { type: "string" },
+  isTruePath: { type: "boolean" },
 };
 
 export const ENTER_SPACE_SCHEMA = new Schema(
