@@ -251,7 +251,7 @@ export abstract class RequestMessage implements Entity {
   }
 }
 
-export class SendEntityRequestMessage extends RequestMessage {
+export abstract class MoveEntityRequestMessage extends RequestMessage {
   space: string;
   entity: string;
   path: string;
@@ -265,7 +265,7 @@ export class SendEntityRequestMessage extends RequestMessage {
   }
 }
 
-const SendEntityRequestMessageSchemaDef: SchemaDefinition = {
+const MoveEntityRequestMessageSchemaDef: SchemaDefinition = {
   timestamp: { type: "date", sortable: true },
   status: { type: "string" },
   errorMsg: { type: "string" },
@@ -274,39 +274,19 @@ const SendEntityRequestMessageSchemaDef: SchemaDefinition = {
   path: { type: "string" },
   isTruePath: { type: "boolean" },
 };
+
+export class SendEntityRequestMessage extends MoveEntityRequestMessage {}
 
 export const SEND_ENTITY_SCHEMA = new Schema(
   "SendEntityRequestMessage",
-  SendEntityRequestMessageSchemaDef,
+  MoveEntityRequestMessageSchemaDef,
   { dataStructure: "JSON" },
 );
 
-export class EnterSpaceRequestMessage extends RequestMessage {
-  space: string;
-  entity: string;
-  path: string;
-  isTruePath: boolean;
-
-  constructor(space: string, entity: string, path: string) {
-    super();
-    this.entity = entity;
-    this.space = space;
-    this.path = path;
-  }
-}
-
-const EnterSpaceRequestMessageSchemaDef: SchemaDefinition = {
-  timestamp: { type: "date", sortable: true },
-  status: { type: "string" },
-  errorMsg: { type: "string" },
-  space: { type: "string" },
-  entity: { type: "string" },
-  path: { type: "string" },
-  isTruePath: { type: "boolean" },
-};
+export class EnterSpaceRequestMessage extends MoveEntityRequestMessage {}
 
 export const ENTER_SPACE_SCHEMA = new Schema(
   "EnterSpaceRequestMessage",
-  EnterSpaceRequestMessageSchemaDef,
+  MoveEntityRequestMessageSchemaDef,
   { dataStructure: "JSON" },
 );
