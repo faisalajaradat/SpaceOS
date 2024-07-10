@@ -136,3 +136,5 @@ dist
 
 
 node_modules/*
+
+results*.csv

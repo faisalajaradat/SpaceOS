@@ -1,5 +1,5 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { GLM4ChatModel } from '../Types/GLM4';
+import { GLM4ChatModel } from '../Types/GLM4.js';
 
 const messages = [
     new SystemMessage("Translate the following from English into Italian"),
@@ -11,7 +11,7 @@ const messages = [
     temperature: 0.9,
     topP: 0.8,
     maxTokens: 25,
-    baseURL: "http://localhost:8000/v1/", // baseURL should look like: http://localhost:8000/v1/
+    baseURL: "http://192.168.2.18:9091/v1/", // baseURL should look like: http://localhost:8000/v1/
   });
   
   // Sample Call using the above messages
@@ -44,6 +44,8 @@ const messages = [
       }
   }
 
+
+  exampleCall();
 
 
 //todo: test function/tool calling 
