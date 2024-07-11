@@ -1,5 +1,5 @@
 import * as core from "./core/program.js";
-import {MatchCondition, SymbolDeclaration} from "./core/program.js";
+import { MatchCondition, SymbolDeclaration } from "./core/program.js";
 import {
   AliasTypeDeclaration,
   Parameter,
@@ -29,9 +29,16 @@ import {
 } from "./core/index.js";
 import { Identifier } from "./core/expr/Expr.js";
 
-export function popOutOfScopeVars(node: core.ScopedNode, varStacks: Map<SymbolDeclaration, unknown[]>) {
+export function popOutOfScopeVars(
+  node: core.ScopedNode,
+  varStacks: Map<SymbolDeclaration, unknown[]>,
+) {
   node.scope.symbolTable.forEach((symbol) => {
-    if (symbol instanceof VarSymbol) varStacks.get(symbol.varDeclaration).pop();
+    if (symbol instanceof VarSymbol) {
+      const varStack = varStacks.get(symbol.varDeclaration);
+      if (varStack === undefined) return;
+      else varStack.pop();
+    }
     if (symbol instanceof ImportSymbol)
       (symbol as ImportSymbol).importDeclaration.importedSymbols.forEach(
         (varDecl) => varStacks.get(varDecl).pop(),
@@ -39,7 +46,10 @@ export function popOutOfScopeVars(node: core.ScopedNode, varStacks: Map<SymbolDe
   });
 }
 
-export function getValueOfExpression(value: unknown, varStacks: Map<SymbolDeclaration, unknown[]>): unknown {
+export function getValueOfExpression(
+  value: unknown,
+  varStacks: Map<SymbolDeclaration, unknown[]>,
+): unknown {
   if (value instanceof Identifier) {
     value = varStacks.get(<VarDeclaration | Parameter>value.declaration).at(-1);
   } else if (value instanceof core.ArrayRepresentation)

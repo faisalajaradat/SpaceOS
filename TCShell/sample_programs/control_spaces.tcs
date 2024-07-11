@@ -1,0 +1,128 @@
+type ConveyorBelt = LandPath
+type AssemblyMachine = physical mutable OpenSpace
+type Twix = physical mutable StaticEntity
+
+var handleMaybeString = fn (var maybeString: MaybeString): bool {
+  match maybeString {
+    var error: string => {
+      print(error)
+      return false
+    }
+    var _v: void => return true
+  }
+}
+
+var beginAssemblyLine = fn (var assemblyLine: SpacePathGraph,
+  var startSpace1: Space, var startSpace2: Space,
+  var endSpace1: Space, var endSpace2: Space,
+  var mergeSpace: MergeSpace, var selectionSpace: SelectionSpace) {
+
+  var mergeControl = false
+  var selectionControl = true
+
+  var iter = 0
+
+  mergeSpace.setControl(mergeControl)
+  selectionSpace.setControl(selectionControl)
+
+  var leftEntities = startSpace1.getEntities()
+  var rightEntities = startSpace2.getEntities()
+
+  while iter < 40 {
+    if !mergeControl {
+      if selectionControl
+        assemblyLine.sendEntity(leftEntities[0], startSpace1, endSpace1, 500)
+      else
+        assemblyLine.sendEntity(leftEntities[0], startSpace1, endSpace2, 500)
+    }
+    else {
+      if selectionControl
+        assemblyLine.sendEntity(rightEntities[0], startSpace2, endSpace1, 500)
+      else assemblyLine.sendEntity(rightEntities[0], startSpace2, endSpace2, 500)
+    }
+    mergeControl = !mergeControl
+    mergeSpace.setControl(mergeControl)
+    if iter == 19 {
+      selectionControl = !selectionControl
+      selectionSpace.setControl(selectionControl)
+    }
+    iter = iter + 1
+  }
+}
+
+var Main = fn () {
+  var rightBarStart = new AssemblyMachine(Location {0, 0}, 2, "Right Bar Start")
+  var leftBarStart = new AssemblyMachine(Location {10, 0}, 2, "Left Bar Start")
+  var chocolatePourMachine = new AssemblyMachine(Location {6, 4}, 2, "Chocolate Pour Machine")
+  var assemblyFinish1 = new AssemblyMachine(Location {0, 10}, 2, "Finish 1")
+  var assemblyFinish2 = new AssemblyMachine(Location {10, 10}, 2, "Finish 2")
+  var assemblyLine = new SpacePathGraph((Space) chocolatePourMachine)
+  var possibleMergeSpace = assemblyLine.createMergeSpace(
+    (Space) leftBarStart, (Path) new ConveyorBelt(), (Space) rightBarStart, (Path) new ConveyorBelt())
+  match possibleMergeSpace {
+    var error: string => {
+      print(error)
+      return
+    }
+    var ms: MergeSpace => {
+      if !handleMaybeString(assemblyLine.setRoot((Space) ms))
+        return
+    }
+  }
+
+  if !handleMaybeString(
+      assemblyLine.addPathSpace((Path) new ConveyorBelt(), (Space) chocolatePourMachine))
+    return
+
+  if !handleMaybeString(assemblyLine.setRoot((Space) chocolatePourMachine))
+    return
+
+  var possibleSelectionSpace = assemblyLine.createSelectionSpace(
+    (Path) new ConveyorBelt(),
+    (Space) assemblyFinish1,
+    (Path) new ConveyorBelt(),
+    (Space) assemblyFinish2,
+    (Path) new ConveyorBelt())
+
+  var leftBars: Entity[] = [(Entity) new Twix("Left Bar 1")]
+  var rightBars: Entity[] = [(Entity) new Twix("Right Bar 1")]
+
+  var numOfBars = 2
+
+  while numOfBars <= 20 {
+    push(leftBars, (Entity) new Twix("Left Bar " + numOfBars))
+    push(rightBars, (Entity) new Twix("Right Bar" + numOfBars))
+    numOfBars = numOfBars + 1
+  }
+
+  leftBarStart.addEntities(leftBars)
+  rightBarStart.addEntities(rightBars)
+
+  match possibleMergeSpace {
+    var error: string => {
+      print(error)
+      return
+    }
+    var mergeSpace: MergeSpace => {
+      match possibleSelectionSpace {
+        var error: string => {
+          print(error)
+          return
+        }
+        var selectionSpace: SelectionSpace => {
+          beginAssemblyLine(assemblyLine,
+            (Space) leftBarStart,
+            (Space) rightBarStart,
+            (Space) assemblyFinish1,
+            (Space) assemblyFinish2,
+            mergeSpace,
+            selectionSpace)
+        }
+      }
+    }
+  }
+  print(assemblyFinish1.getEntities())
+  print(assemblyFinish2.getEntities())
+}
+
+Main()

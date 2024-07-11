@@ -323,15 +323,6 @@ function constructType(originalExpr: Expr, baseType: Type) {
     baseExpr.declaration.type = constructedType;
 }
 
-function assignArraySize(type1: ArrayType, type2: ArrayType) {
-  while (type1.type instanceof ArrayType && type2.type instanceof ArrayType) {
-    type1._size = type2._size;
-    type1 = type1.type;
-    type2 = type2.type;
-  }
-  type1._size = type2._size;
-}
-
 export const enum TypeRule {
   ControlFlowConditionIsBool,
   AssignedToSameType,
@@ -398,11 +389,23 @@ const typeRuleApplicationDictionary: {
         ? checkType(assignment.value)
         : checkType(assignment.rightExpr);
     const isSameType = leftHandType.equals(rightHandType);
-    if (leftHandType instanceof ArrayType && rightHandType instanceof ArrayType)
-      assignArraySize(leftHandType, rightHandType);
     assignment.type = isSameType
       ? rightHandType
       : new BaseType(BaseTypeKind.NONE, assignment.line, assignment.column);
+    if (
+      (isAnyType(rightHandType) ||
+        (rightHandType instanceof ArrayType &&
+          isAnyType(rightHandType.type))) &&
+      !isAnyType(leftHandType)
+    ) {
+      constructType(
+        assignment instanceof VarDeclaration
+          ? assignment.value
+          : assignment.rightExpr,
+        leftHandType,
+      );
+      return true;
+    }
     if (isAnyType(leftHandType) && !isAnyType(rightHandType))
       constructType(
         assignment instanceof VarDeclaration
@@ -410,13 +413,7 @@ const typeRuleApplicationDictionary: {
           : assignment.leftExpr,
         rightHandType,
       );
-    if (isAnyType(rightHandType) && !isAnyType(leftHandType))
-      constructType(
-        assignment instanceof VarDeclaration
-          ? assignment.value
-          : assignment.rightExpr,
-        leftHandType,
-      );
+
     return isSameType;
   },
 
@@ -896,6 +893,7 @@ const typeRuleApplicationDictionary: {
   [TypeRule.ArrayLiteralDeclaredWithEntriesAllMatchingType]: (
     arrayLiteral: ArrayLiteral,
   ): boolean => {
+    if (arrayLiteral.value.length === 0) return true;
     const elementTypes = arrayLiteral.value.map(checkType);
     const allExplicitTypes = elementTypes.filter(
       (elementType) => !isAnyType(elementType),

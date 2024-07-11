@@ -813,8 +813,17 @@ export class Match extends Stmt {
       if (
         (a.matchCondition instanceof Parameter &&
           b.matchCondition instanceof Expr) ||
-        isWildcard(a.matchCondition) ||
-        !isWildcard(b.matchCondition)
+        (isWildcard(a.matchCondition) && !isWildcard(b.matchCondition))
+      )
+        return 1;
+      if (
+        a.matchCondition.type instanceof SpatialType &&
+        b.matchCondition.type.equals(DefaultBaseTypeInstance.STRING)
+      )
+        return -1;
+      if (
+        b.matchCondition.type instanceof SpatialType &&
+        a.matchCondition.type.equals(DefaultBaseTypeInstance.STRING)
       )
         return 1;
       return 0;

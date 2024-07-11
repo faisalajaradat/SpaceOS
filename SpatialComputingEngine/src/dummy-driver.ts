@@ -82,6 +82,10 @@ async function sendEntity(
 
 export async function begin(): Promise<void> {
   while (true) {
-    await acceptSendEntityMessage();
+    try {
+      await acceptSendEntityMessage();
+    } catch (err) {
+      break;
+    }
   }
 }

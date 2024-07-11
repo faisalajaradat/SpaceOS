@@ -879,8 +879,11 @@ export class SpacePathGraphType extends SpatialType {
       )) as engine.Space;
       if (rootSpace.innerSpace === (args[2] as string))
         return "Cannot path root space to its inner space!";
-      if (engine.isControlSpace(rootSpace))
-        return "Cannot extend control space!";
+      if (
+        engine.isControlSpace(rootSpace) &&
+        rootSpace._type === "SelectionSpace"
+      )
+        return "Cannot extend selection space!";
 
       await addPathSpaceFunctionality(
         spg,
@@ -1049,25 +1052,30 @@ export class SpacePathGraphType extends SpatialType {
           engine.SPACE_SCHEMA,
           new engine.SelectionSpace(
             false,
-            args[2] as string,
-            args[4] as string,
+            args[3] as string,
+            args[5] as string,
             "virtual",
             JSON.stringify({ x: 0, y: 0 }, jsonReplacer),
           ),
         );
-        await addPathSpaceFunctionality(
-          spg,
-          struct,
+        await SpacePathGraphType.libMethods.get("addPathSpace")(
+          args[0],
+          args[1],
           selectionSpaceId,
-          args[2] as string,
-          args[1] as string,
         );
         await addPathSpaceFunctionality(
           spg,
           struct,
           selectionSpaceId,
-          args[4] as string,
           args[3] as string,
+          args[2] as string,
+        );
+        await addPathSpaceFunctionality(
+          spg,
+          struct,
+          selectionSpaceId,
+          args[5] as string,
+          args[4] as string,
         );
         return selectionSpaceId;
       },
@@ -1115,6 +1123,7 @@ export class SpacePathGraphType extends SpatialType {
         ]);
       case "createSelectionSpace":
         return new FunctionType(selectionSpaceOrStringType, [
+          new PathType(),
           new SpaceType(),
           new PathType(),
           new SpaceType(),
