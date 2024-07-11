@@ -35,6 +35,7 @@ import {
   BinaryExpr,
   CompositionType,
   ControlDecorator,
+  ControlSpaceType,
   DefaultBaseTypeInstance,
   EnclosedSpaceType,
   FunctionType,
@@ -784,14 +785,17 @@ const typeRuleApplicationDictionary: {
         spatialBaseType = spatialBaseType.delegate;
       if (
         spatialBaseType instanceof SpacePathGraphType ||
+        spatialBaseType instanceof SpaceType ||
         spatialBaseType instanceof PathType
       ) {
         const mapFunction =
           spatialBaseType instanceof SpacePathGraphType
             ? SpacePathGraphType.mapMethodNameToMethodType
-            : spatialBaseType instanceof SpaceType
-              ? SpaceType.mapMethodNameToMethodType
-              : PathType.mapMethodNameToMethodType;
+            : spatialBaseType instanceof ControlSpaceType
+              ? ControlSpaceType.mapMethodNameToMethodType
+              : spatialBaseType instanceof SpaceType
+                ? SpaceType.mapMethodNameToMethodType
+                : PathType.mapMethodNameToMethodType;
         return (
           mapFunction(funCall.identifier.symbol.value).paramTypes.filter(
             (paramType, pos) => !paramType.equals(checkType(funCall.args[pos])),
@@ -957,22 +961,27 @@ const typeRuleApplicationDictionary: {
       spatialBaseType instanceof PathType
     ) {
       const isSPGType = spatialBaseType instanceof SpacePathGraphType;
+      const isControlSpaceType = spatialBaseType instanceof ControlSpaceType;
       const isSpaceType = spatialBaseType instanceof SpaceType;
       symbolAccess.type =
         Array.from(
           isSPGType
             ? SpacePathGraphType.libMethods.keys()
-            : isSpaceType
-              ? SpaceType.libMethods.keys()
-              : PathType.libMethods.keys(),
+            : isControlSpaceType
+              ? ControlSpaceType.libMethods.keys()
+              : isSpaceType
+                ? SpaceType.libMethods.keys()
+                : PathType.libMethods.keys(),
         )
           .filter((methodName) => methodName === symbolAccess.symbol.value)
           .map(
             isSPGType
               ? SpacePathGraphType.mapMethodNameToMethodType
-              : isSpaceType
-                ? SpaceType.mapMethodNameToMethodType
-                : PathType.mapMethodNameToMethodType,
+              : isControlSpaceType
+                ? ControlSpaceType.mapMethodNameToMethodType
+                : isSpaceType
+                  ? SpaceType.mapMethodNameToMethodType
+                  : PathType.mapMethodNameToMethodType,
           )[0] ?? DefaultBaseTypeInstance.NONE;
     } else if (symbolAccess.locationExpr.type instanceof RecordType) {
       symbolAccess.type =

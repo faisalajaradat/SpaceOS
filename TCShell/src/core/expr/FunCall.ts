@@ -10,7 +10,12 @@ import { getValueOfExpression, isDecorator } from "../../utils.js";
 import { FunDeclaration } from "./FunDeclaration.js";
 import { Expr, Identifier } from "./Expr.js";
 import { SymbolAccess } from "./SymbolAccess.js";
-import { PathType, SpacePathGraphType, SpaceType } from "../type/index.js";
+import {
+  ControlSpaceType,
+  PathType,
+  SpacePathGraphType,
+  SpaceType,
+} from "../type/index.js";
 
 export class FunCall extends Expr {
   identifier: Expr;
@@ -74,9 +79,11 @@ export class FunCall extends Expr {
         return await (
           spatialBaseType instanceof SpacePathGraphType
             ? SpacePathGraphType.libMethods
-            : spatialBaseType instanceof SpaceType
-              ? SpaceType.libMethods
-              : PathType.libMethods
+            : spatialBaseType instanceof ControlSpaceType
+              ? ControlSpaceType.libMethods
+              : spatialBaseType instanceof SpaceType
+                ? SpaceType.libMethods
+                : PathType.libMethods
         ).get(this.identifier.symbol.value)(...args);
       }
     }
