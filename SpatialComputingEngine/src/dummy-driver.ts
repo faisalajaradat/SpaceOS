@@ -1,6 +1,7 @@
 import {
   ENTER_SPACE_SCHEMA,
   EnterSpaceRequestMessage,
+  isControlSpace,
   Path,
   PATH_SCHEMA,
   SEND_ENTITY_SCHEMA,
@@ -41,7 +42,11 @@ async function acceptSendEntityMessage() {
     ENTER_SPACE_SCHEMA,
     enterSpaceMessage,
   );
-  space.entities.splice(space.entities.indexOf(sendEntityMessage.entity), 1);
+  if (isControlSpace(space) && space._type === "MergeSpace") {
+    if (sendEntityMessage.path === space.truePath) space.entities[0] = "";
+    if (sendEntityMessage.path === space.falsePath) space.entities[1] = "";
+  } else
+    space.entities.splice(space.entities.indexOf(sendEntityMessage.entity), 1);
   await saveData(SPACE_SCHEMA, space);
   sendEntity(sendEntityMessage.path, enterSpaceMessageId);
   sendEntityMessage.status = "PROCESSED";

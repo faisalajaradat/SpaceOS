@@ -161,6 +161,7 @@ export class MergeSpace extends Space implements ControlSpace {
   ) {
     super(locality, true, locationJSON);
     this._type = "MergeSpace";
+    this.entities = ["", ""];
     this.controlSignal = controlSignal;
     this.truePath = truePath;
     this.falsePath = falsePath;

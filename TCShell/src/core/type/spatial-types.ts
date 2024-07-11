@@ -377,6 +377,21 @@ export class SpaceType extends SpatialObjectType {
           !space.entities.includes(args[1] as string)
         )
           return "Space does not contain inputted entity!";
+        const entityIndex = space.entities.indexOf(args[1] as string);
+        if (engine.isControlSpace(space)) {
+          if (
+            space._type === "MergeSpace" &&
+            ((entityIndex === 0 && !space.controlSignal) ||
+              (entityIndex === 1 && space.controlSignal))
+          )
+            return "Entity blocked by control signal!";
+          if (
+            space._type === "SelectionSpace" &&
+            (((args[2] as string) === space.truePath && !space.controlSignal) ||
+              ((args[2] as string) === space.falsePath && space.controlSignal))
+          )
+            return "Path blocked by control signal!";
+        }
         let message: engine.SendEntityRequestMessage =
           new engine.SendEntityRequestMessage(
             args[0] as string,
@@ -435,11 +450,20 @@ export class SpaceType extends SpatialObjectType {
             (message as Entity)[EntityId],
           )) as engine.EnterSpaceRequestMessage;
         }
+        if (engine.isControlSpace(space) && space._type === "MergeSpace") {
+          if (message.path === space.truePath) {
+            if (space.entities[0] === "") space.entities[0] = message.entity;
+            else return "Merge space true input is already full!";
+          }
+          if (message.path === space.falsePath) {
+            if (space.entities[1] === "") space.entities[1] = message.entity;
+            else return "Merge space false input is already full!";
+          }
+        } else space.entities.push(message.entity);
+        await saveData(engine.SPACE_SCHEMA, space);
         message.status = "ACCEPTED";
         message.timestamp = new Date(Date.now());
         await saveData(engine.ENTER_SPACE_SCHEMA, message);
-        space.entities.push(message.entity);
-        await saveData(engine.SPACE_SCHEMA, space);
         const path: engine.Path = (await fetchData(
           engine.PATH_SCHEMA,
           message.path,
@@ -946,7 +970,6 @@ export class SpacePathGraphType extends SpatialType {
         journeyStack.push(journeyEndNode.spaceId);
         journeyEndNode = journeyEndNode.parent;
       }
-      let fromTruePath = true;
       while (journeyStack.length > 1) {
         const curSpaceId = journeyStack.pop();
         const targetSpaceId = journeyStack.at(-1);
@@ -967,27 +990,6 @@ export class SpacePathGraphType extends SpatialType {
             path.reachable.includes(targetSpaceId),
           )[0] as Entity
         )[EntityId];
-        const curSpace: engine.Space = (await fetchData(
-          engine.SPACE_SCHEMA,
-          curSpaceId,
-        )) as engine.Space;
-        const targetSpace: engine.Space = (await fetchData(
-          engine.SPACE_SCHEMA,
-          targetSpaceId,
-        )) as engine.Space;
-        if (
-          engine.isControlSpace(targetSpace) &&
-          targetSpace._type === "MergeSpace"
-        )
-          fromTruePath = targetSpace.truePath === pathId;
-        if (
-          engine.isControlSpace(curSpace) &&
-          curSpace._type === "MergeSpace" &&
-          ((curSpace.controlSignal && !fromTruePath) ||
-            (!curSpace.controlSignal && fromTruePath))
-        )
-          return "Entity stopped at merge space!";
-
         const sendError = await SpaceType.libMethods.get("sendEntity")(
           curSpaceId,
           args[1],
@@ -1035,6 +1037,41 @@ export class SpacePathGraphType extends SpatialType {
       );
       return mergeSpaceId;
     });
+    SpacePathGraphType.libMethods.set(
+      "createSelectionSpace",
+      async (...args) => {
+        const spg: engine.SpacePathGraph = (await fetchData(
+          engine.SPG_SCHEMA,
+          args[0] as string,
+        )) as engine.SpacePathGraph;
+        const struct: SPGStruct = JSON.parse(spg.structJSON, jsonReviver);
+        const selectionSpaceId = await saveData(
+          engine.SPACE_SCHEMA,
+          new engine.SelectionSpace(
+            false,
+            args[2] as string,
+            args[4] as string,
+            "virtual",
+            JSON.stringify({ x: 0, y: 0 }, jsonReplacer),
+          ),
+        );
+        await addPathSpaceFunctionality(
+          spg,
+          struct,
+          selectionSpaceId,
+          args[2] as string,
+          args[1] as string,
+        );
+        await addPathSpaceFunctionality(
+          spg,
+          struct,
+          selectionSpaceId,
+          args[4] as string,
+          args[3] as string,
+        );
+        return selectionSpaceId;
+      },
+    );
   }
 
   static mapMethodNameToMethodType(methodName: string): FunctionType {
