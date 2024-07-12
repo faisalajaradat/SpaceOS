@@ -797,10 +797,10 @@ async function addPathSpaceFunctionality(
   else struct.table.set(rootSpaceId, [pathId]);
   if (!struct.table.has(newSpaceId)) struct.table.set(newSpaceId, []);
   spg.structJSON = JSON.stringify(struct, jsonReplacer, 4);
-  const path = (await fetchData(engine.PATH_SCHEMA, pathId)) as engine.Path;
   await saveData(engine.SPG_SCHEMA, spg);
-  path.reachable.push(newSpaceId);
+  const path = (await fetchData(engine.PATH_SCHEMA, pathId)) as engine.Path;
   path.target = newSpaceId;
+  path.reachable = await updateReachable(struct, path.target);
   await saveData(engine.PATH_SCHEMA, path);
 }
 
@@ -835,6 +835,34 @@ async function searchSPG(
         queue.push({ parent: nextSpace, spaceId: path.target });
       });
   }
+}
+
+async function updateReachable(
+  struct: SPGStruct,
+  space: string,
+): Promise<Array<string>> {
+  const stack = [space];
+  const visited = new Set<string>();
+  while (stack.length > 0) {
+    const curSpace = stack.pop();
+    if (visited.has(curSpace)) continue;
+    visited.add(curSpace);
+    stack.push(
+      ...(
+        await Promise.all(
+          struct.table
+            .get(curSpace)
+            .map(
+              async (pathId) =>
+                (await fetchData(engine.PATH_SCHEMA, pathId)) as engine.Path,
+            ),
+        )
+      )
+        .map((path) => path.target)
+        .filter((spaceId) => !visited.has(spaceId)),
+    );
+  }
+  return Array.from(visited);
 }
 
 export class SpacePathGraphType extends SpatialType {
@@ -1043,11 +1071,6 @@ export class SpacePathGraphType extends SpatialType {
     SpacePathGraphType.libMethods.set(
       "createSelectionSpace",
       async (...args) => {
-        const spg: engine.SpacePathGraph = (await fetchData(
-          engine.SPG_SCHEMA,
-          args[0] as string,
-        )) as engine.SpacePathGraph;
-        const struct: SPGStruct = JSON.parse(spg.structJSON, jsonReviver);
         const selectionSpaceId = await saveData(
           engine.SPACE_SCHEMA,
           new engine.SelectionSpace(
@@ -1063,6 +1086,11 @@ export class SpacePathGraphType extends SpatialType {
           args[1],
           selectionSpaceId,
         );
+        const spg: engine.SpacePathGraph = (await fetchData(
+          engine.SPG_SCHEMA,
+          args[0] as string,
+        )) as engine.SpacePathGraph;
+        const struct: SPGStruct = JSON.parse(spg.structJSON, jsonReviver);
         await addPathSpaceFunctionality(
           spg,
           struct,
@@ -1080,6 +1108,27 @@ export class SpacePathGraphType extends SpatialType {
         return selectionSpaceId;
       },
     );
+    SpacePathGraphType.libMethods.set("finalize", async (...args) => {
+      const spg: engine.SpacePathGraph = (await fetchData(
+        engine.SPG_SCHEMA,
+        args[0] as string,
+      )) as engine.SpacePathGraph;
+      const struct: SPGStruct = JSON.parse(spg.structJSON, jsonReviver);
+      const allPathIds = [].concat(...Array.from(struct.table.values()));
+      await Promise.all(
+        (
+          await Promise.all(
+            allPathIds.map(
+              async (pathId) =>
+                (await fetchData(engine.PATH_SCHEMA, pathId)) as engine.Path,
+            ),
+          )
+        ).map(async (path) => {
+          path.reachable = await updateReachable(struct, path.target);
+          await saveData(engine.PATH_SCHEMA, path);
+        }),
+      );
+    });
   }
 
   static mapMethodNameToMethodType(methodName: string): FunctionType {
@@ -1129,6 +1178,8 @@ export class SpacePathGraphType extends SpatialType {
           new SpaceType(),
           new PathType(),
         ]);
+      case "finalize":
+        return new FunctionType(DefaultBaseTypeInstance.VOID, []);
     }
   }
 

@@ -46,6 +46,9 @@ var beginAssemblyLine = fn (var assemblyLine: SpacePathGraph,
       selectionControl = !selectionControl
       selectionSpace.setControl(selectionControl)
     }
+    leftEntities = startSpace1.getEntities()
+    rightEntities = startSpace2.getEntities()
+
     iter = iter + 1
   }
 }
@@ -110,6 +113,7 @@ var Main = fn () {
           return
         }
         var selectionSpace: SelectionSpace => {
+          assemblyLine.finalize()
           beginAssemblyLine(assemblyLine,
             (Space) leftBarStart,
             (Space) rightBarStart,
