@@ -9,8 +9,8 @@ import * as dotenv from 'dotenv';
 import { GLM4ChatModel } from '../Types/GLM4.js';
 dotenv.config();
 
-const models = ['GLM4']; //'wizardlm2:latest', 'deepseek-coder:latest', "gemma:latest", "llama2:latest","llama3:latest", "llama3:70b", "mistral:latest", "mixtral:8x22b","wizard-math:13b", "wizard-math:7b"
-//'phi3:mini'
+const models = ['phi3:latest', "phi3:mini", "wizard-math:7b", "wizard-math:13b", "phi3:14b", "mixtral:8x22b", "mistral:latest"]; //'wizardlm2:latest', 'deepseek-coder:latest', "gemma:latest", "llama2:latest","llama3:latest", "llama3:70b", "mistral:latest", "mixtral:8x22b","wizard-math:13b", "wizard-math:7b"
+//'GLM4'
 
 const outputFile = 'results.csv';
 const outputStream = createWriteStream(outputFile);
@@ -25,18 +25,18 @@ function delay(ms: number) {
 }
 
 async function processModel(model: string, useStreaming: boolean) {
-  // const chatModel = new ChatOllama({
-  //   baseUrl: process.env.OLLAMA_BASE_URL,
-  //   model: model,
-  //   temperature: 0.5,
-  //   topP: 0.5,
-  //   keepAlive: "60s",
-  // });
-  const chatModel = new GLM4ChatModel({
-    temperature: 0.9,
-    topP: 0.8,
-    baseURL: "http://192.168.2.18:9091/v1/", // baseURL should look like: http://localhost:8000/v1/
+  const chatModel = new ChatOllama({
+    baseUrl: process.env.OLLAMA_BASE_URL,
+    model: model,
+    temperature: 0.5,
+    topP: 0.5,
+    keepAlive: "60s",
   });
+  // const chatModel = new GLM4ChatModel({
+  //   temperature: 0.9,
+  //   topP: 0.8,
+  //   baseURL: "http://192.168.2.18:9091/v1/", // baseURL should look like: http://localhost:8000/v1/
+  // });
   const parser = createReadStream('questions.csv').pipe(parse({ columns: true }));
 
   for await (const row of parser) {
