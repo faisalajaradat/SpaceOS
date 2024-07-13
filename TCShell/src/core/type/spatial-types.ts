@@ -412,7 +412,7 @@ export class SpaceType extends SpatialObjectType {
     SpaceType.libMethods.set(
       "receiveEntity",
       async (...args): Promise<string | void> => {
-        const space: engine.Space = (await fetchData(
+        let space: engine.Space = (await fetchData(
           engine.SPACE_SCHEMA,
           args[0] as string,
         )) as engine.Space;
@@ -450,6 +450,10 @@ export class SpaceType extends SpatialObjectType {
             (message as Entity)[EntityId],
           )) as engine.EnterSpaceRequestMessage;
         }
+        space = (await fetchData(
+          engine.SPACE_SCHEMA,
+          args[0] as string,
+        )) as engine.Space;
         if (engine.isControlSpace(space) && space._type === "MergeSpace") {
           if (message.path === space.truePath) {
             if (space.entities[0] === "") space.entities[0] = message.entity;

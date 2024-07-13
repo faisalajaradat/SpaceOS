@@ -36,18 +36,18 @@ async function acceptSendEntityMessage() {
     SPACE_SCHEMA,
     sendEntityMessage.space,
   )) as Space;
+  if (isControlSpace(space) && space._type === "MergeSpace") {
+    if (space.controlSignal) space.entities[0] = "";
+    else space.entities[1] = "";
+  } else
+    space.entities.splice(space.entities.indexOf(sendEntityMessage.entity), 1);
+  await saveData(SPACE_SCHEMA, space);
 
   enterSpaceMessage.status = "QUEUED";
   const enterSpaceMessageId = await saveData(
     ENTER_SPACE_SCHEMA,
     enterSpaceMessage,
   );
-  if (isControlSpace(space) && space._type === "MergeSpace") {
-    if (sendEntityMessage.path === space.truePath) space.entities[0] = "";
-    if (sendEntityMessage.path === space.falsePath) space.entities[1] = "";
-  } else
-    space.entities.splice(space.entities.indexOf(sendEntityMessage.entity), 1);
-  await saveData(SPACE_SCHEMA, space);
   sendEntity(sendEntityMessage.path, enterSpaceMessageId);
   sendEntityMessage.status = "PROCESSED";
   await saveData(SEND_ENTITY_SCHEMA, sendEntityMessage);
@@ -68,14 +68,14 @@ async function sendEntity(
     ENTER_SPACE_SCHEMA,
     enterSpaceMessageId,
   )) as EnterSpaceRequestMessage;
-  console.log(
+  /*console.log(
     "Sending entity: " +
       enterSpaceMessage.entity +
       " down path: " +
       enterSpaceMessage.path +
       " to space: " +
       enterSpaceMessage.space,
-  );
+  );*/
   enterSpaceMessage.status = "ARRIVED";
   await saveData(ENTER_SPACE_SCHEMA, enterSpaceMessage);
 }

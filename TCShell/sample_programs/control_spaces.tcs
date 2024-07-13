@@ -17,10 +17,11 @@ var beginAssemblyLine = fn (var assemblyLine: SpacePathGraph,
   var endSpace1: Space, var endSpace2: Space,
   var mergeSpace: MergeSpace, var selectionSpace: SelectionSpace) {
 
-  var mergeControl = false
+  var mergeControl = true
   var selectionControl = true
 
   var iter = 0
+  var index = 0
 
   mergeSpace.setControl(mergeControl)
   selectionSpace.setControl(selectionControl)
@@ -28,28 +29,41 @@ var beginAssemblyLine = fn (var assemblyLine: SpacePathGraph,
   var leftEntities = startSpace1.getEntities()
   var rightEntities = startSpace2.getEntities()
 
-  while iter < 40 {
-    if !mergeControl {
-      if selectionControl
-        assemblyLine.sendEntity(leftEntities[0], startSpace1, endSpace1, 500)
-      else
-        assemblyLine.sendEntity(leftEntities[0], startSpace1, endSpace2, 500)
+  while iter < len(leftEntities) + len(rightEntities) {
+    if mergeControl {
+      if selectionControl {
+        if !handleMaybeString(
+          assemblyLine.sendEntity(leftEntities[index], startSpace1, endSpace1, 500))
+          return
+      }
+      else {
+        if !handleMaybeString(
+          assemblyLine.sendEntity(leftEntities[index], startSpace1, endSpace2, 500))
+          return
+      }
     }
     else {
-      if selectionControl
-        assemblyLine.sendEntity(rightEntities[0], startSpace2, endSpace1, 500)
-      else assemblyLine.sendEntity(rightEntities[0], startSpace2, endSpace2, 500)
+      if selectionControl {
+        if !handleMaybeString(
+          assemblyLine.sendEntity(rightEntities[index], startSpace2, endSpace1, 500))
+          return
+      }
+      else {
+        if !handleMaybeString(
+          assemblyLine.sendEntity(rightEntities[index], startSpace2, endSpace2, 500))
+          return
+      }
     }
     mergeControl = !mergeControl
     mergeSpace.setControl(mergeControl)
-    if iter == 19 {
+    if iter == len(leftEntities) - 1 {
       selectionControl = !selectionControl
       selectionSpace.setControl(selectionControl)
     }
-    leftEntities = startSpace1.getEntities()
-    rightEntities = startSpace2.getEntities()
 
     iter = iter + 1
+    if (iter % 2 == 0)
+      index = index + 1
   }
 }
 
@@ -92,7 +106,7 @@ var Main = fn () {
 
   var numOfBars = 2
 
-  while numOfBars <= 20 {
+  while numOfBars <= 10 {
     push(leftBars, (Entity) new Twix("Left Bar " + numOfBars))
     push(rightBars, (Entity) new Twix("Right Bar" + numOfBars))
     numOfBars = numOfBars + 1
@@ -100,6 +114,9 @@ var Main = fn () {
 
   leftBarStart.addEntities(leftBars)
   rightBarStart.addEntities(rightBars)
+
+  print(leftBarStart.getEntities())
+  print(rightBarStart.getEntities())
 
   match possibleMergeSpace {
     var error: string => {

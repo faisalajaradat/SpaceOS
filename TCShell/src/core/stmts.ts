@@ -517,6 +517,7 @@ export class While extends Stmt {
         unresolved.push(this.whileStmt.evaluate(varStacks));
         returnValue = undefined;
       } else returnValue = await this.whileStmt.evaluate(varStacks);
+      if (returnValue instanceof Return) return returnValue;
     }
     return returnValue;
   }
