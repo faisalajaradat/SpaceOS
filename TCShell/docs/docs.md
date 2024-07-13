@@ -43,8 +43,7 @@ var multiply = fn (var x, var y) {
     return x*y
 }
 
-var subtract = fn (var x, var y)
-    return x-y
+var subtract = fn (var x, var y) return x-y
 
 print(multiply(10, 5))
 print(subtract(55, 5))
