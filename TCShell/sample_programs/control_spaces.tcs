@@ -74,14 +74,19 @@ var Main = fn () {
   var assemblyFinish1 = new AssemblyMachine(Location {0, 10}, 2, "Finish 1")
   var assemblyFinish2 = new AssemblyMachine(Location {10, 10}, 2, "Finish 2")
   var assemblyLine = new SpacePathGraph((Space) chocolatePourMachine)
+
+  //add merge space leading to chocolate machine from start 1 and 2
   var possibleMergeSpace = assemblyLine.createMergeSpace(
     (Space) leftBarStart, (Path) new ConveyorBelt(), (Space) rightBarStart, (Path) new ConveyorBelt())
+
   match possibleMergeSpace {
     var error: string => {
       print(error)
       return
     }
     var ms: MergeSpace => {
+
+      //setup to build off of merge space
       if !handleMaybeString(assemblyLine.setRoot((Space) ms))
         return
     }

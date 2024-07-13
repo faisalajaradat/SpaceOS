@@ -218,8 +218,13 @@ TCShell {
 
     lineTerminator = "\n" | "\r" | "\u2028" | "\u2029"
     unicodeSpaceSeparator = "\u2000".."\u200B" | "\u3000"
-    space := whitespace | lineTerminator
+    space := whitespace | lineTerminator | comment
     newline = space* end  	--last
   				  | whitespace* lineTerminator --whitespace
     NonemptyListWithOptionalEndSep<elem, sep> = NonemptyListOf<elem, sep> sep?
+
+    comment = multiLineComment | singleLineComment
+
+    multiLineComment = "/*" (~"*/" any)* "*/"
+    singleLineComment = "//" (~lineTerminator any)*
 }
