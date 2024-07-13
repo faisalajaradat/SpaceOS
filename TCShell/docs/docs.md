@@ -23,9 +23,7 @@ for the SpaceOS shell.
 var main = fn () {
     print("hello world")
 }
-
 main()
-
 ```
 From this example, quite a few features are expressed. All function declarations are
 variable declarations as function declarations are expressions. The `var` keyword is used
