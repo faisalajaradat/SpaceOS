@@ -12,6 +12,10 @@ var handleMaybeString = fn (var maybeString: MaybeString): bool {
   }
 }
 
+/*
+  Send entities down SPG alternating from start such that the two ends
+  have the same number of entities, but an even amount from each start
+*/
 var beginAssemblyLine = fn (var assemblyLine: SpacePathGraph,
   var startSpace1: Space, var startSpace2: Space,
   var endSpace1: Space, var endSpace2: Space,
