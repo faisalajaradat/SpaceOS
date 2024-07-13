@@ -20,6 +20,9 @@ for the SpaceOS shell.
 ## Hello World
 
 ```
-print("hello world")
+var main = fn ()
+    print("hello world")
+
+main()
 
 ```
