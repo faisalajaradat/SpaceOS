@@ -12,8 +12,9 @@ for the SpaceOS shell.
 
 * [Hello world](#hello-world)
 
-<\td><td width=33% valign=top>
-<\table>
+</td><td width=33% valign=top>
+</tr>
+</table>
 
 
 ## Hello World
