@@ -10,7 +10,8 @@ for the SpaceOS shell.
 <table>
 <tr><td width=33% valign=top>
 
-* [Hello world](#hello-world)
+* [Hello World](#hello-world)
+* [Functions](#functions)
 
 </td><td width=33% valign=top>
 </tr>
@@ -33,4 +34,18 @@ Therefore, a hello world program can simply be the following:
 
 ```
 print("hello world")
+```
+
+## Functions
+
+```
+var multiply = fn (var x, var y) {
+    return x*y
+}
+
+var subtract = fn (var x, var y)
+    return x-y
+
+print(multiply(10, 5))
+print(subtract(55, 5))
 ```
