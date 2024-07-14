@@ -23,6 +23,12 @@ import {
 } from "./program.js";
 import { receiveEntity, sendEntity } from "./space-methods.js";
 
+const enum SPG_ERROR {
+  DNE = "SPG does not exist!",
+  IS_FINAL = "SPG is final!",
+  NOT_FINAL = "SPG is not final!",
+}
+
 async function updateReachable(
   struct: SPGStruct,
   space: string,
@@ -73,14 +79,15 @@ async function addPathSpaceFunctionality(
   rootSpaceId: string,
   pathId: string,
   newSpaceId: string,
-): Promise<void> {
+): Promise<void | string> {
+  const path = (await fetchData(PATH_SCHEMA, pathId)) as Path;
+  if (path._type === undefined) return "Path does not exist!";
   const rootNodePaths = struct.table.get(rootSpaceId);
   if (rootNodePaths !== undefined) rootNodePaths.push(pathId);
   else struct.table.set(rootSpaceId, [pathId]);
   if (!struct.table.has(newSpaceId)) struct.table.set(newSpaceId, []);
   spg.structJSON = JSON.stringify(struct, jsonReplacer, 4);
   await saveData(SPG_SCHEMA, spg);
-  const path = (await fetchData(PATH_SCHEMA, pathId)) as Path;
   path.target = newSpaceId;
   path.reachable = await updateReachable(struct, path.target);
   await saveData(PATH_SCHEMA, path);
@@ -91,6 +98,7 @@ export const setRoot = async (...args: unknown[]): Promise<string | void> => {
     SPG_SCHEMA,
     args[0] as string,
   )) as SpacePathGraph;
+  if (spg.structJSON === undefined) return SPG_ERROR.DNE;
   const struct: SPGStruct = JSON.parse(
     spg.structJSON,
     jsonReviver,
@@ -109,6 +117,8 @@ export const addPathSpace = async (
     SPG_SCHEMA,
     args[0] as string,
   )) as SpacePathGraph;
+  if (spg.structJSON === undefined) return SPG_ERROR.DNE;
+  if (spg.final) return SPG_ERROR.IS_FINAL;
   const struct: SPGStruct = JSON.parse(
     spg.structJSON,
     jsonReviver,
@@ -122,7 +132,7 @@ export const addPathSpace = async (
   if (isControlSpace(rootSpace) && rootSpace._type === "SelectionSpace")
     return "Cannot extend selection space!";
 
-  await addPathSpaceFunctionality(
+  return await addPathSpaceFunctionality(
     spg,
     struct,
     struct.root,
@@ -140,6 +150,11 @@ export const splitPath = async (...args: unknown[]): Promise<string> => {
     PATH_SCHEMA,
     args[1] as string,
   )) as Path;
+  if (originalPath._type) return "Path does not exist!";
+  if (spg.structJSON) return SPG_ERROR.DNE;
+  if (originalPath.target === undefined || originalPath.reachable.length < 1)
+    return "Path is not in SPG!";
+  if (spg.final) return SPG_ERROR.IS_FINAL;
   Promise.all(
     (
       (await (await connectAndGetRepo(PATH_SCHEMA))
@@ -185,7 +200,7 @@ export const splitPath = async (...args: unknown[]): Promise<string> => {
 
 export const getStructJSON = async (...args: unknown[]): Promise<string> =>
   ((await fetchData(SPG_SCHEMA, args[0] as string)) as SpacePathGraph)
-    .structJSON;
+    .structJSON ?? SPG_ERROR.DNE;
 
 export const sendEntityThrough = async (
   ...args: unknown[]
@@ -194,6 +209,8 @@ export const sendEntityThrough = async (
     SPG_SCHEMA,
     args[0] as string,
   )) as SpacePathGraph;
+  if (spg.structJSON === undefined) return SPG_ERROR.DNE;
+  if (!spg.final) return SPG_ERROR.NOT_FINAL;
   const struct: SPGStruct = JSON.parse(spg.structJSON, jsonReviver);
   let journeyEndNode = await searchSPG(
     struct,
@@ -225,6 +242,8 @@ export const createMergeSpace = async (...args: unknown[]): Promise<string> => {
     SPG_SCHEMA,
     args[0] as string,
   )) as SpacePathGraph;
+  if (spg.structJSON === undefined) return SPG_ERROR.DNE;
+  if (spg.final) return SPG_ERROR.IS_FINAL;
   const struct: SPGStruct = JSON.parse(spg.structJSON, jsonReviver);
   const mergeSpaceId = await saveData(
     SPACE_SCHEMA,
@@ -236,20 +255,22 @@ export const createMergeSpace = async (...args: unknown[]): Promise<string> => {
       JSON.stringify({ x: 0, y: 0 }, jsonReplacer),
     ),
   );
-  await addPathSpaceFunctionality(
+  let addPathResult = await addPathSpaceFunctionality(
     spg,
     struct,
     args[1] as string,
     args[2] as string,
     mergeSpaceId,
   );
-  await addPathSpaceFunctionality(
+  if (typeof addPathResult === "string") return addPathResult;
+  addPathResult = await addPathSpaceFunctionality(
     spg,
     struct,
     args[3] as string,
     args[4] as string,
     mergeSpaceId,
   );
+  if (typeof addPathResult === "string") return addPathResult;
   return mergeSpaceId;
 };
 
@@ -266,26 +287,31 @@ export const createSelectionSpace = async (
       JSON.stringify({ x: 0, y: 0 }, jsonReplacer),
     ),
   );
-  await addPathSpace(args[0], args[1], selectionSpaceId);
+  let addPathResult = await addPathSpace(args[0], args[1], selectionSpaceId);
+  if (typeof addPathResult === "string") return addPathResult;
   const spg: SpacePathGraph = (await fetchData(
     SPG_SCHEMA,
     args[0] as string,
   )) as SpacePathGraph;
+  if (spg.structJSON === undefined) return SPG_ERROR.DNE;
+  if (spg.final) return SPG_ERROR.IS_FINAL;
   const struct: SPGStruct = JSON.parse(spg.structJSON, jsonReviver);
-  await addPathSpaceFunctionality(
+  addPathResult = await addPathSpaceFunctionality(
     spg,
     struct,
     selectionSpaceId,
     args[3] as string,
     args[2] as string,
   );
-  await addPathSpaceFunctionality(
+  if (typeof addPathResult === "string") return addPathResult;
+  addPathResult = await addPathSpaceFunctionality(
     spg,
     struct,
     selectionSpaceId,
     args[5] as string,
     args[4] as string,
   );
+  if (typeof addPathResult === "string") return addPathResult;
   return selectionSpaceId;
 };
 
@@ -294,6 +320,8 @@ export const finalize = async (...args: unknown[]): Promise<string | void> => {
     SPG_SCHEMA,
     args[0] as string,
   )) as SpacePathGraph;
+  if (spg.structJSON === undefined) return SPG_ERROR.DNE;
+  if (spg.final) return SPG_ERROR.IS_FINAL;
   const struct: SPGStruct = JSON.parse(spg.structJSON, jsonReviver);
   const allPathIds = [].concat(...Array.from(struct.table.values()));
   await Promise.all(
@@ -302,4 +330,6 @@ export const finalize = async (...args: unknown[]): Promise<string | void> => {
       await saveData(PATH_SCHEMA, path);
     }),
   );
+  spg.final = true;
+  await saveData(SPG_SCHEMA, spg);
 };

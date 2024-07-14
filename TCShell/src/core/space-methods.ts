@@ -17,6 +17,10 @@ import {
   SpatialEntity,
 } from "../../../SpatialComputingEngine/src/index.js";
 
+const enum SPACE_ERROR {
+  DNE = "Space does not exist!",
+}
+
 export const addEntities = async (
   ...args: unknown[]
 ): Promise<string | void> => {
@@ -24,7 +28,7 @@ export const addEntities = async (
     SPACE_SCHEMA,
     args[0] as string,
   )) as Space;
-  if (space._type === undefined) return "Space does not exist!";
+  if (space._type === undefined) return SPACE_ERROR.DNE;
   if (
     (await fetchAll(ENTITY_SCHEMA, args[1] as string[])).filter(
       (entity: SpatialEntity) => entity._type === undefined,
@@ -42,6 +46,7 @@ export const getEntities = async (
     SPACE_SCHEMA,
     args[0] as string,
   )) as Space;
+  if (space._type === undefined) return SPACE_ERROR.DNE;
   return space.entities;
 };
 
@@ -95,7 +100,7 @@ export const receiveEntity = async (
     SPACE_SCHEMA,
     args[0] as string,
   )) as Space;
-  if (space.entities === undefined) return "Space cannot be found!";
+  if (space.entities === undefined) return SPACE_ERROR.DNE;
   if (space.entities.includes(args[1] as string))
     return "Space already contains entity!";
   let message: EnterSpaceRequestMessage = (await (
