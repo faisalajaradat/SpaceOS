@@ -3,7 +3,7 @@ type PhysicalBikeSpace = physical mutable OpenSpace
 type Bike = physical mutable mobile SmartEntity
 
 var sendEntityDownSPG = fn (var spg: SpacePathGraph, var entity: Entity, var startSpace: Space, var endSpace: Space) {
-  spg.sendEntity(entity, startSpace, endSpace, 500)
+  spg.sendEntityThrough(entity, startSpace, endSpace, 500)
   print(startSpace.getEntities())
   print(endSpace.getEntities())
 }

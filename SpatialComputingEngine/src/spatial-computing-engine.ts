@@ -32,3 +32,12 @@ export async function fetchData(
   const repo = await connectAndGetRepo(schema);
   return (await repo.fetch(id)) as engine.EngineEntity;
 }
+
+export async function fetchAll(
+  schema: Schema,
+  ids: Array<string>,
+): Promise<Array<engine.EngineEntity>> {
+  return await Promise.all(
+    ids.map(async (entityId) => await fetchData(schema, entityId)),
+  );
+}
