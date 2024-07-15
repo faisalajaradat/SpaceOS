@@ -14,6 +14,7 @@ for the SpaceOS shell.
 * [Functions](#functions)
 * [Symbol Visibility](#symbol-visibility)
 * [Variables](#variables)
+* [Types](#types)
 
 </td><td width=33% valign=top>
 </tr>
@@ -84,3 +85,37 @@ The type of a variable is inferred from the value on the right side of the assig
 the type of a declared variable.
 
 Excluding functions, all variables are mutable. To reassign the value of a variable, you reuse `=` with the new value.
+
+## Types
+
+### Base Types
+
+```
+bool
+
+string
+
+number
+
+void
+```
+
+### Numbers
+
+The `number` type works the same as in JavaScript, so it is a double-precision 64-bit
+binary format IEEE 754 value. They are no integers at the moment. Literals can be defined
+in decimal form, or in scientific notation.
+
+```
+var PI = 3.14
+var AVAGADRO = 6.02214076e23
+```
+
+### Strings
+
+String literals can be defined using either single or double quotes.
+
+```
+var sam = "Sam"
+var marc = 'Marc'
+```
