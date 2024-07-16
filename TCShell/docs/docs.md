@@ -15,6 +15,9 @@ for the SpaceOS shell.
 * [Symbol Visibility](#symbol-visibility)
 * [Variables](#variables)
 * [Types](#types)
+    * [Base Types](#base-types)
+    * [Numbers](#numbers)
+    * [Strings](#strings)
 
 </td><td width=33% valign=top>
 </tr>
