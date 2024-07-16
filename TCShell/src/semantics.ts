@@ -46,6 +46,7 @@ import {
   RecordLiteral,
   RecordType,
   SmartEntityType,
+  SpacePathGraphFactoryType,
   SpacePathGraphType,
   SpaceType,
   SpatialObjectInstantiationExpr,
@@ -826,6 +827,7 @@ const typeRuleApplicationDictionary: {
     while (isDecorator(baseObjectType))
       baseObjectType = baseObjectType.delegate;
     return (
+      baseObjectType instanceof SpacePathGraphFactoryType ||
       baseObjectType instanceof SpacePathGraphType ||
       baseObjectType instanceof PathType ||
       baseObjectType instanceof EnclosedSpaceType ||
@@ -839,6 +841,7 @@ const typeRuleApplicationDictionary: {
   [TypeRule.FullyDescribedSpatialObjectInstantiated]: (
     objectInstantiation: SpatialObjectInstantiationExpr,
   ): boolean =>
+    objectInstantiation.type instanceof SpacePathGraphFactoryType ||
     (isDecorator(objectInstantiation.type) &&
       (objectInstantiation.type.delegate instanceof PathType ||
         (objectInstantiation.type.delegate instanceof ControlDecorator &&
@@ -856,10 +859,20 @@ const typeRuleApplicationDictionary: {
     while (isDecorator(baseType)) baseType = baseType.delegate;
     if (
       objectInstantiation.args.length === 0 &&
-      !(baseType instanceof SpaceType || baseType instanceof SpacePathGraphType)
+      !(
+        baseType instanceof SpaceType ||
+        baseType instanceof SpacePathGraphType ||
+        baseType instanceof SpacePathGraphFactoryType
+      )
     )
       return true;
     if (objectInstantiation.args.length === 0) return false;
+    if (baseType instanceof SpacePathGraphFactoryType) {
+      if (objectInstantiation.args.length > 1) return false;
+      return new SpacePathGraphType().equals(
+        checkType(objectInstantiation.args[0]),
+      );
+    }
     if (baseType instanceof SpacePathGraphType) {
       if (objectInstantiation.args.length > 1) return false;
       return new SpaceType().contains(checkType(objectInstantiation.args[0]));

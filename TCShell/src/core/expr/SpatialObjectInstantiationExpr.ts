@@ -5,17 +5,19 @@ import {
   OpenSpaceType,
   PathType,
   SmartEntityType,
+  SpacePathGraphFactoryType,
   SpacePathGraphType,
   SpatialType,
   StaticEntityType,
 } from "../type/index.js";
 import {
-    ASTNode,
-    dotString,
-    jsonReplacer,
-    newNodeId,
-    RuntimeType,
-    SPGStruct, SymbolDeclaration,
+  ASTNode,
+  dotString,
+  jsonReplacer,
+  newNodeId,
+  RuntimeType,
+  SPGStruct,
+  SymbolDeclaration,
 } from "../program.js";
 import {
   getSpatialTypeSchema,
@@ -25,6 +27,7 @@ import {
 import * as engine from "../../../../SpatialComputingEngine/src/frontend-objects.js";
 import { saveData } from "../../../../SpatialComputingEngine/src/spatial-computing-engine.js";
 import { Expr } from "./Expr.js";
+import { intializeSPGFactory } from "../spg-factory-methods.js";
 
 export class SpatialObjectInstantiationExpr extends Expr {
   args: Expr[];
@@ -56,18 +59,13 @@ export class SpatialObjectInstantiationExpr extends Expr {
     return spatialObjectInstantiationNodeId;
   }
 
-  async evaluate(varStacks: Map<SymbolDeclaration, unknown[]>): Promise<unknown> {
-    const [propertiesRaw, delegateType] = parseSpatialTypeProperties(
-      this.type as SpatialType,
-    );
-    const properties: Map<string, string | boolean> = propertiesRaw as Map<
-      string,
-      string | boolean
-    >;
-    if (delegateType instanceof SpacePathGraphType) {
+  async evaluate(
+    varStacks: Map<SymbolDeclaration, unknown[]>,
+  ): Promise<unknown> {
+    if (this.type instanceof SpacePathGraphType) {
       const rootSpaceId = getValueOfExpression(
         await this.args[0].evaluate(varStacks),
-          varStacks
+        varStacks,
       ) as string;
       const struct: SPGStruct = {
         root: rootSpaceId,
@@ -79,19 +77,36 @@ export class SpatialObjectInstantiationExpr extends Expr {
       );
       return await saveData(engine.SPG_SCHEMA, newSPG);
     }
+    if (this.type instanceof SpacePathGraphFactoryType)
+      return await intializeSPGFactory(
+        getValueOfExpression(
+          await this.args[0].evaluate(varStacks),
+          varStacks,
+        ) as string,
+      );
+    const [propertiesRaw, delegateType] = parseSpatialTypeProperties(
+      this.type as SpatialType,
+    );
+    const properties: Map<string, string | boolean> = propertiesRaw as Map<
+      string,
+      string | boolean
+    >;
     const newObject: engine.SpatialTypeEntity =
       delegateType instanceof AirPathType
         ? new engine.AirPath()
-          : delegateType instanceof LandPathType
+        : delegateType instanceof LandPathType
           ? new engine.LandPath()
-              : delegateType instanceof PathType
+          : delegateType instanceof PathType
             ? new engine.Path("virtual")
-                  : delegateType instanceof OpenSpaceType
+            : delegateType instanceof OpenSpaceType
               ? new engine.OpenSpace(
                   properties.get("locality") as string,
                   properties.get("isControlled") as boolean,
                   JSON.stringify(
-                    getValueOfExpression(await this.args[0].evaluate(varStacks), varStacks),
+                    getValueOfExpression(
+                      await this.args[0].evaluate(varStacks),
+                      varStacks,
+                    ),
                     jsonReplacer,
                   ),
                 )
@@ -100,7 +115,10 @@ export class SpatialObjectInstantiationExpr extends Expr {
                     properties.get("locality") as string,
                     properties.get("isControlled") as boolean,
                     JSON.stringify(
-                      getValueOfExpression(await this.args[0].evaluate(varStacks), varStacks),
+                      getValueOfExpression(
+                        await this.args[0].evaluate(varStacks),
+                        varStacks,
+                      ),
                       jsonReplacer,
                     ),
                   )
@@ -124,16 +142,19 @@ export class SpatialObjectInstantiationExpr extends Expr {
       if (this.args.length > 1)
         newObject.dimension = getValueOfExpression(
           await this.args[1].evaluate(varStacks),
-            varStacks
+          varStacks,
         ) as number;
       if (this.args.length > 2)
         newObject.name = getValueOfExpression(
           await this.args[2].evaluate(varStacks),
-            varStacks
+          varStacks,
         ) as string;
     } else if (this.args.length > 0)
       (newObject as engine.SpatialObject | engine.Path).name =
-        getValueOfExpression(await this.args[0].evaluate(varStacks), varStacks) as string;
+        getValueOfExpression(
+          await this.args[0].evaluate(varStacks),
+          varStacks,
+        ) as string;
     return await saveData(getSpatialTypeSchema(newObject), newObject);
   }
 }

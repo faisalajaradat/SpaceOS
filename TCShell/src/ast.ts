@@ -29,7 +29,6 @@ import {
   ControlledDecorator,
   DynamicEntityType,
   EnclosedSpaceType,
-  EntityFactoryType,
   EntityType,
   FunctionType,
   FunDeclaration,
@@ -40,14 +39,13 @@ import {
   NotControlledDecorator,
   NumberLiteral,
   OpenSpaceType,
-  PathFactoryType,
   PathType,
   PhysicalDecorator,
   RecordLiteral,
   RecordType,
   SelectionSpaceType,
   SmartEntityType,
-  SpaceFactoryType,
+  SpacePathGraphFactoryType,
   SpacePathGraphType,
   SpaceType,
   SpatialObjectInstantiationExpr,
@@ -644,18 +642,6 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
       lineAndColumn.colNum,
     );
   },
-  spaceFactory(_spaceFactory) {
-    const lineAndColumn = this.source.getLineAndColumn();
-    return new SpaceFactoryType(lineAndColumn.lineNum, lineAndColumn.colNum);
-  },
-  entityFactory(_entityFactory) {
-    const lineAndColumn = this.source.getLineAndColumn();
-    return new EntityFactoryType(lineAndColumn.lineNum, lineAndColumn.colNum);
-  },
-  pathFactory(_pathFactory) {
-    const lineAndColumn = this.source.getLineAndColumn();
-    return new PathFactoryType(lineAndColumn.lineNum, lineAndColumn.colNum);
-  },
   path(_path) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new PathType(lineAndColumn.lineNum, lineAndColumn.colNum);
@@ -703,6 +689,13 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   spacePathGraph(_spacePathGraph) {
     const lineAndColumn = this.source.getLineAndColumn();
     return new SpacePathGraphType(lineAndColumn.lineNum, lineAndColumn.colNum);
+  },
+  spacePathGraphFactory(_spacePathGraphFactory) {
+    const lineAndColumn = this.source.getLineAndColumn();
+    return new SpacePathGraphFactoryType(
+      lineAndColumn.lineNum,
+      lineAndColumn.colNum,
+    );
   },
   wildcard(_underscore) {
     const lineAndColumn = this.source.getLineAndColumn();

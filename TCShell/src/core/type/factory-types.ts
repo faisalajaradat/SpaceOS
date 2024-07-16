@@ -1,6 +1,5 @@
-import {ASTNode, dotString, newNodeId, RuntimeType} from "../program.js";
 import { isAnyType } from "../../utils.js";
-
+import { ASTNode } from "../program.js";
 import { Type } from "./primitive-types.js";
 
 export abstract class FactoryType extends Type {
@@ -9,66 +8,20 @@ export abstract class FactoryType extends Type {
   }
 }
 
-export class SpaceFactoryType extends FactoryType {
+export class SpacePathGraphFactoryType extends FactoryType {
   constructor(line: number = -1, column: number = -1) {
     super(line, column);
   }
 
   children(): ASTNode[] {
-    return new Array<ASTNode>();
+    return [];
   }
 
   print(): string {
-    const spaceFactoryTypeNodeId = newNodeId();
-    dotString.push(
-      spaceFactoryTypeNodeId + '[label=" Space Factory Type "];\n',
-    );
-    return spaceFactoryTypeNodeId;
+    return undefined;
   }
 
   equals(_type: Type): boolean {
-    return isAnyType(_type) || _type instanceof SpaceFactoryType;
-  }
-}
-
-export class EntityFactoryType extends FactoryType {
-  constructor(line: number = -1, column: number = -1) {
-    super(line, column);
-  }
-
-  children(): ASTNode[] {
-    return new Array<ASTNode>();
-  }
-
-  print(): string {
-    const entityFactoryTypeNodeId = newNodeId();
-    dotString.push(
-      entityFactoryTypeNodeId + '[label=" Entity Factory Type "];\n',
-    );
-    return entityFactoryTypeNodeId;
-  }
-
-  equals(_type: RuntimeType): boolean {
-    return isAnyType(_type) || _type instanceof EntityFactoryType;
-  }
-}
-
-export class PathFactoryType extends FactoryType {
-  constructor(line: number = -1, column: number = -1) {
-    super(line, column);
-  }
-
-  children(): ASTNode[] {
-    return new Array<ASTNode>();
-  }
-
-  print(): string {
-    const pathFactoryTypeNodeId = newNodeId();
-    dotString.push(pathFactoryTypeNodeId + '[label=" Path Factory Type "];\n');
-    return pathFactoryTypeNodeId;
-  }
-
-  equals(_type: RuntimeType): boolean {
-    return isAnyType(_type) || _type instanceof PathFactoryType;
+    return isAnyType(_type) || _type instanceof SpacePathGraphFactoryType;
   }
 }

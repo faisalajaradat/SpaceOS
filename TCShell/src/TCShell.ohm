@@ -78,9 +78,8 @@ TCShell {
     SpatialType = MaybeVirtualSpatialType
                 | PhysicalPathType
                 | spacePathGraph
-                | spaceFactory
-                | entityFactory
-                | pathFactory
+                | spacePathGraphFactory
+
 
     PhysicalPathType = landPath | airPath
 
@@ -136,6 +135,7 @@ TCShell {
             | entityFactory
             | pathFactory
             | spacePathGraph
+            | spacePathGraphFactory
             | new
             | defer
             | pub
@@ -178,6 +178,7 @@ TCShell {
     entityFactory = "EntiyFactory" ~identPart
     pathFactory = "PathFactory" ~identPart
     spacePathGraph = "SpacePathGraph" ~identPart
+    spacePathGraphFactory = "SpacePathGraphFactory" ~identPart
     new = "new" ~identPart
     defer = "defer" ~identPart
     pub = "pub" ~identPart

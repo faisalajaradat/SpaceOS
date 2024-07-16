@@ -154,6 +154,7 @@ var Main = fn () {
   }
   print(assemblyFinish1.getEntities())
   print(assemblyFinish2.getEntities())
+  var assemblyLineFactory = new SpacePathGraphFactory(assemblyLine)
 }
 
 Main()

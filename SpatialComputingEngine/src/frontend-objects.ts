@@ -1,6 +1,11 @@
 import { Entity, EntityDataValue, Schema, SchemaDefinition } from "redis-om";
+import { fetchData } from "./spatial-computing-engine.js";
 
-export type EngineEntity = SpatialTypeEntity | SpacePathGraph | RequestMessage;
+export type EngineEntity =
+  | SpatialTypeEntity
+  | SpacePathGraph
+  | RequestMessage
+  | SpacePathGraphFactory;
 
 export abstract class SpatialTypeEntity implements Entity {
   [index: string]: EntityDataValue;
@@ -50,6 +55,51 @@ export abstract class Space extends SpatialObject {
     this.locationJSON = locationJSON;
     this.entities = new Array<string>();
   }
+}
+
+export class SpaceLiteral {
+  _type: string;
+  locality: string;
+  isControlled: boolean;
+  name: string;
+  locationJSON: string;
+  dimension: number;
+  innerSpace: SpaceLiteral;
+
+  constructor(
+    _type: string,
+    locality: string,
+    isControlled: boolean,
+    name: string,
+    locationJSON: string,
+    dimension: number,
+    innerSpace: SpaceLiteral,
+  ) {
+    this._type = _type;
+    this.locality = locality;
+    this.isControlled = isControlled;
+    this.name = name;
+    this.locationJSON = locationJSON;
+    this.dimension = dimension;
+    this.innerSpace = innerSpace;
+  }
+}
+
+export async function mapSpaceToSpaceLiteral(space: Space) {
+  if (space === undefined) return undefined;
+  return new SpaceLiteral(
+    space._type,
+    space.locality,
+    space.isControlled,
+    space.name,
+    space.locationJSON,
+    space.dimension,
+    space.innerSpace === undefined
+      ? undefined
+      : await mapSpaceToSpaceLiteral(
+          (await fetchData(SPACE_SCHEMA, space.innerSpace)) as Space,
+        ),
+  );
 }
 
 export abstract class SpatialEntity extends SpatialObject {}
@@ -216,28 +266,86 @@ export class Path extends SpatialTypeEntity {
   reachable: string[];
   isFull: boolean;
 
-  constructor(locality: string, segment: number = 0) {
+  constructor(
+    locality: string,
+    segment: number = 0,
+    reachable: Array<string> = [],
+  ) {
     super(locality);
     this.segment = segment;
-    this.reachable = new Array<string>();
+    this.reachable = reachable;
     this._type = "Path";
     this.isFull = false;
   }
 }
 
+export class PathLiteral {
+  _type: string;
+  locality: string;
+  name: string;
+  target: SpaceLiteral;
+  reachable: SpaceLiteral[];
+
+  constructor(
+    _type: string,
+    locality: string,
+    name: string,
+    target: SpaceLiteral,
+    reachable: SpaceLiteral[],
+  ) {
+    this._type = _type;
+    this.locality = locality;
+    this.name = name;
+    this.target = target;
+    this.reachable = reachable;
+  }
+}
+
+export function mapPathToPathLiteral(
+  path: Path,
+  spaceMap: Map<string, SpaceLiteral>,
+) {
+  return new PathLiteral(
+    path._type,
+    path.locality,
+    path.name,
+    spaceMap.get(path.target),
+    path.reachable.map((spaceId) => spaceMap.get(spaceId)),
+  );
+}
+
 export class AirPath extends Path {
-  constructor(segment: number = 0) {
-    super("physical", segment);
+  constructor(segment: number = 0, reachable: Array<string> = []) {
+    super("physical", segment, reachable);
     this._type = "AirPath";
   }
 }
 
 export class LandPath extends Path {
-  constructor(segment: number = 0) {
-    super("physical", segment);
+  constructor(segment: number = 0, reachable: Array<string> = []) {
+    super("physical", segment, reachable);
     this._type = "LandPath";
   }
 }
+
+export class SpacePathGraphFactory implements Entity {
+  [index: string]: EntityDataValue;
+  SPGFactoryStructJSON: string;
+
+  constructor(SPGFactoryStructJSON: string) {
+    this.SPGFactoryStructJSON = SPGFactoryStructJSON;
+  }
+}
+
+const SpacePathGraphFactorySchemaDef: SchemaDefinition = {
+  SPGFactoryStructJSON: { type: "string" },
+};
+
+export const SPG_FACTORY_SCHEMA = new Schema(
+  "SpacePathGraphFactory",
+  SpacePathGraphFactorySchemaDef,
+  { dataStructure: "JSON" },
+);
 
 export abstract class RequestMessage implements Entity {
   [index: string]: EntityDataValue;

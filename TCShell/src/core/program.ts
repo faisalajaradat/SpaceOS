@@ -14,6 +14,10 @@ import { Expr, Identifier } from "./expr/Expr.js";
 import { BinaryExpr } from "./expr/index.js";
 import { Type } from "./type/index.js";
 import { FunDeclaration } from "./expr/index.js";
+import {
+  PathLiteral,
+  SpaceLiteral,
+} from "../../../SpatialComputingEngine/src/frontend-objects.js";
 //A map variable declaration and their stack of assigned values
 export const unresolved = [];
 export class ArrayRepresentation {
@@ -46,6 +50,11 @@ export type RuntimeType = Type | Identifier;
 export type Location = { x: number; y: number };
 
 export type SPGStruct = { root: string; table: Map<string, string[]> };
+
+export type SPGFactoryStruct = {
+  root: SpaceLiteral;
+  table: Map<SpaceLiteral, PathLiteral[]>;
+};
 
 export type ScopedNode =
   | Program
