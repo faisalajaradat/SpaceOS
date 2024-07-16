@@ -7,23 +7,23 @@ import { ChatOllama } from '@langchain/community/chat_models/ollama';
 
 dotenv.config();
 
-// const llm = new ChatOpenAI({
-//     model: "gpt-3.5-turbo-0125",
-//     temperature: 0
-// });
+const llm = new ChatOpenAI({
+    model: "gpt-3.5-turbo-0125",
+    temperature: 0
+});
 // const llm = new GLM4ChatModel({
 //     temperature: 0,
 //     baseURL: "http://192.168.2.18:9091/v1/", // baseURL should look like: http://localhost:8000/v1/
 //   });
-const llm = new ChatOllama({
-  baseUrl: "http://192.168.2.18:9090", 
-  model: "mistral:latest",
-  temperature: 0,
-});
+// const llm = new ChatOllama({
+//   baseUrl: "http://192.168.2.18:9090", 
+//   model: "mistral:latest",
+//   temperature: 0,
+// });
 const llmWithTools = llm.bindTools([weatherTool]);
 
 const main = async () => {
-    const res = await llmWithTools.invoke('What is the weather in Beirut?');
+    const res = await llmWithTools.invoke('What is the weather in Moncton?');
   
     // Check if there are any tool calls in the response
     if (res.tool_calls && res.tool_calls.length > 0) {

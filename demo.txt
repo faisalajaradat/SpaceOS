@@ -1,8 +1,0 @@
-Hello my name is Faisal
-
-How are you doing today?
-
-Please tell me what SpaceOS is useful for 
-
-
-https://commonvoice.mozilla.org/en/datasets

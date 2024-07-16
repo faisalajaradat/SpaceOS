@@ -13,13 +13,13 @@ interface WeatherData {
 }
 
 const getWeather = async (location: string): Promise<WeatherData> => {
-  const apiKey = process.env.OPENWEATHERMAP_API_KEY; // Replace with your actual API key
+  const apiKey = process.env.OPENWEATHERMAP_API_KEY; 
   const url = `https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${apiKey}&units=metric`;
 
   try {
     const response = await axios.get(url);
     const data = response.data;
-    console.log(data);
+    console.log("datais " +data);
 
     const weather: WeatherData = {
       location: data.name,
