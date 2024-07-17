@@ -4,7 +4,7 @@ import {RunnableConfig, RunnableWithMessageHistory} from '@langchain/core/runnab
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatGroq } from "@langchain/groq";
 import { ChatOllama } from "@langchain/community/chat_models/ollama";
-import { ChatModelType, initializedChatModel } from './Types/chatModelTypes';
+import { ChatModelType, initializedChatModel } from './Types/chatModelTypes.js';
 //prompt management 
 import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts';
 import { InMemoryChatMessageHistory } from "@langchain/core/chat_history";

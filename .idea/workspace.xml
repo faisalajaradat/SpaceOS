@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="3ca96637-c0cc-4056-90a5-aecfcb04fec3" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/TCShell.ohm" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/TCShell.ohm" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/TCShell.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/TCShell.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/ast.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/ast.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/ArrayAccess.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/ArrayAccess.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/ArrayLiteral.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/ArrayLiteral.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/BinaryExpr.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/BinaryExpr.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/BoolLiteral.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/BoolLiteral.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/Expr.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/Expr.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/FunCall.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/FunCall.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/FunDeclaration.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/FunDeclaration.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/NoneLiteral.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/NoneLiteral.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/NumberLiteral.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/NumberLiteral.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/RecordLiteral.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/RecordLiteral.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/SpatialObjectInstantiationExpr.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/SpatialObjectInstantiationExpr.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/StringLiteral.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/StringLiteral.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/SymbolAccess.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/SymbolAccess.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/TypeCast.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/TypeCast.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/UnaryExpr.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/UnaryExpr.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/program.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/program.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/stmts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/stmts.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/type/RecordType.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/type/RecordType.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/type/UnionType.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/type/UnionType.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/type/factory-types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/type/factory-types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/type/primitive-types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/type/primitive-types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/core/type/spatial-types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/type/spatial-types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/semantics.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/semantics.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/src/utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/utils.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TCShell/tests/interpreter.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/tests/interpreter.test.ts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="TypeScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
+  <component name="ProjectId" id="2iL9mWMMZueXZPauCzI9rBcXVvS" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;TCShell&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/coldstuff1/work/space_os/spaceOS/TCShell/sample_programs&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.maddyhome.idea.vim.ui.VimEmulationConfigurable&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/home/coldstuff1/work/space_os/spaceOS/node_modules/typescript/lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/TCShell/sample_programs" />
+    </key>
+    <key name="es6.move.members.recent.items">
+      <recent name="$PROJECT_DIR$/TCShell/src/core/expr/Expr.ts" />
+      <recent name="$PROJECT_DIR$/TCShell/src/core/expr/Identifier.ts" />
+      <recent name="$PROJECT_DIR$/TCShell/src/core/expr/ArrayLiteral.ts" />
+      <recent name="$PROJECT_DIR$/TCShell/src/core/expr/NoneLiteral.ts" />
+      <recent name="$PROJECT_DIR$/TCShell/src/core/expr/NumberLiteral.ts" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/TCShell/src/core/expr" />
+      <recent name="$PROJECT_DIR$/TCShell/src/core/type" />
+      <recent name="$PROJECT_DIR$/TCShell/src/core" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9f38398b9061-39b83d9b5494-intellij.indexing.shared.core-IU-241.18034.62" />
+        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-IU-241.18034.62" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="3ca96637-c0cc-4056-90a5-aecfcb04fec3" name="Changes" comment="" />
+      <created>1719259150764</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1719259150764</updated>
+      <workItem from="1719259151690" duration="350000" />
+      <workItem from="1719260116719" duration="1565000" />
+      <workItem from="1719261953641" duration="64000" />
+      <workItem from="1719262018793" duration="11086000" />
+      <workItem from="1719328804702" duration="282000" />
+      <workItem from="1719349760112" duration="7179000" />
+      <workItem from="1719410604771" duration="3425000" />
+      <workItem from="1719421423780" duration="4424000" />
+      <workItem from="1719588445110" duration="41000" />
+      <workItem from="1719765629980" duration="682000" />
+      <workItem from="1719786876901" duration="97000" />
+      <workItem from="1719863766394" duration="3740000" />
+      <workItem from="1719960610614" duration="290000" />
+      <workItem from="1720108491163" duration="192000" />
+      <workItem from="1720279178740" duration="732000" />
+      <workItem from="1720452673662" duration="2624000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+</project>

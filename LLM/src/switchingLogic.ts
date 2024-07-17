@@ -5,6 +5,7 @@ import { ChatGroq } from '@langchain/groq';
 import { ChatOllama } from '@langchain/community/chat_models/ollama';
 import { fetchConfig } from './fetchconfig.js';
 import { systemPrompt } from './chatModelInitializer.js';
+import { ChatGenerationChunk } from 'langchain/schema';
 
 
 const preferRemote = fetchConfig();
@@ -39,7 +40,7 @@ export async function* handleChatModel(userInput:string = "", attempts = 0, maxR
             }
             for await (const chunk of chatModelInitializer.makeCall(chatModel, userInput, forceModel?.sessionID)) {
                 yield {chunk, "chatmodel":{name: chatModel.constructor.name, failures:modelFailures, temperature: chatModel.temperature, topP: (chatModel as any).topP, "context":"testing", "system_Prompt": systemPrompt }}; //not sure why chatModel.topP was giving an error for some reason //todo -add context
-                process.stdout.write(chunk.lc_kwargs.content);
+                process.stdout.write((chunk as any).lc_kwargs.content); 
             }
             //chatResponse = chatModelInitializer.makeCall(chatModel, userInput);
             modelFailures[chatModel.constructor.name] = 0;

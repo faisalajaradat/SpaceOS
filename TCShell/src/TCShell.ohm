@@ -1,0 +1,231 @@
+TCShell {
+
+    Program = Stmt*
+
+    Interactive = StmtNewline
+
+	  StmtNewline = defer? CompoundStmt #newline	--compound
+    						| defer? SimpleStmts	--simple
+                | newline
+                | end
+
+    Stmt = defer? SimpleStmts #newline --simple
+    			| defer? CompoundStmt  --compound
+
+    SimpleStmts = NonemptyListWithOptionalEndSep<SimpleStmt, ";">
+
+    SimpleStmt = UnionDeclaration
+                | VarDeclaration
+                | ImportDeclaration
+                | RecordDeclaration
+    					  | return (Exp)?		--return
+                | Exp
+
+    CompoundStmt = Block    --block
+    		  				| if Exp Stmt (else Stmt)?	--if
+                  |  match Exp "{" CaseStmt+ "}"    --match
+          				| while Exp Stmt	--while
+
+     CaseStmt = (Parameter | Exp | wildcard) "=>" Stmt
+
+     Exp = AssignExp
+     AssignExp = UnaryExp "=" AssignExp		--assign
+     					  | LorExp
+     LorExp = LorExp "||" LarExp		--lor
+     				| LarExp
+     LarExp = LarExp "&&" EqExp		--lar
+     				| EqExp
+     EqExp = EqExp ("==" | "!=") RelExp		--eq
+     			  | RelExp
+     RelExp = RelExp ( "<=" | "<" | ">=" | ">") AddExp		--rel
+     				| AddExp
+     AddExp = AddExp ("+" | "-") MultExp		--add
+     				| MultExp
+     MultExp = MultExp ( "*" | "/" | "%" ) UnaryExp		--mult
+     				| UnaryExp
+	   UnaryExp = ("+" | "-" | "!") UnaryExp	--unary
+            | "(" Type ")" UnaryExp     --typecast
+            | new Type "(" ListOf<Exp, ","> ")"    --new
+    				| LeftExp
+     LeftExp = LeftExp "(" ListOf<Exp, ","> ")"		--call
+     				| LeftExp "[" Exp "]"		--array
+            | LeftExp "." identifier    --access
+            | PrimaryExp
+
+    PrimaryExp = stringLiteral
+            | numberLiteral
+            | booleanLiteral
+            | noneLiteral
+            | fnKeyword "(" ListOf<Parameter, ","> ")" ExplicitType? Stmt  --function
+            | identifier "{" NonemptyListOf<Exp, ","> "}"    --record
+    				| identifier
+            | "(" Exp ")"		--group
+            | "[" ListOf<Exp, ","> "]"		--array
+
+    Block = "{" Stmt* "}"
+
+    VarDeclaration = pub? Parameter "=" Exp
+    UnionDeclaration = UnionType "=" NonemptyListOf<Type, "|">
+    ImportDeclaration = import stringLiteral as identifier
+    RecordDeclaration = RecordType "{" NonemptyListOf<Parameter, ","> "}"
+    Parameter = varKeyword identifier ExplicitType?
+
+    ExplicitType = ":" Type
+
+    TypeSpecifier = "[]"   --array
+                  |"{" ListOf<Type, ","> "}"    --function
+
+    SpatialType = MaybeVirtualSpatialType
+                | PhysicalPathType
+                | spacePathGraph
+                | spacePathGraphFactory
+
+
+    PhysicalPathType = landPath | airPath
+
+    MaybeVirtualSpatialType = (physical | virtual)? (spatialTypeKeyword | path | MaybeImmutableSpatialType | selectionSpace | mergeSpace)
+
+    MaybeImmutableSpatialType = (mutable | immutable)? (spaceKeyword | openSpace | enclosedSpace | entity | staticEntity | MaybeMobileSpatialType)
+
+    MaybeMobileSpatialType = (stationary | mobile)? (dynamicEntity | animateEntity | smartEntity)
+
+    Type = (identifier | baseTypeKeyword | SpatialType) TypeSpecifier*
+
+    baseTypeKeyword = "number" ~identPart
+    						    | "string" ~identPart
+                    | "bool" ~identPart
+                    | "void" ~identPart
+
+    UnionType = typeKeyword identifier
+    RecordType = record identifier
+
+    keyword = baseTypeKeyword
+    				| booleanLiteral
+            | noneLiteral
+            | typeKeyword
+            | while
+            | if
+            | else
+            | return
+            | match
+            | virtual
+            | physical
+            | mutable
+            | immutable
+            | stationary
+            | mobile
+            | unidirectional
+            | bidirectional
+            | spatialTypeKeyword
+            | spaceKeyword
+            | openSpace
+            | enclosedSpace
+            | mergeSpace
+            | selectionSpace
+            | entity
+            | staticEntity
+            | dynamicEntity
+            | animateEntity
+            | smartEntity
+            | path
+            | landPath
+            | airPath
+            | wildcard
+            | spaceFactory
+            | entityFactory
+            | pathFactory
+            | spacePathGraph
+            | spacePathGraphFactory
+            | new
+            | defer
+            | pub
+            | import
+            | as
+            | record
+            | varKeyword
+            | fnKeyword
+
+    typeKeyword = "type" ~identPart
+    while = "while" ~identPart
+    if = "if" ~identPart
+    else = "else" ~identPart
+    return = "return" ~identPart
+    match = "match" ~identPart
+    virtual = "virtual" ~identPart
+    physical = "physical" ~identPart
+    mutable = "mutable" ~identPart
+    immutable = "immutable" ~identPart
+    mobile = "mobile" ~identPart
+    stationary = "stationary" ~identPart
+    unidirectional = "unidirectional" ~identPart
+    bidirectional = "bidirectional" ~identPart
+    spatialTypeKeyword = "SpatialType" ~identPart
+    spaceKeyword = "Space" ~identPart
+    openSpace = "OpenSpace" ~identPart
+    enclosedSpace = "EnclosedSpace" ~identPart
+    mergeSpace = "MergeSpace" ~identPart
+    selectionSpace = "SelectionSpace" ~identPart
+    entity = "Entity" ~identPart
+    staticEntity = "StaticEntity" ~identPart
+    dynamicEntity = "DynamicEntity" ~identPart
+    animateEntity = "AnimateEntity" ~identPart
+    smartEntity = "SmartEntity" ~identPart
+    path = "Path" ~identPart
+    landPath = "LandPath" ~identPart
+    airPath = "AirPath" ~identPart
+    wildcard = "_" ~identPart
+    spaceFactory = "SpaceFactory" ~identPart
+    entityFactory = "EntiyFactory" ~identPart
+    pathFactory = "PathFactory" ~identPart
+    spacePathGraph = "SpacePathGraph" ~identPart
+    spacePathGraphFactory = "SpacePathGraphFactory" ~identPart
+    new = "new" ~identPart
+    defer = "defer" ~identPart
+    pub = "pub" ~identPart
+    import = "import" ~identPart
+    as = "as" ~identPart
+    record = "record" ~identPart
+    varKeyword = "var" ~identPart
+    fnKeyword = "fn" ~identPart
+
+
+
+    identStart      = letter
+                    | ("_" #identPart)    --underscore
+    identPart       = identStart | decimalDigit
+    decimalDigit    = "0".."9"
+
+  	identName       = identStart identPart*
+    identifier      = ~keyword identName
+
+    noneLiteral = "none" ~identPart
+
+	  booleanLiteral = "true" ~identPart
+    						| "false" ~identPart
+
+    numberLiteral = digit+ ("." digit+ (("e" | "E") ("+" | "-") digit+)?)?
+
+    stringLiteral = ("\"" char* "\"")   --doublequotes
+    					    | ("'" char* "'")   --singlequotes
+    char = ~"\"" ~"\n" any
+
+    whitespace = "\t"       --tabchar
+                | "\x0B"    --verticaltab
+                | "\x0C"    --formfeed
+                | " "       --space
+                | "\u00A0"  --nobreakspace
+                | "\uFEFF"  --byteordermark
+                | unicodeSpaceSeparator   --spaceseperator
+
+    lineTerminator = "\n" | "\r" | "\u2028" | "\u2029"
+    unicodeSpaceSeparator = "\u2000".."\u200B" | "\u3000"
+    space := whitespace | lineTerminator | comment
+    newline = space* end  	--last
+  				  | whitespace* lineTerminator --whitespace
+    NonemptyListWithOptionalEndSep<elem, sep> = NonemptyListOf<elem, sep> sep?
+
+    comment = multiLineComment | singleLineComment
+
+    multiLineComment = "/*" (~"*/" any)* "*/"
+    singleLineComment = "//" (~lineTerminator any)*
+}

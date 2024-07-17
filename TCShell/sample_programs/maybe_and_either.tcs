@@ -1,0 +1,70 @@
+type MaybeNum = number | void
+
+type EitherNumOrString = number | string
+
+type MaybeNumApplyFunctionType = MaybeNum {MaybeNum, MaybeNum {number}}
+
+type EitherNumOrStringApplyFunctionType = EitherNumOrString {EitherNumOrString, EitherNumOrString {number}}
+
+var voidError = fn () {
+  return "Error: expected value is void!"
+}
+
+var maybeApplyOperation = fn (var maybe: MaybeNum, var operation) {
+  match maybe {
+    var num: number => return operation(num)
+    var e: void => return (MaybeNum) none
+  }
+}
+
+var eitherApplyOperationOrReturnAndLogError = fn (var either: EitherNumOrString, var operation) {
+  match either {
+    var num: number => return operation(num)
+    var str: string => {
+      print(str)
+      return (EitherNumOrString) str
+    }
+  }
+}
+
+var returnsOddNumbers = fn (var x) {
+  match x % 2 {
+    1 => return (MaybeNum) x
+    0 => return (MaybeNum) none
+  }
+}
+
+var parseMaybeNumOrReturnError = fn (var maybe: MaybeNum) {
+  match maybe {
+    var num: number => return (EitherNumOrString) num
+    var e: void => return (EitherNumOrString) voidError()
+  }
+}
+
+var printAndReturnOddNumber = fn (var oddNumber: number) {
+  print("The following is Odd:")
+  print(oddNumber)
+  return (EitherNumOrString) oddNumber
+}
+
+var sum = 0
+
+var Main = fn () {
+  var addToSum = fn (var x) {
+    sum = sum + x
+    return (EitherNumOrString) sum
+  }
+  var iter = 0
+  while iter < 16 {
+    var maybeOdd = (MaybeNum) iter
+    maybeOdd = maybeApplyOperation(maybeOdd, returnsOddNumbers)
+    var numOrError = parseMaybeNumOrReturnError(maybeOdd)
+    numOrError = eitherApplyOperationOrReturnAndLogError(numOrError, printAndReturnOddNumber)
+    eitherApplyOperationOrReturnAndLogError(numOrError, addToSum)
+    iter = iter + 1
+  }
+  print("The sum of all odd numbers from 0-15:")
+  print(sum)
+}
+
+Main()

@@ -1,0 +1,29 @@
+var iter = 0
+
+defer match iter {
+  _ => {
+    while iter < 10 {
+      print("match 1 loop!")
+      print(iter)
+      iter = iter + 1
+    }
+  }
+}
+
+iter = 1
+defer match iter {
+  _ => {
+    while iter < 10 {
+      print("match 2 loop!")
+      print(iter)
+      iter = iter + 1
+    }
+  }
+}
+
+iter = 2
+while iter < 10 {
+  print("outer loop!")
+  print(iter)
+  iter = iter + 1
+}

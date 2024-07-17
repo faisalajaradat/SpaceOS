@@ -1,0 +1,3 @@
+import "./TCShell/sample_programs/import_test.tcs" as imported_fib
+
+print(imported_fib.fib(15))

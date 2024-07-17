@@ -1,0 +1,146 @@
+type ConveyorBelt = LandPath
+type AssemblyMachine = physical mutable OpenSpace
+type Twix = physical mutable mobile SmartEntity
+
+var MERGE_DISPATCH_ERROR = "Entity blocked by control signal!"
+var SELECTION_DISPATCH_ERROR = "Path blocked by control signal!"
+var MISSING_ENTITY_ERROR = "Space does not contain inputted entity!"
+
+var handleMaybeString = fn (var maybeString: MaybeString): bool {
+  match maybeString {
+    var error: string => {
+      print(error)
+      return false
+    }
+    var _v: void => return true
+  }
+}
+
+/*
+  Send entities down SPG alternating from start such that the two ends
+  have the same number of entities, but an even amount from each start
+*/
+
+var beginAssemblyLine = fn (var assemblyLine: SpacePathGraph,
+  var startSpace1: Space, var startSpace2: Space,
+  var endSpace1: Space, var endSpace2: Space,
+  var mergeSpace: MergeSpace, var selectionSpace: SelectionSpace) {
+
+  var mergeControl = true
+  var selectionControl = true
+
+  var iter = 0
+  var index = 0
+
+  mergeSpace.setControl(mergeControl)
+  selectionSpace.setControl(selectionControl)
+
+  var leftEntities = startSpace1.getEntities()
+  var rightEntities = startSpace2.getEntities()
+
+  var arrived = false
+  while iter < len(leftEntities) + len(rightEntities) {
+    var curEntity = leftEntities[index]
+    var result = assemblyLine.sendEntity(curEntity, startSpace1, endSpace1, 500)
+    while (!arrived) {
+      match result {
+        var _v: void => arrived = true
+      }
+    }
+    arrived = false
+    mergeControl = !mergeControl
+    mergeSpace.setControl(mergeControl)
+    if iter == len(leftEntities) - 1 {
+      selectionControl = !selectionControl
+      selectionSpace.setControl(selectionControl)
+    }
+
+    iter = iter + 1
+  }
+}
+
+var Main = fn () {
+  var rightBarStart = new AssemblyMachine(Location {0, 0}, 2, "Right Bar Start")
+  var leftBarStart = new AssemblyMachine(Location {10, 0}, 2, "Left Bar Start")
+  var chocolatePourMachine = new AssemblyMachine(Location {6, 4}, 2, "Chocolate Pour Machine")
+  var assemblyFinish1 = new AssemblyMachine(Location {0, 10}, 2, "Finish 1")
+  var assemblyFinish2 = new AssemblyMachine(Location {10, 10}, 2, "Finish 2")
+  var assemblyLine = new SpacePathGraph((Space) chocolatePourMachine)
+
+  //add merge space leading to chocolate machine from start 1 and 2
+  var possibleMergeSpace = assemblyLine.createMergeSpace(
+    (Space) leftBarStart, (Path) new ConveyorBelt(), (Space) rightBarStart, (Path) new ConveyorBelt())
+
+  match possibleMergeSpace {
+    var error: string => {
+      print(error)
+      return
+    }
+    var ms: MergeSpace => {
+
+      //setup to build off of merge space
+      if !handleMaybeString(assemblyLine.setRoot((Space) ms))
+        return
+    }
+  }
+
+  if !handleMaybeString(
+      assemblyLine.addPathSpace((Path) new ConveyorBelt(), (Space) chocolatePourMachine))
+    return
+
+  if !handleMaybeString(assemblyLine.setRoot((Space) chocolatePourMachine))
+    return
+
+  var possibleSelectionSpace = assemblyLine.createSelectionSpace(
+    (Path) new ConveyorBelt(),
+    (Space) assemblyFinish1,
+    (Path) new ConveyorBelt(),
+    (Space) assemblyFinish2,
+    (Path) new ConveyorBelt())
+
+  var leftBars: Entity[] = [(Entity) new Twix("Left Bar 1")]
+  var rightBars: Entity[] = [(Entity) new Twix("Right Bar 1")]
+
+  var numOfBars = 2
+
+  while numOfBars <= 10 {
+    push(leftBars, (Entity) new Twix("Left Bar " + numOfBars))
+    push(rightBars, (Entity) new Twix("Right Bar" + numOfBars))
+    numOfBars = numOfBars + 1
+  }
+
+  leftBarStart.addEntities(leftBars)
+  rightBarStart.addEntities(rightBars)
+
+  print(leftBarStart.getEntities())
+  print(rightBarStart.getEntities())
+
+  match possibleMergeSpace {
+    var error: string => {
+      print(error)
+      return
+    }
+    var mergeSpace: MergeSpace => {
+      match possibleSelectionSpace {
+        var error: string => {
+          print(error)
+          return
+        }
+        var selectionSpace: SelectionSpace => {
+          assemblyLine.finalize()
+          beginAssemblyLine(assemblyLine,
+            (Space) leftBarStart,
+            (Space) rightBarStart,
+            (Space) assemblyFinish1,
+            (Space) assemblyFinish2,
+            mergeSpace,
+            selectionSpace)
+        }
+      }
+    }
+  }
+  print(assemblyFinish1.getEntities())
+  print(assemblyFinish2.getEntities())
+}
+
+Main()
