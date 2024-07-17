@@ -25,6 +25,7 @@ const PATH_SCHEMA_DEF: SchemaDefinition = {
   target: { type: "string" },
   reachable: { type: "string[]" },
   isFull: { type: "boolean" },
+  factory: { type: "string" },
 };
 
 export const PATH_SCHEMA: Schema = new Schema("Path", PATH_SCHEMA_DEF, {
@@ -265,6 +266,7 @@ export class Path extends SpatialTypeEntity {
   target: string;
   reachable: string[];
   isFull: boolean;
+  factory: string;
 
   constructor(
     locality: string,

@@ -35,6 +35,7 @@ import {
   receiveEntity,
   sendEntity,
 } from "../space-methods.js";
+import { getReachableSpaces } from "../path-methods.js";
 
 export class SpatialType extends CompositionType {
   constructor(line: number = -1, column: number = -1) {
@@ -156,13 +157,7 @@ export class PathType extends SpatialType {
       string,
       (...args: unknown[]) => Promise<unknown>
     >();
-    PathType.libMethods.set("getReachableSpaces", async (...args) => {
-      const path: Path = (await fetchData(
-        PATH_SCHEMA,
-        args[0] as string,
-      )) as Path;
-      return path.reachable;
-    });
+    PathType.libMethods.set("getReachableSpaces", getReachableSpaces);
   }
 
   static mapMethodNameToMethodType(methodName): FunctionType {

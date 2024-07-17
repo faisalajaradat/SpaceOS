@@ -68,3 +68,5 @@ export async function intializeSPGFactory(spgId: string): Promise<string> {
     new SpacePathGraphFactory(JSON.stringify(factoryStruct, jsonReplacer, 4)),
   );
 }
+
+export const createSPG = async (...args: unknown[]): Promise<string> => {};
