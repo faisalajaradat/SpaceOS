@@ -1,24 +1,27 @@
-import { ASTNode, dotString, newNodeId } from "../program.js";
-import {
-  ArrayType,
-  CompositionType,
-  DefaultBaseTypeInstance,
-  FunctionType,
-  Type,
-} from "./primitive-types.js";
-import { isAnyType, isDecorator } from "../../utils.js";
 import {
   fetchData,
-  saveData,
   isControlSpace,
-  Path,
-  PATH_SCHEMA,
+  saveData,
   Space,
   SPACE_SCHEMA,
-} from "../../../../SpatialComputingEngine/src/index.js";
-import { UnionType } from "./UnionType.js";
-import { Identifier } from "../expr/Expr.js";
-import { libDeclarations } from "../stmts.js";
+} from '../../../../SpatialComputingEngine/src/index.js';
+import {
+  isAnyType,
+  isDecorator,
+} from '../../utils.js';
+import { Identifier } from '../expr/Expr.js';
+import { getReachableSpaces } from '../path-methods.js';
+import {
+  ASTNode,
+  dotString,
+  newNodeId,
+} from '../program.js';
+import {
+  addEntities,
+  getEntities,
+  receiveEntity,
+  sendEntity,
+} from '../space-methods.js';
 import {
   addPathSpace,
   createMergeSpace,
@@ -28,14 +31,16 @@ import {
   sendEntityThrough,
   setRoot,
   splitPath,
-} from "../spg-methods.js";
+} from '../spg-methods.js';
+import { libDeclarations } from '../stmts.js';
 import {
-  addEntities,
-  getEntities,
-  receiveEntity,
-  sendEntity,
-} from "../space-methods.js";
-import { getReachableSpaces } from "../path-methods.js";
+  ArrayType,
+  CompositionType,
+  DefaultBaseTypeInstance,
+  FunctionType,
+  Type,
+} from './primitive-types.js';
+import { UnionType } from './UnionType.js';
 
 export class SpatialType extends CompositionType {
   constructor(line: number = -1, column: number = -1) {

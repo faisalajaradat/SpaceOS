@@ -1,7 +1,14 @@
-import "dotenv/config";
-import { EntityId, Repository, Schema } from "redis-om";
-import * as engine from "./frontend-objects.js";
-import { createClient } from "redis";
+import 'dotenv/config';
+
+import { createClient } from 'redis';
+import {
+  Entity,
+  EntityId,
+  Repository,
+  Schema,
+} from 'redis-om';
+
+import * as engine from './frontend-objects.js';
 
 const client = await createClient({ url: process.env.REDIS_URL })
   .on("error", (err) => console.log("Redis Client Error", err))
@@ -22,7 +29,7 @@ export async function saveData(
   data: engine.EngineEntity,
 ): Promise<string> {
   const repo = await connectAndGetRepo(schema);
-  return (await repo.save(data))[EntityId];
+  return ((await repo.save(data)) as Entity)[EntityId];
 }
 
 export async function fetchData(

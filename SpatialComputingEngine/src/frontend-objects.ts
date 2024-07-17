@@ -1,5 +1,11 @@
-import { Entity, EntityDataValue, Schema, SchemaDefinition } from "redis-om";
-import { fetchData } from "./spatial-computing-engine.js";
+import {
+  Entity,
+  EntityDataValue,
+  Schema,
+  SchemaDefinition,
+} from 'redis-om';
+
+import { fetchData } from './spatial-computing-engine.js';
 
 export type EngineEntity =
   | SpatialTypeEntity

@@ -1,4 +1,8 @@
-import { Entity, EntityId } from "redis-om";
+import {
+  Entity,
+  EntityId,
+} from 'redis-om';
+
 import {
   mapPathToPathLiteral,
   mapSpaceToSpaceLiteral,
@@ -12,18 +16,18 @@ import {
   SpacePathGraphFactory,
   SPG_FACTORY_SCHEMA,
   SPG_SCHEMA,
-} from "../../../SpatialComputingEngine/src/frontend-objects.js";
+} from '../../../SpatialComputingEngine/src/frontend-objects.js';
 import {
   fetchAll,
   fetchData,
   saveData,
-} from "../../../SpatialComputingEngine/src/spatial-computing-engine.js";
+} from '../../../SpatialComputingEngine/src/spatial-computing-engine.js';
 import {
   jsonReplacer,
   jsonReviver,
   SPGFactoryStruct,
   SPGStruct,
-} from "./program.js";
+} from './program.js';
 
 export async function intializeSPGFactory(spgId: string): Promise<string> {
   const templateSPG: SpacePathGraph = (await fetchData(
