@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { EntityId, Repository, Schema } from "redis-om";
+import { Entity, EntityId, Repository, Schema } from "redis-om";
 import * as engine from "./frontend-objects.js";
 import { createClient } from "redis";
 
@@ -22,13 +22,8 @@ export async function saveData(
   data: engine.EngineEntity,
 ): Promise<string> {
   const repo = await connectAndGetRepo(schema);
-  return (await repo.save(data))[EntityId]; 
-}//Errors relating to EntityID being a unique symbol.
-//maybe to retrieve the entity Id you can instead do:
-/*
-  const EntityId = await repo.save(data)
-  return EntityId.toString()
-*/
+  return ((await repo.save(data)) as Entity)[EntityId];
+}
 
 export async function fetchData(
   schema: Schema,
