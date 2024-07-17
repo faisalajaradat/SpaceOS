@@ -1,0 +1,60 @@
+type BikePath = LandPath
+type PhysicalBikeSpace = physical mutable OpenSpace
+type Bike = physical mutable mobile SmartEntity
+
+var sendEntityDownSPG = fn (var spg: SpacePathGraph, var entity: Entity, var startSpace: Space, var endSpace: Space) {
+  spg.sendEntityThrough(entity, startSpace, endSpace, 500)
+  print(startSpace.getEntities())
+  print(endSpace.getEntities())
+}
+
+var Main = fn () {
+  var bikePath = new BikePath("bikePath1")
+  var bikePathStart
+    = new PhysicalBikeSpace(Location {0, 0}, 10, "Start")
+  var bikePathEnd
+    = new PhysicalBikeSpace(Location {10, 10}, 10, "End")
+  var bike1 = new Bike()
+  var bike2 = new Bike()
+  var bikeSPG
+    = new SpacePathGraph(bikePathStart)
+
+  bikePathStart.addEntities([(Entity) bike1, (Entity) bike2])
+
+  match bikeSPG.addPathSpace((Path) bikePath, (Space) bikePathEnd) {
+    var s: string => {
+      print(s)
+      return
+    }
+    var v: void => {
+    }
+  }
+
+  var bikePathSegments = [(Path) bikePath]
+
+  var index = 0
+
+  while index < 3 {
+    match bikeSPG.splitPath(bikePathSegments[index]) {
+      var p: Path => push(bikePathSegments, p)
+      var s: string => {
+        print(s)
+        return
+      }
+    }
+    index = index + 1
+  }
+
+  print(bikePathSegments)
+
+  print(bikeSPG.getStructJSON())
+
+  print(bikePathStart.getEntities())
+  print(bikePathEnd.getEntities())
+
+  defer sendEntityDownSPG(bikeSPG, (Entity) bike1, (Space) bikePathStart, (Space) bikePathEnd)
+  defer sendEntityDownSPG(bikeSPG, (Entity) bike2, (Space) bikePathStart, (Space) bikePathEnd)
+}
+
+
+Main()

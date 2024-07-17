@@ -1,0 +1,71 @@
+var handleSpace = fn (var s: Space) {
+  print("Is Space")
+  match s {
+    var es: EnclosedSpace => print("Is Enclosed")
+    var os: OpenSpace => print("Is Open")
+  }
+}
+
+var handlePath = fn (var p: Path) {
+  print("Is Path")
+  match p {
+    var ap: AirPath => print("Is Air")
+    var lp: LandPath => print("Is Land")
+  }
+}
+
+var handleEntity = fn (var e: Entity) {
+  print("Is Entity")
+  match e {
+    var se: StaticEntity => print("Is Static")
+    var de: DynamicEntity => {
+      match de {
+        var mde: mobile DynamicEntity => print("Is mobile")
+        var sde: stationary DynamicEntity => print("Is stationary")
+      }
+      match de {
+        var ae: AnimateEntity => print("Is Animate")
+        var se: SmartEntity => print("Is Smart")
+      }
+    }
+  }
+}
+
+var handlePhysicalSpatialType = fn (var physicalSpatialType: physical SpatialType) {
+  print("Is physical")
+  match physicalSpatialType {
+    var ps: physical Space => handleSpace((Space) ps)
+    var pp: physical Path => handlePath((Path) pp)
+    var pe: physical Entity => handleEntity((Entity) pe)
+  }
+}
+
+var handleVirtualSpatialType = fn (var virtualSpatialType: virtual SpatialType) {
+  print("Is virtual")
+  match virtualSpatialType {
+    var vs: virtual Space => handleSpace((Space) vs)
+    var vp: virtual Path => handlePath((Path) vp)
+    var ve: virtual Entity => handleEntity((Entity) ve)
+  }
+}
+
+var parseAndDescribeSpacialTypes = fn (var listOfSpatialTypes: SpatialType[]) {
+  var iter = 0
+  var numOfSpatialType = len(listOfSpatialTypes)
+  while iter < numOfSpatialType {
+    print(listOfSpatialTypes[iter])
+    match listOfSpatialTypes[iter] {
+      var pst: physical SpatialType => handlePhysicalSpatialType(pst)
+      var vst: virtual SpatialType => handleVirtualSpatialType(vst)
+    }
+    iter = iter + 1
+  }
+}
+
+var car = new physical mutable mobile SmartEntity()
+var parkingLot = new physical mutable OpenSpace(Location {50, 20})
+var street = new LandPath()
+
+var lotAndCars = [ (SpatialType)car, (SpatialType)parkingLot, (SpatialType)street ]
+
+parseAndDescribeSpacialTypes(lotAndCars)

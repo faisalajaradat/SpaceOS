@@ -1,0 +1,20 @@
+var Main = fn () {
+  var nums = [7, 5, 3]
+  var arraysOfStringArrays = [["hello!"], ["Hello"], [" "], ["World!"]]
+  print(nums)
+  print(nums[0])
+  nums[0] = 10
+  print(nums[0])
+  push(nums, 7)
+  print(nums)
+  print(len(nums))
+  removeElements(nums, 0, 4)
+  print(nums)
+  print(len(nums))
+  print(arraysOfStringArrays)
+  print(arraysOfStringArrays[3][0])
+  print(len(arraysOfStringArrays))
+  print(len(arraysOfStringArrays[0]))
+}
+
+Main()
