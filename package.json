@@ -7,6 +7,7 @@
     "scripts": {
         "clean": "rm -rf ./dist",
         "build": "rm -rf ./dist && tsc && cp ./TCShell/src/TCShell.ohm ./dist/TCShell/src",
+        "build-windows": "powershell -Command \"Remove-Item -Recurse -Force ./dist; tsc; Copy-Item -Path ./TCShell/src/TCShell.ohm -Destination ./dist/TCShell/src/\"",
         "test": "NODE_OPTIONS='--experimental-vm-modules' jest ./dist",
         "test-windows": "cross-env NODE_OPTIONS='--experimental-vm-modules' jest ./dist"
     },
