@@ -181,8 +181,11 @@ export const splitPath = async (...args: unknown[]): Promise<string> => {
     intermediateSpaceLocation,
   );
   const intermediateSpaceId = await saveData(SPACE_SCHEMA, intermediateSpace);
-  const newPath = new Path(originalPath.locality, originalPath.segment++);
-  newPath._type = originalPath._type;
+  const newPath = new Path(
+    originalPath.locality,
+    originalPath.name,
+    originalPath.segment++,
+  );
   newPath.name = originalPath.name;
   const newPathId = await saveData(PATH_SCHEMA, newPath);
   await addPathSpaceFunctionality(
