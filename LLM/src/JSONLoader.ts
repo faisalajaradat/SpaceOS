@@ -1,9 +1,6 @@
 import { JSONLoader } from "langchain/document_loaders/fs/json";
 
 
-
-
-
 export default async function LoadJson(PATH: string): Promise<any>;
 export default async function LoadJson(PATH: string, keys: string[]): Promise<any>;
 
@@ -22,7 +19,7 @@ export default async function LoadJson(PATH: string, keys?: string[]): Promise<a
 }
 
 
-LoadJson("./LLM/src/formatted_data.json");
+
 
 
 
