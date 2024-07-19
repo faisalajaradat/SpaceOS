@@ -74,10 +74,10 @@ export class SpaceLiteral {
   dimension: number;
   innerSpace: SpaceLiteral;
   controlSignal: boolean;
-  mergeTrueSpace: SpaceLiteral;
-  mergeFalseSpace: SpaceLiteral;
   selectionTruePath: PathLiteral;
   selectionFalsePath: PathLiteral;
+  mergeTrueSpace: SpaceLiteral;
+  mergeFalseSpace: SpaceLiteral;
 
   constructor(
     _type: string,
@@ -403,7 +403,8 @@ export function mapPathToPathLiteral(
 
 export function mapPathLiteralToPath(
   pathLiteral: PathLiteral,
-  spaceMap: Map<SpaceLiteral, string>,
+  spaceMap: Map<string, string>,
+  hash: (SpaceLiteral) => string,
 ) {
   switch (pathLiteral._type) {
     case "Path":
@@ -411,21 +412,21 @@ export function mapPathLiteralToPath(
         pathLiteral.locality,
         pathLiteral.name,
         pathLiteral.segment,
-        spaceMap.get(pathLiteral.target),
+        spaceMap.get(hash(pathLiteral.target)),
         pathLiteral.reachable.map(mapSpaceLiteralToSpace),
       );
     case "AirPath":
       return new AirPath(
         pathLiteral.name,
         pathLiteral.segment,
-        spaceMap.get(pathLiteral.target),
+        spaceMap.get(hash(pathLiteral.target)),
         pathLiteral.reachable.map(mapSpaceLiteralToSpace),
       );
     case "LandPath":
       return new LandPath(
         pathLiteral.name,
         pathLiteral.segment,
-        spaceMap.get(pathLiteral.target),
+        spaceMap.get(hash(pathLiteral.target)),
         pathLiteral.reachable.map(mapSpaceLiteralToSpace),
       );
   }

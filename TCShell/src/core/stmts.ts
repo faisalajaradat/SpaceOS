@@ -924,6 +924,10 @@ export const libDeclarations: (
     new UnionType(new Identifier("SelectionSpaceOrString")),
     [new SelectionSpaceType(), DefaultBaseTypeInstance.STRING],
   ),
+  new UnionDeclaration(
+    new UnionType(new Identifier("SpacePathGraphOrString")),
+    [new SpacePathGraphType(), DefaultBaseTypeInstance.STRING],
+  ),
 ];
 
 //Dictionary of predefined functions implemented in TS to be called in TCShell

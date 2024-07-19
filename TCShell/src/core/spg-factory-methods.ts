@@ -3,7 +3,6 @@ import { Entity, EntityId } from "redis-om";
 import {
   ControlSpace,
   mapPathToPathLiteral,
-  mapSpaceLiteralToSpace,
   mapSpaceToSpaceLiteral,
   MergeSpace,
   Path,
@@ -69,71 +68,50 @@ export async function intializeSPGFactory(spgId: string): Promise<string> {
     pathMap.set(controlSpace.truePath, controlSpaceLiteral.selectionTruePath);
     pathMap.set(controlSpace.falsePath, controlSpaceLiteral.selectionFalsePath);
   }
-  const factoryStruct: SPGFactoryStruct = {
-    root: spaceMap.get(templateStruct.root),
-    table: new Map(
-      await Promise.all(
-        Array.from(templateStruct.table.entries()).map(
-          async ([spaceId, pathIds]) => {
-            const paths = (await fetchAll(PATH_SCHEMA, pathIds)) as Path[];
-            await Promise.all(
-              paths
-                .filter(
-                  (path) => spaceMap.get(path.target)._type === "MergeSpace",
-                )
-                .map(async (path) => {
-                  const mergeSpace = (await fetchData(
-                    SPACE_SCHEMA,
-                    path.target,
-                  )) as MergeSpace;
-                  if (mergeSpace.truePath === (path as Entity)[EntityId])
-                    spaceMap.get(
-                      (mergeSpace as Entity)[EntityId],
-                    ).mergeTrueSpace = spaceMap.get(spaceId);
-                  else if (mergeSpace.falsePath === (path as Entity)[EntityId])
-                    spaceMap.get(
-                      (mergeSpace as Entity)[EntityId],
-                    ).mergeFalseSpace = spaceMap.get(spaceId);
-                }),
-            );
-            return [
-              spaceMap.get(spaceId),
-              paths.map((path: Path) =>
-                pathMap.has((path as Entity)[EntityId])
-                  ? pathMap.get((path as Entity)[EntityId])
-                  : mapPathToPathLiteral(path, spaceMap),
-              ),
-            ] as [SpaceLiteral, PathLiteral[]];
-          },
-        ),
+  const factoryTable = new Map(
+    await Promise.all(
+      Array.from(templateStruct.table.entries()).map(
+        async ([spaceId, pathIds]) => {
+          const paths = (await fetchAll(PATH_SCHEMA, pathIds)) as Path[];
+          await Promise.all(
+            paths
+              .filter(
+                (path) => spaceMap.get(path.target)._type === "MergeSpace",
+              )
+              .map(async (path) => {
+                const mergeSpace = (await fetchData(
+                  SPACE_SCHEMA,
+                  path.target,
+                )) as MergeSpace;
+                if (mergeSpace.truePath === (path as Entity)[EntityId])
+                  spaceMap.get(
+                    (mergeSpace as Entity)[EntityId],
+                  ).mergeTrueSpace = spaceMap.get(spaceId);
+                if (mergeSpace.falsePath === (path as Entity)[EntityId])
+                  spaceMap.get(
+                    (mergeSpace as Entity)[EntityId],
+                  ).mergeFalseSpace = spaceMap.get(spaceId);
+              }),
+          );
+          return [
+            spaceMap.get(spaceId),
+            paths.map((path: Path) =>
+              pathMap.has((path as Entity)[EntityId])
+                ? pathMap.get((path as Entity)[EntityId])
+                : mapPathToPathLiteral(path, spaceMap),
+            ),
+          ] as [SpaceLiteral, PathLiteral[]];
+        },
       ),
     ),
+  );
+
+  const factoryStruct: SPGFactoryStruct = {
+    root: spaceMap.get(templateStruct.root),
+    table: factoryTable,
   };
   return await saveData(
     SPG_FACTORY_SCHEMA,
     new SpacePathGraphFactory(JSON.stringify(factoryStruct, jsonReplacer, 4)),
   );
 }
-
-export const createSPG = async (...args: unknown[]): Promise<string> => {
-  const factory: SpacePathGraphFactory = (await fetchData(
-    SPG_FACTORY_SCHEMA,
-    args[0] as string,
-  )) as SpacePathGraphFactory;
-  const factoryStruct: SPGFactoryStruct = JSON.parse(
-    factory.SPGFactoryStructJSON,
-    jsonReviver,
-  );
-  const spaceMap: Map<SpaceLiteral, string> = new Map<SpaceLiteral, string>(
-    await Promise.all(
-      Array.from(factoryStruct.table.keys()).map(
-        async (spaceLiteral) =>
-          [
-            spaceLiteral,
-            await saveData(SPACE_SCHEMA, mapSpaceLiteralToSpace(spaceLiteral)),
-          ] as [SpaceLiteral, string],
-      ),
-    ),
-  );
-  return "";
-};
