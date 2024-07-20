@@ -1,0 +1,99 @@
+type Car = physical mutable mobile SmartEntity
+type RoadSegment = LandPath
+type RoadSection = physical mutable OpenSpace
+
+var handleMaybeString = fn (var maybeString: MaybeString): bool {
+  match maybeString {
+    var error: string => {
+      print(error)
+      return false
+    }
+    var _v: void => return true
+  }
+}
+
+var createHalfIntersection = fn (
+  var intersection: SpacePathGraph,
+  var trueEntry: Space,
+  var falseEntry: Space,
+  var trueExit: Space,
+  var falseExit: Space) {
+
+  var possibleEntryControl = intersection
+    .createMergeSpace(
+      trueEntry,
+      (Path) new RoadSegment(),
+      falseEntry,
+      (Path) new RoadSegment())
+
+  match possibleEntryControl {
+    var error: string => {
+      print(error)
+      return false
+    }
+    var ms: MergeSpace => {
+      if !handleMaybeString(intersection.setRoot((Space) ms))
+        return false
+    }
+  }
+
+  var possibleExitControl = intersection
+    .createSelectionSpace(
+      (Path) new RoadSegment(),
+      trueExit,
+      (Path) new RoadSegment(),
+      falseExit,
+      (Path) new RoadSegment())
+
+  match possibleExitControl {
+    var error: string => {
+      print(error)
+      return false
+    }
+    var ss: SelectionSpace => return true
+  }
+}
+
+var bottomEntry = new RoadSection(Location {5, 0}, 1, "Bottom Entry")
+var bottomExit = new RoadSection(Location {5, 0}, 1, "Bottom Exit")
+var topEntry = new RoadSection(Location {5, 10}, 1, "Top Entry")
+var topExit = new RoadSection(Location {5, 10}, 1, "Top Exit")
+var leftEntry = new RoadSection(Location {0, 5}, 1, "Left Entry")
+var leftExit = new RoadSection(Location {0, 5}, 1, "Left Exit")
+var rightEntry = new RoadSection(Location {10, 5}, 1, "Right Entry")
+var rightExit = new RoadSection(Location {10, 5}, 1, "Right Exit")
+
+var intersection = new SpacePathGraph((Space) bottomEntry)
+
+if !createHalfIntersection(
+  intersection,
+  (Space) bottomEntry,
+  (Space) rightEntry,
+  (Space) bottomExit,
+  (Space) rightExit) {
+  return
+}
+
+if !createHalfIntersection(
+  intersection,
+  (Space) topEntry,
+  (Space) leftEntry,
+  (Space) topExit,
+  (Space) leftExit) {
+  return
+}
+
+var intersectionFactory = new SpacePathGraphFactory(intersection)
+
+var possibleIntersection = intersectionFactory.createSPG()
+
+match possibleIntersection {
+  var error: string => {
+    print(error)
+    return
+  }
+  var intersection2: SpacePathGraph => {
+    print(intersection.getStructJSON())
+    print(intersection2.getStructJSON())
+  }
+}

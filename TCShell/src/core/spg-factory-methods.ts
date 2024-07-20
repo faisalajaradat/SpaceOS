@@ -4,7 +4,6 @@ import {
   ControlSpace,
   mapPathToPathLiteral,
   mapSpaceToSpaceLiteral,
-  MergeSpace,
   Path,
   PATH_SCHEMA,
   PathLiteral,
@@ -15,6 +14,10 @@ import {
   SpacePathGraphFactory,
   SPG_FACTORY_SCHEMA,
   SPG_SCHEMA,
+  mapPathLiteralToPath,
+  mapSpaceLiteralToSpace,
+  MergeSpace,
+  SelectionSpace,
 } from "../../../SpatialComputingEngine/src/frontend-objects.js";
 import {
   fetchAll,
@@ -27,6 +30,7 @@ import {
   SPGFactoryStruct,
   SPGStruct,
 } from "./program.js";
+import hash from "object-hash";
 
 export async function intializeSPGFactory(spgId: string): Promise<string> {
   const templateSPG: SpacePathGraph = (await fetchData(
@@ -115,3 +119,130 @@ export async function intializeSPGFactory(spgId: string): Promise<string> {
     new SpacePathGraphFactory(JSON.stringify(factoryStruct, jsonReplacer, 4)),
   );
 }
+
+export const createSPG = async (...args: unknown[]): Promise<string> => {
+  const factory: SpacePathGraphFactory = (await fetchData(
+    SPG_FACTORY_SCHEMA,
+    args[0] as string,
+  )) as SpacePathGraphFactory;
+  if (factory === undefined) return "Factory does not exist!";
+  const factoryStruct: SPGFactoryStruct = JSON.parse(
+    factory.SPGFactoryStructJSON,
+    jsonReviver,
+  );
+  const selectionSpaceLiterals: Array<SpaceLiteral> = [];
+  const spaceMap: Map<string, string> = new Map<string, string>(
+    await Promise.all(
+      Array.from(factoryStruct.table.keys()).map(async (spaceLiteral) => {
+        if (spaceLiteral._type === "SelectionSpace")
+          selectionSpaceLiterals.push(spaceLiteral);
+        return [
+          hash(spaceLiteral),
+          await saveData(SPACE_SCHEMA, mapSpaceLiteralToSpace(spaceLiteral)),
+        ] as [string, string];
+      }),
+    ),
+  );
+  const pathMap: Map<string, string> = new Map<string, string>();
+  for (const selectionSpaceLiteral of selectionSpaceLiterals) {
+    const selectionSpace = (await fetchData(
+      SPACE_SCHEMA,
+      spaceMap.get(hash(selectionSpaceLiteral)),
+    )) as SelectionSpace;
+    selectionSpace.truePath = await saveData(
+      PATH_SCHEMA,
+      mapPathLiteralToPath(
+        selectionSpaceLiteral.selectionTruePath,
+        spaceMap,
+        hash,
+      ),
+    );
+    selectionSpace.falsePath = await saveData(
+      PATH_SCHEMA,
+      mapPathLiteralToPath(
+        selectionSpaceLiteral.selectionFalsePath,
+        spaceMap,
+        hash,
+      ),
+    );
+    await saveData(SPACE_SCHEMA, selectionSpace);
+    pathMap.set(
+      hash(selectionSpaceLiteral.selectionTruePath),
+      selectionSpace.truePath,
+    );
+    pathMap.set(
+      hash(selectionSpaceLiteral.selectionFalsePath),
+      selectionSpace.falsePath,
+    );
+  }
+  const structTable = new Map(
+    await Promise.all(
+      Array.from(factoryStruct.table.entries()).map(
+        async ([spaceLiteral, pathLiterals]) => {
+          await Promise.all(
+            pathLiterals
+              .filter(
+                (pathLiteral) => pathLiteral.target._type === "MergeSpace",
+              )
+              .map(async (pathLiteral) => {
+                const mergeSpace = (await fetchData(
+                  SPACE_SCHEMA,
+                  spaceMap.get(hash(pathLiteral.target)),
+                )) as MergeSpace;
+                if (
+                  spaceMap.get(hash(pathLiteral.target.mergeTrueSpace)) ===
+                  spaceMap.get(hash(spaceLiteral))
+                ) {
+                  mergeSpace.truePath = await saveData(
+                    PATH_SCHEMA,
+                    mapPathLiteralToPath(pathLiteral, spaceMap, hash),
+                  );
+                  pathMap.set(hash(pathLiteral), mergeSpace.truePath);
+                }
+                if (
+                  spaceMap.get(hash(pathLiteral.target.mergeFalseSpace)) ===
+                  spaceMap.get(hash(spaceLiteral))
+                ) {
+                  mergeSpace.falsePath = await saveData(
+                    PATH_SCHEMA,
+                    mapPathLiteralToPath(pathLiteral, spaceMap, hash),
+                  );
+                  pathMap.set(hash(pathLiteral), mergeSpace.falsePath);
+                }
+                await saveData(SPACE_SCHEMA, mergeSpace);
+              }),
+          );
+          return [
+            spaceMap.get(hash(spaceLiteral)),
+            await Promise.all(
+              pathLiterals.map(async (pathLiteral) =>
+                pathMap.has(hash(pathLiteral))
+                  ? pathMap.get(hash(pathLiteral))
+                  : await saveData(
+                      PATH_SCHEMA,
+                      mapPathLiteralToPath(pathLiteral, spaceMap, hash),
+                    ),
+              ),
+            ),
+          ] as [string, string[]];
+        },
+      ),
+    ),
+  );
+  const struct: SPGStruct = {
+    root: spaceMap.get(hash(factoryStruct.root)),
+    table: structTable,
+  };
+  return await saveData(
+    SPG_SCHEMA,
+    new SpacePathGraph(JSON.stringify(struct, jsonReplacer, 4)),
+  );
+};
+
+export const getFactoryJSON = async (...args: unknown[]): Promise<string> =>
+  (
+    (await fetchData(
+      SPG_FACTORY_SCHEMA,
+      args[0] as string,
+    )) as SpacePathGraphFactory
+  ).SPGFactoryStructJSON ?? "Factory does not exist!";

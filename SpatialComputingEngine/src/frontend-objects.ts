@@ -413,21 +413,27 @@ export function mapPathLiteralToPath(
         pathLiteral.name,
         pathLiteral.segment,
         spaceMap.get(hash(pathLiteral.target)),
-        pathLiteral.reachable.map(mapSpaceLiteralToSpace),
+        pathLiteral.reachable.map((spaceLiteral) =>
+          spaceMap.get(hash(spaceLiteral)),
+        ),
       );
     case "AirPath":
       return new AirPath(
         pathLiteral.name,
         pathLiteral.segment,
         spaceMap.get(hash(pathLiteral.target)),
-        pathLiteral.reachable.map(mapSpaceLiteralToSpace),
+        pathLiteral.reachable.map((spaceLiteral) =>
+          spaceMap.get(hash(spaceLiteral)),
+        ),
       );
     case "LandPath":
       return new LandPath(
         pathLiteral.name,
         pathLiteral.segment,
         spaceMap.get(hash(pathLiteral.target)),
-        pathLiteral.reachable.map(mapSpaceLiteralToSpace),
+        pathLiteral.reachable.map((spaceLiteral) =>
+          spaceMap.get(hash(spaceLiteral)),
+        ),
       );
   }
 }

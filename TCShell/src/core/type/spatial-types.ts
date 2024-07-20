@@ -7,7 +7,7 @@ import {
 } from "../../../../SpatialComputingEngine/src/index.js";
 import { isAnyType, isDecorator } from "../../utils.js";
 import { Identifier } from "../expr/Expr.js";
-import { createSPG, getReachableSpaces, setFactory } from "../path-methods.js";
+import { getReachableSpaces, setFactory } from "../path-methods.js";
 import { ASTNode, dotString, newNodeId } from "../program.js";
 import {
   addEntities,
@@ -158,16 +158,11 @@ export class PathType extends SpatialType {
     >();
     PathType.libMethods.set("getReachableSpaces", getReachableSpaces);
     PathType.libMethods.set("setFactory", setFactory);
-    PathType.libMethods.set("createSPG", createSPG);
   }
 
   static mapMethodNameToMethodType(methodName): FunctionType {
     const maybeStringType = new UnionType(new Identifier("MaybeString"));
     maybeStringType.identifier.declaration = libDeclarations[1];
-    const spacePathGraphOrStringType = new UnionType(
-      new Identifier("SpacePathGraphOrString"),
-    );
-    spacePathGraphOrStringType.identifier.declaration = libDeclarations[7];
     switch (methodName) {
       case "getReachableSpaces":
         return new FunctionType(new ArrayType(new SpaceType()), []);
@@ -175,8 +170,6 @@ export class PathType extends SpatialType {
         return new FunctionType(maybeStringType, [
           new SpacePathGraphFactoryType(),
         ]);
-      case "createSPG":
-        return new FunctionType(spacePathGraphOrStringType, []);
     }
   }
 
