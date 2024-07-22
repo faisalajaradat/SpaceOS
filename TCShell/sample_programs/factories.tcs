@@ -83,6 +83,8 @@ if !handleMaybeString(voltageDivider.finalize()) {
 print(voltageDivider.getStructJSON())
 var charge = new ElectricalCharge()
 
+print(vOut)
+
 if !handleMaybeString(vIn.addEntities([(Entity) charge]))
   return
 

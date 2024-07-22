@@ -197,7 +197,7 @@ export const splitPath = async (...args: unknown[]): Promise<string> => {
     endSpace,
   );
   originalPath.target = intermediateSpaceId;
-  originalPath.reachable.push(intermediateSpaceId);
+  originalPath.reachable = await updateReachable(struct, originalPath.target);
   await saveData(PATH_SCHEMA, originalPath);
   return newPathId;
 };
@@ -343,6 +343,8 @@ export const finalize = async (...args: unknown[]): Promise<string | void> => {
       args[0] as string,
       (factoryPath as Entity)[EntityId],
     );
+    spg = (await fetchData(SPG_SCHEMA, args[0] as string)) as SpacePathGraph;
+    struct = JSON.parse(spg.structJSON, jsonReviver);
     const factoryPathSegment = (await fetchData(
       PATH_SCHEMA,
       factoryPathSegmentId,
@@ -383,6 +385,7 @@ export const finalize = async (...args: unknown[]): Promise<string | void> => {
       );
     }
     factoryPathUpdated.target = generatedStruct.root;
+    factoryPathUpdated.reachable.push(generatedStruct.root);
     await saveData(PATH_SCHEMA, factoryPathUpdated);
     generatedSPG.final = true;
     await saveData(SPG_SCHEMA, generatedSPG);
