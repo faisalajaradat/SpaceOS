@@ -727,7 +727,7 @@ export class SpacePathGraphType extends SpatialType {
           new PathType(),
         ]);
       case "finalize":
-        return new FunctionType(DefaultBaseTypeInstance.VOID, []);
+        return new FunctionType(maybeStringType, []);
     }
   }
 

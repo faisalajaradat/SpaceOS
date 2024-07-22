@@ -349,11 +349,12 @@ export class Path extends SpatialTypeEntity {
   constructor(
     locality: string,
     name?: string,
-    segment?: number,
+    segment: number = 0,
     target?: string,
     reachable: Array<string> = [],
   ) {
     super(locality);
+    this.name = name;
     this.segment = segment;
     this.target = target;
     this.reachable = reachable;
@@ -441,7 +442,7 @@ export function mapPathLiteralToPath(
 export class AirPath extends Path {
   constructor(
     name?: string,
-    segment?: number,
+    segment: number = 0,
     target?: string,
     reachable: Array<string> = [],
   ) {
@@ -453,7 +454,7 @@ export class AirPath extends Path {
 export class LandPath extends Path {
   constructor(
     name?: string,
-    segment?: number,
+    segment: number = 0,
     target?: string,
     reachable: Array<string> = [],
   ) {
