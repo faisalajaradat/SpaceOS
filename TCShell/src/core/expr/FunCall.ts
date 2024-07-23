@@ -13,6 +13,7 @@ import { SymbolAccess } from "./SymbolAccess.js";
 import {
   ControlSpaceType,
   PathType,
+  SpacePathGraphFactoryType,
   SpacePathGraphType,
   SpaceType,
 } from "../type/index.js";
@@ -61,6 +62,7 @@ export class FunCall extends Expr {
       while (isDecorator(spatialBaseType))
         spatialBaseType = spatialBaseType.delegate;
       if (
+        spatialBaseType instanceof SpacePathGraphFactoryType ||
         spatialBaseType instanceof SpacePathGraphType ||
         spatialBaseType instanceof SpaceType ||
         spatialBaseType instanceof PathType
@@ -77,14 +79,16 @@ export class FunCall extends Expr {
           ),
         );
         return await (
-          spatialBaseType instanceof SpacePathGraphType
-            ? SpacePathGraphType.libMethods
-            : spatialBaseType instanceof ControlSpaceType
-              ? ControlSpaceType.libMethods
-              : spatialBaseType instanceof SpaceType
-                ? SpaceType.libMethods
-                : PathType.libMethods
-        ).get(this.identifier.symbol.value)(...args);
+          spatialBaseType instanceof SpacePathGraphFactoryType
+            ? SpacePathGraphFactoryType
+            : spatialBaseType instanceof SpacePathGraphType
+              ? SpacePathGraphType
+              : spatialBaseType instanceof ControlSpaceType
+                ? ControlSpaceType
+                : spatialBaseType instanceof SpaceType
+                  ? SpaceType
+                  : PathType
+        ).libMethods.get(this.identifier.symbol.value)(...args);
       }
     }
     const identifier = await this.identifier.evaluate(varStacks);

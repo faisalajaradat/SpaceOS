@@ -1,24 +1,20 @@
-import { ASTNode, dotString, newNodeId } from "../program.js";
-import {
-  ArrayType,
-  CompositionType,
-  DefaultBaseTypeInstance,
-  FunctionType,
-  Type,
-} from "./primitive-types.js";
-import { isAnyType, isDecorator } from "../../utils.js";
 import {
   fetchData,
-  saveData,
   isControlSpace,
-  Path,
-  PATH_SCHEMA,
+  saveData,
   Space,
   SPACE_SCHEMA,
 } from "../../../../SpatialComputingEngine/src/index.js";
-import { UnionType } from "./UnionType.js";
+import { isAnyType, isDecorator } from "../../utils.js";
 import { Identifier } from "../expr/Expr.js";
-import { libDeclarations } from "../stmts.js";
+import { getReachableSpaces, setFactory } from "../path-methods.js";
+import { ASTNode, dotString, newNodeId } from "../program.js";
+import {
+  addEntities,
+  getEntities,
+  receiveEntity,
+  sendEntity,
+} from "../space-methods.js";
 import {
   addPathSpace,
   createMergeSpace,
@@ -29,12 +25,16 @@ import {
   setRoot,
   splitPath,
 } from "../spg-methods.js";
+import { libDeclarations } from "../stmts.js";
+import { SpacePathGraphFactoryType } from "./factory-types.js";
 import {
-  addEntities,
-  getEntities,
-  receiveEntity,
-  sendEntity,
-} from "../space-methods.js";
+  ArrayType,
+  CompositionType,
+  DefaultBaseTypeInstance,
+  FunctionType,
+  Type,
+} from "./primitive-types.js";
+import { UnionType } from "./UnionType.js";
 
 export class SpatialType extends CompositionType {
   constructor(line: number = -1, column: number = -1) {
@@ -156,19 +156,20 @@ export class PathType extends SpatialType {
       string,
       (...args: unknown[]) => Promise<unknown>
     >();
-    PathType.libMethods.set("getReachableSpaces", async (...args) => {
-      const path: Path = (await fetchData(
-        PATH_SCHEMA,
-        args[0] as string,
-      )) as Path;
-      return path.reachable;
-    });
+    PathType.libMethods.set("getReachableSpaces", getReachableSpaces);
+    PathType.libMethods.set("setFactory", setFactory);
   }
 
   static mapMethodNameToMethodType(methodName): FunctionType {
+    const maybeStringType = new UnionType(new Identifier("MaybeString"));
+    maybeStringType.identifier.declaration = libDeclarations[1];
     switch (methodName) {
       case "getReachableSpaces":
         return new FunctionType(new ArrayType(new SpaceType()), []);
+      case "setFactory":
+        return new FunctionType(maybeStringType, [
+          new SpacePathGraphFactoryType(),
+        ]);
     }
   }
 
@@ -726,7 +727,7 @@ export class SpacePathGraphType extends SpatialType {
           new PathType(),
         ]);
       case "finalize":
-        return new FunctionType(DefaultBaseTypeInstance.VOID, []);
+        return new FunctionType(maybeStringType, []);
     }
   }
 

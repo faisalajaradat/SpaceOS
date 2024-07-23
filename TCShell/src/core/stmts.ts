@@ -712,7 +712,7 @@ export class Match extends Stmt {
         if (Object.keys(data).length === 0) return false;
       }
       let constructedType = undefined;
-      if (data instanceof engine.SpacePathGraph)
+      if (data.structJSON !== undefined)
         return condition.type.contains(new SpacePathGraphType());
       switch (data._type) {
         case "Path": {
@@ -923,6 +923,10 @@ export const libDeclarations: (
   new UnionDeclaration(
     new UnionType(new Identifier("SelectionSpaceOrString")),
     [new SelectionSpaceType(), DefaultBaseTypeInstance.STRING],
+  ),
+  new UnionDeclaration(
+    new UnionType(new Identifier("SpacePathGraphOrString")),
+    [new SpacePathGraphType(), DefaultBaseTypeInstance.STRING],
   ),
 ];
 

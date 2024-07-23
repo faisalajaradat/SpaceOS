@@ -1,4 +1,5 @@
 import { Entity, EntityDataValue, Schema, SchemaDefinition } from "redis-om";
+
 import { fetchData } from "./spatial-computing-engine.js";
 
 export type EngineEntity =
@@ -25,6 +26,7 @@ const PATH_SCHEMA_DEF: SchemaDefinition = {
   target: { type: "string" },
   reachable: { type: "string[]" },
   isFull: { type: "boolean" },
+  factory: { type: "string" },
 };
 
 export const PATH_SCHEMA: Schema = new Schema("Path", PATH_SCHEMA_DEF, {
@@ -50,10 +52,16 @@ export abstract class Space extends SpatialObject {
     locality: string,
     isControlled: boolean,
     locationJSON: string,
+    name?: string,
+    dimension?: number,
+    innerSpace?: string,
   ) {
     super(locality, isControlled);
     this.locationJSON = locationJSON;
     this.entities = new Array<string>();
+    this.name = name;
+    this.dimension = dimension;
+    this.innerSpace = innerSpace;
   }
 }
 
@@ -65,6 +73,11 @@ export class SpaceLiteral {
   locationJSON: string;
   dimension: number;
   innerSpace: SpaceLiteral;
+  controlSignal: boolean;
+  selectionTruePath: PathLiteral;
+  selectionFalsePath: PathLiteral;
+  mergeTrueSpace: SpaceLiteral;
+  mergeFalseSpace: SpaceLiteral;
 
   constructor(
     _type: string,
@@ -100,6 +113,52 @@ export async function mapSpaceToSpaceLiteral(space: Space) {
           (await fetchData(SPACE_SCHEMA, space.innerSpace)) as Space,
         ),
   );
+}
+
+export function mapSpaceLiteralToSpace(spaceLiteral: SpaceLiteral) {
+  if (spaceLiteral === undefined) return undefined;
+  switch (spaceLiteral._type) {
+    case "OpenSpace":
+      return new OpenSpace(
+        spaceLiteral.locality,
+        spaceLiteral.isControlled,
+        spaceLiteral.locationJSON,
+        spaceLiteral.name,
+        spaceLiteral.dimension,
+        mapSpaceLiteralToSpace(spaceLiteral.innerSpace),
+      );
+    case "EnclosedSpace":
+      return new EnclosedSpace(
+        spaceLiteral.locality,
+        spaceLiteral.isControlled,
+        spaceLiteral.locationJSON,
+        spaceLiteral.name,
+        spaceLiteral.dimension,
+        mapSpaceLiteralToSpace(spaceLiteral.innerSpace),
+      );
+    case "MergeSpace":
+      return new MergeSpace(
+        spaceLiteral.controlSignal,
+        undefined,
+        undefined,
+        spaceLiteral.locality,
+        spaceLiteral.locationJSON,
+        spaceLiteral.name,
+        spaceLiteral.dimension,
+        mapSpaceLiteralToSpace(spaceLiteral.innerSpace),
+      );
+    case "SelectionSpace":
+      return new SelectionSpace(
+        spaceLiteral.controlSignal,
+        undefined,
+        undefined,
+        spaceLiteral.locality,
+        spaceLiteral.locationJSON,
+        spaceLiteral.name,
+        spaceLiteral.dimension,
+        mapSpaceLiteralToSpace(spaceLiteral.innerSpace),
+      );
+  }
 }
 
 export abstract class SpatialEntity extends SpatialObject {}
@@ -172,15 +231,29 @@ export const SPG_SCHEMA: Schema = new Schema("SpacePathGraph", SPG_SCHEMA_DEF, {
 });
 
 export class OpenSpace extends Space {
-  constructor(locality: string, isControlled: boolean, locationJSON: string) {
-    super(locality, isControlled, locationJSON);
+  constructor(
+    locality: string,
+    isControlled: boolean,
+    locationJSON: string,
+    name?: string,
+    dimension?: number,
+    innerSpace?: string,
+  ) {
+    super(locality, isControlled, locationJSON, name, dimension, innerSpace);
     this._type = "OpenSpace";
   }
 }
 
 export class EnclosedSpace extends Space {
-  constructor(locality: string, isControlled: boolean, locationJSON: string) {
-    super(locality, isControlled, locationJSON);
+  constructor(
+    locality: string,
+    isControlled: boolean,
+    locationJSON: string,
+    name?: string,
+    dimension?: number,
+    innerSpace?: string,
+  ) {
+    super(locality, isControlled, locationJSON, name, dimension, innerSpace);
     this._type = "EnclosedSpace";
   }
 }
@@ -208,8 +281,11 @@ export class MergeSpace extends Space implements ControlSpace {
     falsePath: string,
     locality: string,
     locationJSON: string,
+    name?: string,
+    dimension?: number,
+    innerSpace?: string,
   ) {
-    super(locality, true, locationJSON);
+    super(locality, true, locationJSON, name, dimension, innerSpace);
     this._type = "MergeSpace";
     this.entities = ["", ""];
     this.controlSignal = controlSignal;
@@ -229,8 +305,11 @@ export class SelectionSpace extends Space implements ControlSpace {
     falsePath: string,
     locality: string,
     locationJSON: string,
+    name?: string,
+    dimension?: number,
+    innerSpace?: string,
   ) {
-    super(locality, true, locationJSON);
+    super(locality, true, locationJSON, name, dimension, innerSpace);
     this._type = "SelectionSpace";
     this.controlSignal = controlSignal;
     this.truePath = truePath;
@@ -265,14 +344,19 @@ export class Path extends SpatialTypeEntity {
   target: string;
   reachable: string[];
   isFull: boolean;
+  factory: string;
 
   constructor(
     locality: string,
+    name?: string,
     segment: number = 0,
+    target?: string,
     reachable: Array<string> = [],
   ) {
     super(locality);
+    this.name = name;
     this.segment = segment;
+    this.target = target;
     this.reachable = reachable;
     this._type = "Path";
     this.isFull = false;
@@ -283,6 +367,7 @@ export class PathLiteral {
   _type: string;
   locality: string;
   name: string;
+  segment: number;
   target: SpaceLiteral;
   reachable: SpaceLiteral[];
 
@@ -290,12 +375,14 @@ export class PathLiteral {
     _type: string,
     locality: string,
     name: string,
+    segment: number,
     target: SpaceLiteral,
     reachable: SpaceLiteral[],
   ) {
     this._type = _type;
     this.locality = locality;
     this.name = name;
+    this.segment = segment;
     this.target = target;
     this.reachable = reachable;
   }
@@ -309,21 +396,69 @@ export function mapPathToPathLiteral(
     path._type,
     path.locality,
     path.name,
+    path.segment,
     spaceMap.get(path.target),
     path.reachable.map((spaceId) => spaceMap.get(spaceId)),
   );
 }
 
+export function mapPathLiteralToPath(
+  pathLiteral: PathLiteral,
+  spaceMap: Map<string, string>,
+  hash: (SpaceLiteral) => string,
+) {
+  switch (pathLiteral._type) {
+    case "Path":
+      return new Path(
+        pathLiteral.locality,
+        pathLiteral.name,
+        pathLiteral.segment,
+        spaceMap.get(hash(pathLiteral.target)),
+        pathLiteral.reachable.map((spaceLiteral) =>
+          spaceMap.get(hash(spaceLiteral)),
+        ),
+      );
+    case "AirPath":
+      return new AirPath(
+        pathLiteral.name,
+        pathLiteral.segment,
+        spaceMap.get(hash(pathLiteral.target)),
+        pathLiteral.reachable.map((spaceLiteral) =>
+          spaceMap.get(hash(spaceLiteral)),
+        ),
+      );
+    case "LandPath":
+      return new LandPath(
+        pathLiteral.name,
+        pathLiteral.segment,
+        spaceMap.get(hash(pathLiteral.target)),
+        pathLiteral.reachable.map((spaceLiteral) =>
+          spaceMap.get(hash(spaceLiteral)),
+        ),
+      );
+  }
+}
+
 export class AirPath extends Path {
-  constructor(segment: number = 0, reachable: Array<string> = []) {
-    super("physical", segment, reachable);
+  constructor(
+    name?: string,
+    segment: number = 0,
+    target?: string,
+    reachable: Array<string> = [],
+  ) {
+    super("physical", name, segment, target, reachable);
     this._type = "AirPath";
   }
 }
 
 export class LandPath extends Path {
-  constructor(segment: number = 0, reachable: Array<string> = []) {
-    super("physical", segment, reachable);
+  constructor(
+    name?: string,
+    segment: number = 0,
+    target?: string,
+    reachable: Array<string> = [],
+  ) {
+    super("physical", name, segment, target, reachable);
     this._type = "LandPath";
   }
 }
