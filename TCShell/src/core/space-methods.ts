@@ -153,3 +153,9 @@ export const receiveEntity = async (
   path.isFull = false;
   await saveData(PATH_SCHEMA, path);
 };
+
+export const getName = async (...args: unknown[]): Promise<string> => {
+  const space = (await fetchData(SPACE_SCHEMA, args[0] as string)) as Space;
+  if (space._type === undefined) return "Space does not exist!";
+  return space.name ?? "Space does not have name!";
+};

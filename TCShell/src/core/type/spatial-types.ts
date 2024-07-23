@@ -12,10 +12,12 @@ import { ASTNode, dotString, newNodeId } from "../program.js";
 import {
   addEntities,
   getEntities,
+  getName,
   receiveEntity,
   sendEntity,
 } from "../space-methods.js";
 import {
+  activateFactories,
   addPathSpace,
   createMergeSpace,
   createSelectionSpace,
@@ -341,6 +343,7 @@ export class SpaceType extends SpatialObjectType {
     SpaceType.libMethods.set("getEntities", getEntities);
     SpaceType.libMethods.set("sendEntity", sendEntity);
     SpaceType.libMethods.set("receiveEntity", receiveEntity);
+    SpaceType.libMethods.set("getName", getName);
   }
 
   static mapMethodNameToMethodType(methodName: string): FunctionType {
@@ -364,6 +367,8 @@ export class SpaceType extends SpatialObjectType {
           new EntityType(),
           DefaultBaseTypeInstance.NUMBER,
         ]);
+      case "getName":
+        return new FunctionType(DefaultBaseTypeInstance.STRING, []);
     }
   }
 
@@ -677,6 +682,7 @@ export class SpacePathGraphType extends SpatialType {
       createSelectionSpace,
     );
     SpacePathGraphType.libMethods.set("finalize", finalize);
+    SpacePathGraphType.libMethods.set("activateFactories", activateFactories);
   }
 
   static mapMethodNameToMethodType(methodName: string): FunctionType {
@@ -692,6 +698,10 @@ export class SpacePathGraphType extends SpatialType {
       new Identifier("SelectionSpaceOrString"),
     );
     selectionSpaceOrStringType.identifier.declaration = libDeclarations[6];
+    const unhandledSpaceListsOrStringType = new UnionType(
+      new Identifier("UnhandledSpaceListsOrString"),
+    );
+    unhandledSpaceListsOrStringType.identifier.declaration = libDeclarations[8];
     switch (methodName) {
       case "setRoot":
         return new FunctionType(maybeStringType, [new SpaceType()]);
@@ -728,6 +738,8 @@ export class SpacePathGraphType extends SpatialType {
         ]);
       case "finalize":
         return new FunctionType(maybeStringType, []);
+      case "activateFactories":
+        return new FunctionType(unhandledSpaceListsOrStringType, []);
     }
   }
 

@@ -658,11 +658,11 @@ export class Match extends Stmt {
     if (isAnyType(condition.type)) return true;
     if (condition.type instanceof BaseType)
       return typeof subject === (await condition.type.evaluate(varStacks));
-    if (
-      condition.type instanceof ArrayType &&
-      subject instanceof ArrayRepresentation
-    ) {
-      let subjectBase = subject.array;
+    if (condition.type instanceof ArrayType) {
+      let subjectBase = undefined;
+      if (subject instanceof ArrayRepresentation) subjectBase = subject.array;
+      else if (Array.isArray(subject)) subjectBase = subject;
+      if (subjectBase === undefined) return false;
       let conditionTypeBase = condition.type;
       while (
         conditionTypeBase instanceof ArrayType &&
@@ -672,9 +672,15 @@ export class Match extends Stmt {
         conditionTypeBase = conditionTypeBase.type;
         subjectBase = subjectBase[0];
       }
-      return (
-        typeof subjectBase[0] ===
-        (await (conditionTypeBase as ArrayType).type.evaluate(varStacks))
+      if (
+        subjectBase[0] === undefined &&
+        !(conditionTypeBase.type instanceof ArrayType)
+      )
+        return true;
+      return await this.match(
+        new Parameter(conditionTypeBase.type, condition.identifier),
+        subjectBase[0],
+        varStacks,
       );
     }
     if (condition.type instanceof RecordType) {
@@ -927,6 +933,13 @@ export const libDeclarations: (
   new UnionDeclaration(
     new UnionType(new Identifier("SpacePathGraphOrString")),
     [new SpacePathGraphType(), DefaultBaseTypeInstance.STRING],
+  ),
+  new UnionDeclaration(
+    new UnionType(new Identifier("UnhandledSpaceListsOrString")),
+    [
+      new ArrayType(new ArrayType(new SpaceType()), 2),
+      DefaultBaseTypeInstance.STRING,
+    ],
   ),
 ];
 

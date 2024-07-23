@@ -83,6 +83,10 @@ export class SpatialObjectInstantiationExpr extends Expr {
           await this.args[0].evaluate(varStacks),
           varStacks,
         ) as string,
+        getValueOfExpression(
+          await this.args[1].evaluate(varStacks),
+          varStacks,
+        ) as string,
       );
     const [propertiesRaw, delegateType] = parseSpatialTypeProperties(
       this.type as SpatialType,

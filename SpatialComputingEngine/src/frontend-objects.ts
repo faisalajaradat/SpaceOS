@@ -78,6 +78,7 @@ export class SpaceLiteral {
   selectionFalsePath: PathLiteral;
   mergeTrueSpace: SpaceLiteral;
   mergeFalseSpace: SpaceLiteral;
+  isPrimaryOutput: boolean;
 
   constructor(
     _type: string,
@@ -95,6 +96,7 @@ export class SpaceLiteral {
     this.locationJSON = locationJSON;
     this.dimension = dimension;
     this.innerSpace = innerSpace;
+    this.isPrimaryOutput = false;
   }
 }
 
@@ -466,6 +468,7 @@ export class LandPath extends Path {
 export class SpacePathGraphFactory implements Entity {
   [index: string]: EntityDataValue;
   SPGFactoryStructJSON: string;
+  primaryOutputSpaceId: string;
 
   constructor(SPGFactoryStructJSON: string) {
     this.SPGFactoryStructJSON = SPGFactoryStructJSON;
@@ -474,6 +477,7 @@ export class SpacePathGraphFactory implements Entity {
 
 const SpacePathGraphFactorySchemaDef: SchemaDefinition = {
   SPGFactoryStructJSON: { type: "string" },
+  primaryOutputSpaceId: { type: "string" },
 };
 
 export const SPG_FACTORY_SCHEMA = new Schema(
