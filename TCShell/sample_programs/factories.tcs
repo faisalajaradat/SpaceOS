@@ -27,9 +27,6 @@ if !handleMaybeString(voltageDividerTemplate
 if !handleMaybeString(voltageDividerTemplate.setRoot((Space) r1))
   return
 
-if !handleMaybeString(voltageDividerTemplate.setRoot((Space) r1))
-  return
-
 match voltageDividerTemplate.createSelectionSpace(
   (Path) new Wire(),
   (Space) vO,
