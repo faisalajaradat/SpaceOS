@@ -4,6 +4,8 @@ import {
   fetchAll,
   fetchData,
   isControlSpace,
+  Location,
+  LOCATION_SCHEMA,
   MergeSpace,
   OpenSpace,
   Path,
@@ -174,9 +176,9 @@ export const splitPath = async (...args: unknown[]): Promise<string> => {
   await updateSegmentCounts(originalPath);
   const struct: SPGStruct = JSON.parse(spg.structJSON, jsonReviver);
   const endSpace = originalPath.target;
-  const intermediateSpaceLocation = JSON.stringify(
-    { x: 0, y: 0 },
-    jsonReplacer,
+  const intermediateSpaceLocation = await saveData(
+    LOCATION_SCHEMA,
+    new Location({ x: 0, y: 0 }),
   );
   const intermediateSpace = new OpenSpace(
     "virtual",
@@ -262,7 +264,7 @@ export const createMergeSpace = async (...args: unknown[]): Promise<string> => {
       args[2] as string,
       args[4] as string,
       "virtual",
-      JSON.stringify({ x: 0, y: 0 }, jsonReplacer),
+      await saveData(LOCATION_SCHEMA, new Location({ x: 0, y: 0 })),
     ),
   );
   let addPathResult = await addPathSpaceFunctionality(
@@ -294,7 +296,7 @@ export const createSelectionSpace = async (
       args[3] as string,
       args[5] as string,
       "virtual",
-      JSON.stringify({ x: 0, y: 0 }, jsonReplacer),
+      await saveData(LOCATION_SCHEMA, new Location({ x: 0, y: 0 })),
     ),
   );
   let addPathResult = await addPathSpace(args[0], args[1], selectionSpaceId);

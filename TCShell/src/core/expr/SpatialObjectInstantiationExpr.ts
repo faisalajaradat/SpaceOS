@@ -14,6 +14,7 @@ import {
   ASTNode,
   dotString,
   jsonReplacer,
+  LocationRecord,
   newNodeId,
   RuntimeType,
   SPGStruct,
@@ -28,6 +29,10 @@ import * as engine from "../../../../SpatialComputingEngine/src/frontend-objects
 import { saveData } from "../../../../SpatialComputingEngine/src/spatial-computing-engine.js";
 import { Expr } from "./Expr.js";
 import { intializeSPGFactory } from "../spg-factory-methods.js";
+import {
+  Location,
+  LOCATION_SCHEMA,
+} from "../../../../SpatialComputingEngine/src/frontend-objects.js";
 
 export class SpatialObjectInstantiationExpr extends Expr {
   args: Expr[];
@@ -106,24 +111,28 @@ export class SpatialObjectInstantiationExpr extends Expr {
               ? new engine.OpenSpace(
                   properties.get("locality") as string,
                   properties.get("isControlled") as boolean,
-                  JSON.stringify(
-                    getValueOfExpression(
-                      await this.args[0].evaluate(varStacks),
-                      varStacks,
+                  await saveData(
+                    LOCATION_SCHEMA,
+                    new Location(
+                      getValueOfExpression(
+                        await this.args[0].evaluate(varStacks),
+                        varStacks,
+                      ) as LocationRecord,
                     ),
-                    jsonReplacer,
                   ),
                 )
               : delegateType instanceof EnclosedSpaceType
                 ? new engine.EnclosedSpace(
                     properties.get("locality") as string,
                     properties.get("isControlled") as boolean,
-                    JSON.stringify(
-                      getValueOfExpression(
-                        await this.args[0].evaluate(varStacks),
-                        varStacks,
+                    await saveData(
+                      LOCATION_SCHEMA,
+                      new Location(
+                        getValueOfExpression(
+                          await this.args[0].evaluate(varStacks),
+                          varStacks,
+                        ) as LocationRecord,
                       ),
-                      jsonReplacer,
                     ),
                   )
                 : delegateType instanceof StaticEntityType

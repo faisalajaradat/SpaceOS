@@ -130,7 +130,7 @@ export const createSPG = async (...args: unknown[]): Promise<string> => {
       selectionSpaceLiterals.push(spaceLiteral);
     const spaceId = await saveData(
       SPACE_SCHEMA,
-      mapSpaceLiteralToSpace(spaceLiteral),
+      await mapSpaceLiteralToSpace(spaceLiteral),
     );
     if (spaceLiteral.isPrimaryOutput) {
       factory.primaryOutputSpaceId = spaceId;
