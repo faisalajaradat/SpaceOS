@@ -6,8 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="3ca96637-c0cc-4056-90a5-aecfcb04fec3" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TCShell/src/core/expr/SpatialObjectInstantiationExpr.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/expr/SpatialObjectInstantiationExpr.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TCShell/src/core/spg-methods.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/spg-methods.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TCShell/src/core/stmts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/TCShell/src/core/stmts.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -107,7 +105,7 @@
       <workItem from="1720279178740" duration="732000" />
       <workItem from="1720452673662" duration="2624000" />
       <workItem from="1721836564508" duration="181000" />
-      <workItem from="1721839504217" duration="3806000" />
+      <workItem from="1721839504217" duration="4067000" />
     </task>
     <servers />
   </component>
