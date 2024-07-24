@@ -388,8 +388,8 @@ export class Return extends Stmt {
     return returnNodeId;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async evaluate(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     varStacks: Map<SymbolDeclaration, unknown[]>,
   ): Promise<Return> {
     return this;
@@ -684,6 +684,18 @@ export class Match extends Stmt {
       );
     }
     if (condition.type instanceof RecordType) {
+      if (typeof subject !== "object") return false;
+      const recordDeclaration = (condition.type.identifier.declaration as RecordDeclaration);
+      if (recordDeclaration.defaultRecordImplementation !== undefined && typeof recordDeclaration.defaultRecordImplementation === "object") {
+        const allProps = [recordDeclaration.defaultRecordImplementation, subject]
+            .reduce((props: string[], object) => props.concat(Object.keys(object)), []) as string[];
+        const propsSet = new Set(allProps);
+        return [recordDeclaration.defaultRecordImplementation, subject].every(object => propsSet.size === Object.keys(object).length);
+      }
+      let allPropsMatch = true;
+      for (const field of recordDeclaration.fields)
+        allPropsMatch = allPropsMatch && await this.match(field, subject[field.identifier.value], varStacks);
+      return allPropsMatch;
     }
     if (condition.type instanceof SpatialType && typeof subject === "string") {
       const [propertiesRaw, delegateTypeRaw] = parseSpatialTypeProperties(

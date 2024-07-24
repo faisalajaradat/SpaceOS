@@ -227,6 +227,7 @@ export const sendEntityThrough = async (
   );
   const journeyStack = new Array<string>();
   while (journeyEndNode !== null) {
+    if (journeyEndNode === undefined) return "Cannot reach end location!";
     journeyStack.push(journeyEndNode.spaceId);
     journeyEndNode = journeyEndNode.parent;
   }

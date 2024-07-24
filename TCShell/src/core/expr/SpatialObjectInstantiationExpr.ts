@@ -26,13 +26,13 @@ import {
   parseSpatialTypeProperties,
 } from "../../utils.js";
 import * as engine from "../../../../SpatialComputingEngine/src/frontend-objects.js";
-import { saveData } from "../../../../SpatialComputingEngine/src/spatial-computing-engine.js";
+import { saveData } from "../../../../SpatialComputingEngine/src/index.js";
 import { Expr } from "./Expr.js";
 import { intializeSPGFactory } from "../spg-factory-methods.js";
 import {
   Location,
   LOCATION_SCHEMA,
-} from "../../../../SpatialComputingEngine/src/frontend-objects.js";
+} from "../../../../SpatialComputingEngine/src/index.js";
 
 export class SpatialObjectInstantiationExpr extends Expr {
   args: Expr[];
