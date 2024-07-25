@@ -14,10 +14,10 @@ for the SpaceOS shell.
 * [Functions](#functions)
 * [Symbol Visibility](#symbol-visibility)
 * [Variables](#variables)
+* [Type Analysis](#type-analysis)
 * [Conventional Types](#conventional-types)
     * [Base Types](#base-types)
-    * [Numbers](#numbers)
-    * [Strings](#strings)
+    * [Arrays](#arrays)
 
 </td><td width=33% valign=top>
 </tr>
@@ -89,6 +89,27 @@ the type of a declared variable.
 
 Excluding functions, all variables are mutable. To reassign the value of a variable, you reuse `=` with the new value.
 
+## Type Analysis
+
+By default, the type of expressions are inferenced by the first hint of the type. There is always the option to
+explicitly type a declaration:
+
+```
+var add = fn (var x: number, var y: number): number
+    return x+y
+
+var one: number = 1
+var two: number = 2
+
+print(add(one, two))
+```
+
+In most cases, it is not required to explicitly type a declaration. In the example above, the type hints for vars
+`one` and `two` can be dropped as the assignment to a `number` gives enough information. There are cases where the
+hints to the type are insufficient to infer and explicit typing is required or else an error will be raised. In the
+example above, when considering the `add` function, the parameters `x` and `y` are required to be explicitly type
+as their only use is with the `+` operator which can be used with both `number` and `string`.
+
 ## Conventional Types
 
 ### Base Types
@@ -103,7 +124,7 @@ number
 void
 ```
 
-### Numbers
+#### Numbers
 
 The `number` type works the same as in JavaScript, so it is a double-precision 64-bit
 binary format IEEE 754 value. They are no integers at the moment. Literals can be defined
@@ -120,7 +141,7 @@ The `number` type supports many of the standard math operators:
 var x = 2 + ((5*5) - 2) / 4 % 6
 ```
 
-### Strings
+#### Strings
 
 String literals can be defined using either single or double quotes.
 
@@ -135,3 +156,31 @@ To concatenate `string` types, use the `+` operator:
 var samAndMarc = sam + " and " + marc
 ```
 
+When using the `+` operator on a `number` and a `string`, the `number` will be coerced into a string:
+
+```
+"Sam is " + 21 + " years old!"
+```
+
+The following can be done to check string equality:
+
+```
+sam == "Sam"
+
+marc != sam
+```
+
+#### Bools
+
+The `bool` type is used for boolean logic. A `bool` can be either `true` or `false`. The common boolean operators
+are supported:
+
+```
+var notTrue = false
+true != notTrue
+true == !notTrue
+true || notTrue == true
+true && notTrue == false
+```
+
+### Arrays
