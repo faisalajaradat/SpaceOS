@@ -131,7 +131,7 @@ binary format IEEE 754 value. They are no integers at the moment. Literals can b
 in decimal form, or in scientific notation.
 
 ```
-var PI = 3.14
+var PI: number = 3.14
 var AVAGADRO = 6.02214076e23
 ```
 
@@ -147,7 +147,7 @@ String literals can be defined using either single or double quotes.
 
 ```
 var sam = "Sam"
-var marc = 'Marc'
+var marc: string = 'Marc'
 ```
 
 To concatenate `string` types, use the `+` operator:
@@ -176,7 +176,7 @@ The `bool` type is used for boolean logic. A `bool` can be either `true` or `fal
 are supported:
 
 ```
-var notTrue = false
+var notTrue: bool = false
 true != notTrue
 true == !notTrue
 true || notTrue == true
