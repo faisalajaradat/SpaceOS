@@ -824,3 +824,16 @@ export class MergeSpaceType extends ControlSpaceType {
     );
   }
 }
+
+export const spatialTypeDictionary: { [key in string]: SpatialType } = {
+  ["Path"]: new PathType(),
+  ["AirPath"]: new AirPathType(),
+  ["LandPath"]: new LandPathType(),
+  ["OpenSpace"]: new OpenSpaceType(),
+  ["EnclosedSpace"]: new EnclosedSpaceType(),
+  ["MergeSpace"]: new MergeSpaceType(),
+  ["SelectionSpace"]: new SelectionSpaceType(),
+  ["StaticEntity"]: new StaticEntityType(),
+  ["AnimateEntity"]: new AnimateEntityType(),
+  ["SmartEntity"]: new SmartEntityType(),
+};
