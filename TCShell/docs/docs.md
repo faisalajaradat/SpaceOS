@@ -18,6 +18,8 @@ for the SpaceOS shell.
 * [Conventional Types](#conventional-types)
     * [Base Types](#base-types)
     * [Arrays](#arrays)
+    * [Records](#records)
+    * [Type Aliases](#type-aliases)
 
 </td><td width=33% valign=top>
 </tr>
@@ -227,3 +229,35 @@ removeElement(names, 1, 1)
 names[1] == "Alec"
 ```
 
+
+### Records
+
+Records allow encapsulating data within. Records are defined with explicitly typed fields before use. After
+definition, a record can be initialized by invoking the record name, and passing the desired field values as
+inputs in the same order as the fields were declared within `{}`.
+
+```
+record Person {
+    var name: string,
+    var age: number
+}
+
+var sam = Person {"Sam", 21}
+```
+
+Fields can be accessed with `.`. Record fields are immutable, so they can only be retreived and not set.
+
+```
+sam.name == "Sam"
+```
+
+### Type Aliases
+
+The `type` keyword allows for assigning a type to an identifier. A declaration using a type alias
+can be used anywhere that expecting the aliased type.
+
+```
+type Name = string
+
+var sam: Name = "Sam"
+```
