@@ -180,7 +180,9 @@ export async function mapSpaceLiteralToSpace(spaceLiteral: SpaceLiteral) {
   }
 }
 
-export abstract class SpatialEntity extends SpatialObject {}
+export abstract class SpatialEntity extends SpatialObject {
+  nodeId: string;
+}
 
 const SPACE_SCHEMA_DEF: SchemaDefinition = {
   _type: { type: "string" },
@@ -218,6 +220,7 @@ const ENTITY_SCHEMA_DEF: SchemaDefinition = {
   locality: { type: "string" },
   isControlled: { type: "boolean" },
   name: { type: "string" },
+  nodeId: { type: "string" },
   motion: { type: "string" },
 };
 
