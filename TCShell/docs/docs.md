@@ -92,7 +92,7 @@ Excluding functions, all variables are mutable. To reassign the value of a varia
 ## Type Analysis
 
 By default, the type of expressions are inferenced by the first hint of the type. There is always the option to
-explicitly type a declaration:
+explicitly type a declaration.
 
 ```
 var add = fn (var x: number, var y: number): number
@@ -150,13 +150,13 @@ var sam = "Sam"
 var marc: string = 'Marc'
 ```
 
-To concatenate `string` types, use the `+` operator:
+To concatenate `string` types, use the `+` operator.
 
 ```
 var samAndMarc = sam + " and " + marc
 ```
 
-When using the `+` operator on a `number` and a `string`, the `number` will be coerced into a string:
+When using the `+` operator on a `number` and a `string`, the `number` will be coerced into a string.
 
 ```
 "Sam is " + 21 + " years old!"
@@ -173,7 +173,7 @@ marc != sam
 #### Bools
 
 The `bool` type is used for boolean logic. A `bool` can be either `true` or `false`. The common boolean operators
-are supported:
+are supported.
 
 ```
 var notTrue: bool = false
@@ -184,3 +184,46 @@ true && notTrue == false
 ```
 
 ### Arrays
+
+An array type can be defined by appending `[]` to a type for each dimension of the array. An array can be initialized
+by enclosing a comma seperated list of expressions within `[]`. Arrays initialized with no contents must be explicitly
+type.
+
+```
+var names = ["Sam", "Marc"]
+
+var nums: number[] = []
+```
+
+An array is accessed by appending an index enclosed with `[]`.
+
+```
+names[0] == "Sam"
+```
+
+The length of an array can be found with the `len` function.
+
+```
+len(names) == 2
+```
+
+To append an element to the end of an array, use the `push` function.
+
+```
+push(nums, 5)
+
+nums[0] == 5
+
+push(names, "Alec")
+
+names[2] == "Alec"
+```
+
+To remove a specific number of elements starting from a specific index of an array, use the `removeElement` function.
+
+```
+removeElement(names, 1, 1)
+
+names[1] == "Alec"
+```
+
