@@ -14,7 +14,7 @@ for the SpaceOS shell.
 * [Functions](#functions)
 * [Symbol Visibility](#symbol-visibility)
 * [Variables](#variables)
-* [Types](#types)
+* [Conventional Types](#conventional-types)
     * [Base Types](#base-types)
     * [Numbers](#numbers)
     * [Strings](#strings)
@@ -89,7 +89,7 @@ the type of a declared variable.
 
 Excluding functions, all variables are mutable. To reassign the value of a variable, you reuse `=` with the new value.
 
-## Types
+## Conventional Types
 
 ### Base Types
 
@@ -114,6 +114,12 @@ var PI = 3.14
 var AVAGADRO = 6.02214076e23
 ```
 
+The `number` type supports many of the standard math operators:
+
+```
+var x = 2 + ((5*5) - 2) / 4 % 6
+```
+
 ### Strings
 
 String literals can be defined using either single or double quotes.
@@ -122,3 +128,10 @@ String literals can be defined using either single or double quotes.
 var sam = "Sam"
 var marc = 'Marc'
 ```
+
+To concatenate `string` types, use the `+` operator:
+
+```
+var samAndMarc = sam + " and " + marc
+```
+
