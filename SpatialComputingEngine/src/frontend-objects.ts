@@ -1,12 +1,13 @@
 import { Entity, EntityDataValue, Schema, SchemaDefinition } from "redis-om";
 
-import { fetchData } from "./spatial-computing-engine.js";
+import { fetchData, saveData } from "./spatial-computing-engine.js";
 
 export type EngineEntity =
   | SpatialTypeEntity
   | SpacePathGraph
   | RequestMessage
-  | SpacePathGraphFactory;
+  | SpacePathGraphFactory
+  | Location;
 
 export abstract class SpatialTypeEntity implements Entity {
   [index: string]: EntityDataValue;
@@ -44,20 +45,20 @@ export abstract class SpatialObject extends SpatialTypeEntity {
 }
 
 export abstract class Space extends SpatialObject {
-  locationJSON: string;
+  locationId: string;
   dimension: number;
   innerSpace: string;
   entities: string[];
   protected constructor(
     locality: string,
     isControlled: boolean,
-    locationJSON: string,
+    locationId: string,
     name?: string,
     dimension?: number,
     innerSpace?: string,
   ) {
     super(locality, isControlled);
-    this.locationJSON = locationJSON;
+    this.locationId = locationId;
     this.entities = new Array<string>();
     this.name = name;
     this.dimension = dimension;
@@ -70,7 +71,7 @@ export class SpaceLiteral {
   locality: string;
   isControlled: boolean;
   name: string;
-  locationJSON: string;
+  location: { x: number; y: number };
   dimension: number;
   innerSpace: SpaceLiteral;
   controlSignal: boolean;
@@ -78,13 +79,14 @@ export class SpaceLiteral {
   selectionFalsePath: PathLiteral;
   mergeTrueSpace: SpaceLiteral;
   mergeFalseSpace: SpaceLiteral;
+  isPrimaryOutput: boolean;
 
   constructor(
     _type: string,
     locality: string,
     isControlled: boolean,
     name: string,
-    locationJSON: string,
+    location: { x: number; y: number },
     dimension: number,
     innerSpace: SpaceLiteral,
   ) {
@@ -92,20 +94,25 @@ export class SpaceLiteral {
     this.locality = locality;
     this.isControlled = isControlled;
     this.name = name;
-    this.locationJSON = locationJSON;
+    this.location = location;
     this.dimension = dimension;
     this.innerSpace = innerSpace;
+    this.isPrimaryOutput = false;
   }
 }
 
 export async function mapSpaceToSpaceLiteral(space: Space) {
   if (space === undefined) return undefined;
+  const location = (await fetchData(
+    LOCATION_SCHEMA,
+    space.locationId,
+  )) as Location;
   return new SpaceLiteral(
     space._type,
     space.locality,
     space.isControlled,
     space.name,
-    space.locationJSON,
+    { x: location.x, y: location.y },
     space.dimension,
     space.innerSpace === undefined
       ? undefined
@@ -115,26 +122,32 @@ export async function mapSpaceToSpaceLiteral(space: Space) {
   );
 }
 
-export function mapSpaceLiteralToSpace(spaceLiteral: SpaceLiteral) {
+export async function mapSpaceLiteralToSpace(spaceLiteral: SpaceLiteral) {
   if (spaceLiteral === undefined) return undefined;
   switch (spaceLiteral._type) {
     case "OpenSpace":
       return new OpenSpace(
         spaceLiteral.locality,
         spaceLiteral.isControlled,
-        spaceLiteral.locationJSON,
+        await saveData(LOCATION_SCHEMA, new Location(spaceLiteral.location)),
         spaceLiteral.name,
         spaceLiteral.dimension,
-        mapSpaceLiteralToSpace(spaceLiteral.innerSpace),
+        await saveData(
+          SPACE_SCHEMA,
+          mapSpaceLiteralToSpace(spaceLiteral.innerSpace),
+        ),
       );
     case "EnclosedSpace":
       return new EnclosedSpace(
         spaceLiteral.locality,
         spaceLiteral.isControlled,
-        spaceLiteral.locationJSON,
+        await saveData(LOCATION_SCHEMA, new Location(spaceLiteral.location)),
         spaceLiteral.name,
         spaceLiteral.dimension,
-        mapSpaceLiteralToSpace(spaceLiteral.innerSpace),
+        await saveData(
+          SPACE_SCHEMA,
+          mapSpaceLiteralToSpace(spaceLiteral.innerSpace),
+        ),
       );
     case "MergeSpace":
       return new MergeSpace(
@@ -142,10 +155,13 @@ export function mapSpaceLiteralToSpace(spaceLiteral: SpaceLiteral) {
         undefined,
         undefined,
         spaceLiteral.locality,
-        spaceLiteral.locationJSON,
+        await saveData(LOCATION_SCHEMA, new Location(spaceLiteral.location)),
         spaceLiteral.name,
         spaceLiteral.dimension,
-        mapSpaceLiteralToSpace(spaceLiteral.innerSpace),
+        await saveData(
+          SPACE_SCHEMA,
+          mapSpaceLiteralToSpace(spaceLiteral.innerSpace),
+        ),
       );
     case "SelectionSpace":
       return new SelectionSpace(
@@ -153,15 +169,20 @@ export function mapSpaceLiteralToSpace(spaceLiteral: SpaceLiteral) {
         undefined,
         undefined,
         spaceLiteral.locality,
-        spaceLiteral.locationJSON,
+        await saveData(LOCATION_SCHEMA, new Location(spaceLiteral.location)),
         spaceLiteral.name,
         spaceLiteral.dimension,
-        mapSpaceLiteralToSpace(spaceLiteral.innerSpace),
+        await saveData(
+          SPACE_SCHEMA,
+          mapSpaceLiteralToSpace(spaceLiteral.innerSpace),
+        ),
       );
   }
 }
 
-export abstract class SpatialEntity extends SpatialObject {}
+export abstract class SpatialEntity extends SpatialObject {
+  nodeId: string;
+}
 
 const SPACE_SCHEMA_DEF: SchemaDefinition = {
   _type: { type: "string" },
@@ -199,6 +220,7 @@ const ENTITY_SCHEMA_DEF: SchemaDefinition = {
   locality: { type: "string" },
   isControlled: { type: "boolean" },
   name: { type: "string" },
+  nodeId: { type: "string" },
   motion: { type: "string" },
 };
 
@@ -234,12 +256,12 @@ export class OpenSpace extends Space {
   constructor(
     locality: string,
     isControlled: boolean,
-    locationJSON: string,
+    locationId: string,
     name?: string,
     dimension?: number,
     innerSpace?: string,
   ) {
-    super(locality, isControlled, locationJSON, name, dimension, innerSpace);
+    super(locality, isControlled, locationId, name, dimension, innerSpace);
     this._type = "OpenSpace";
   }
 }
@@ -248,12 +270,12 @@ export class EnclosedSpace extends Space {
   constructor(
     locality: string,
     isControlled: boolean,
-    locationJSON: string,
+    locationId: string,
     name?: string,
     dimension?: number,
     innerSpace?: string,
   ) {
-    super(locality, isControlled, locationJSON, name, dimension, innerSpace);
+    super(locality, isControlled, locationId, name, dimension, innerSpace);
     this._type = "EnclosedSpace";
   }
 }
@@ -280,12 +302,12 @@ export class MergeSpace extends Space implements ControlSpace {
     truePath: string,
     falsePath: string,
     locality: string,
-    locationJSON: string,
+    locationId: string,
     name?: string,
     dimension?: number,
     innerSpace?: string,
   ) {
-    super(locality, true, locationJSON, name, dimension, innerSpace);
+    super(locality, true, locationId, name, dimension, innerSpace);
     this._type = "MergeSpace";
     this.entities = ["", ""];
     this.controlSignal = controlSignal;
@@ -304,12 +326,12 @@ export class SelectionSpace extends Space implements ControlSpace {
     truePath: string,
     falsePath: string,
     locality: string,
-    locationJSON: string,
+    locationId: string,
     name?: string,
     dimension?: number,
     innerSpace?: string,
   ) {
-    super(locality, true, locationJSON, name, dimension, innerSpace);
+    super(locality, true, locationId, name, dimension, innerSpace);
     this._type = "SelectionSpace";
     this.controlSignal = controlSignal;
     this.truePath = truePath;
@@ -466,6 +488,7 @@ export class LandPath extends Path {
 export class SpacePathGraphFactory implements Entity {
   [index: string]: EntityDataValue;
   SPGFactoryStructJSON: string;
+  primaryOutputSpaceId: string;
 
   constructor(SPGFactoryStructJSON: string) {
     this.SPGFactoryStructJSON = SPGFactoryStructJSON;
@@ -474,6 +497,7 @@ export class SpacePathGraphFactory implements Entity {
 
 const SpacePathGraphFactorySchemaDef: SchemaDefinition = {
   SPGFactoryStructJSON: { type: "string" },
+  primaryOutputSpaceId: { type: "string" },
 };
 
 export const SPG_FACTORY_SCHEMA = new Schema(
@@ -534,3 +558,23 @@ export const ENTER_SPACE_SCHEMA = new Schema(
   MoveEntityRequestMessageSchemaDef,
   { dataStructure: "JSON" },
 );
+
+export class Location implements Entity {
+  [index: string]: EntityDataValue;
+  x: number;
+  y: number;
+
+  constructor(locationObject: { x: number; y: number }) {
+    this.x = locationObject.x;
+    this.y = locationObject.y;
+  }
+}
+
+const locationSchemaDef: SchemaDefinition = {
+  x: { type: "number" },
+  y: { type: "number" },
+};
+
+export const LOCATION_SCHEMA = new Schema("Location", locationSchemaDef, {
+  dataStructure: "JSON",
+});

@@ -23,8 +23,6 @@ import {
 } from "./program.js";
 import { Expr, Identifier } from "./expr/Expr.js";
 import {
-  AirPathType,
-  AnimateEntityType,
   ArrayType,
   BaseType,
   BaseTypeKind,
@@ -32,28 +30,24 @@ import {
   ControlledDecorator,
   DefaultBaseTypeInstance,
   DynamicEntityType,
-  EnclosedSpaceType,
   EntityType,
   FunctionType,
-  LandPathType,
   MergeSpaceType,
   MobileDecorator,
   NotControlledDecorator,
-  OpenSpaceType,
   PathType,
   PhysicalDecorator,
   RecordType,
   SelectionSpaceType,
-  SmartEntityType,
   SpacePathGraphType,
   SpaceType,
   SpatialObjectType,
   SpatialType,
-  StaticEntityType,
   StationaryDecorator,
   Type,
   UnionType,
   VirtualDecorator,
+  spatialTypeDictionary,
 } from "./type/index.js";
 import { FunDeclaration } from "./expr/index.js";
 
@@ -351,16 +345,14 @@ export class RecordDeclaration extends Stmt {
   async evaluate(
     varStacks: Map<SymbolDeclaration, unknown[]>,
   ): Promise<object> {
-    if (this.defaultRecordImplementation === undefined)
-      this.defaultRecordImplementation = Object.assign(
-        {},
-        ...(await Promise.all(
-          this.fields.map(
-            async (field) =>
-              await this.fieldDefaultImplementation(field, varStacks),
-          ),
-        )),
+    if (this.defaultRecordImplementation !== undefined)
+      return { ...this.defaultRecordImplementation };
+    const defaultFields = new Array<object>();
+    for (const field of this.fields)
+      defaultFields.push(
+        await this.fieldDefaultImplementation(field, varStacks),
       );
+    this.defaultRecordImplementation = Object.assign({}, ...defaultFields);
     return { ...this.defaultRecordImplementation };
   }
 }
@@ -388,8 +380,8 @@ export class Return extends Stmt {
     return returnNodeId;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async evaluate(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     varStacks: Map<SymbolDeclaration, unknown[]>,
   ): Promise<Return> {
     return this;
@@ -658,11 +650,11 @@ export class Match extends Stmt {
     if (isAnyType(condition.type)) return true;
     if (condition.type instanceof BaseType)
       return typeof subject === (await condition.type.evaluate(varStacks));
-    if (
-      condition.type instanceof ArrayType &&
-      subject instanceof ArrayRepresentation
-    ) {
-      let subjectBase = subject.array;
+    if (condition.type instanceof ArrayType) {
+      let subjectBase = undefined;
+      if (subject instanceof ArrayRepresentation) subjectBase = subject.array;
+      else if (Array.isArray(subject)) subjectBase = subject;
+      if (subjectBase === undefined) return false;
       let conditionTypeBase = condition.type;
       while (
         conditionTypeBase instanceof ArrayType &&
@@ -672,111 +664,89 @@ export class Match extends Stmt {
         conditionTypeBase = conditionTypeBase.type;
         subjectBase = subjectBase[0];
       }
-      return (
-        typeof subjectBase[0] ===
-        (await (conditionTypeBase as ArrayType).type.evaluate(varStacks))
+      if (
+        subjectBase[0] === undefined &&
+        !(conditionTypeBase.type instanceof ArrayType)
+      )
+        return true;
+      return await this.match(
+        new Parameter(conditionTypeBase.type, condition.identifier),
+        subjectBase[0],
+        varStacks,
       );
     }
     if (condition.type instanceof RecordType) {
-    }
-    if (condition.type instanceof SpatialType && typeof subject === "string") {
-      const [propertiesRaw, delegateTypeRaw] = parseSpatialTypeProperties(
-        <SpatialType>condition.type,
+      if (typeof subject !== "object") return false;
+      const recordDeclaration = condition.type.identifier
+        .declaration as RecordDeclaration;
+      const defaultRecord = await recordDeclaration.evaluate(varStacks);
+      const allProps = [defaultRecord, subject].reduce(
+        (props: string[], object) => props.concat(Object.keys(object)),
+        [],
+      ) as string[];
+      const propsSet = new Set(allProps);
+      return [defaultRecord, subject].every(
+        (object) => propsSet.size === Object.keys(object).length,
       );
-      const delegateType: SpatialType = delegateTypeRaw as SpatialType;
-      const properties: Map<string, string | boolean> = propertiesRaw as Map<
-        string,
-        string | boolean
-      >;
-      let data = undefined;
-      if (delegateType.equals(new SpatialType())) {
-        for (const schema of [
-          engine.ENTITY_SCHEMA,
-          engine.SPACE_SCHEMA,
-          engine.PATH_SCHEMA,
-          engine.SPG_SCHEMA,
-        ]) {
-          const fetchedData = await fetchData(schema, subject);
-          if (Object.keys(fetchedData).length > 0) data = fetchedData;
-        }
-        if (data === undefined) return false;
-      } else {
-        const schema = new SpaceType().contains(delegateType)
-          ? engine.SPACE_SCHEMA
-          : new EntityType().contains(delegateType)
-            ? engine.ENTITY_SCHEMA
-            : new PathType().contains(delegateType)
-              ? engine.PATH_SCHEMA
-              : engine.SPG_SCHEMA;
-        data = await fetchData(schema, subject);
-        if (Object.keys(data).length === 0) return false;
-      }
-      let constructedType = undefined;
-      if (data.structJSON !== undefined)
-        return condition.type.contains(new SpacePathGraphType());
-      switch (data._type) {
-        case "Path": {
-          constructedType = new PathType();
-          break;
-        }
-        case "AirPath": {
-          constructedType = new AirPathType();
-          break;
-        }
-        case "LandPath": {
-          constructedType = new LandPathType();
-          break;
-        }
-        case "OpenSpace": {
-          constructedType = new OpenSpaceType();
-          break;
-        }
-        case "EnclosedSpace": {
-          constructedType = new EnclosedSpaceType();
-          break;
-        }
-        case "MergeSpace": {
-          constructedType = new MergeSpaceType();
-          break;
-        }
-        case "SelectionSpace": {
-          constructedType = new SelectionSpaceType();
-          break;
-        }
-        case "StaticEntity": {
-          constructedType = new StaticEntityType();
-          break;
-        }
-        case "AnimateEntity": {
-          constructedType = new AnimateEntityType();
-          break;
-        }
-        case "SmartEntity": {
-          constructedType = new SmartEntityType();
-          break;
-        }
-      }
-      Array.from(properties.keys())
-        .reverse()
-        .forEach((property) => {
-          if (property === "motion")
-            constructedType =
-              (<engine.DynamicEntity>data).motion === "mobile"
-                ? new MobileDecorator(<DynamicEntityType>constructedType)
-                : new StationaryDecorator(<DynamicEntityType>constructedType);
-          if (property === "isControlled")
-            constructedType = (<engine.SpatialObject>data).isControlled
-              ? new ControlledDecorator(<SpatialObjectType>constructedType)
-              : new NotControlledDecorator(<SpatialObjectType>constructedType);
-          if (property === "locality")
-            constructedType =
-              data.locality === "physical"
-                ? new PhysicalDecorator(constructedType)
-                : new VirtualDecorator(constructedType);
-        });
-      return (condition.type as CompositionType).contains(constructedType);
     }
-    return false;
+    if (!(condition.type instanceof SpatialType) || typeof subject !== "string")
+      return false;
+    const [propertiesRaw, delegateTypeRaw] = parseSpatialTypeProperties(
+      <SpatialType>condition.type,
+    );
+    const delegateType: SpatialType = delegateTypeRaw as SpatialType;
+    const properties: Map<string, string | boolean> = propertiesRaw as Map<
+      string,
+      string | boolean
+    >;
+    let data: engine.SpatialTypeEntity = undefined;
+    if (delegateType.equals(new SpatialType())) {
+      for (const schema of [
+        engine.ENTITY_SCHEMA,
+        engine.SPACE_SCHEMA,
+        engine.PATH_SCHEMA,
+        engine.SPG_SCHEMA,
+      ]) {
+        const fetchedData = (await fetchData(
+          schema,
+          subject,
+        )) as engine.SpatialTypeEntity;
+        if (Object.keys(fetchedData).length > 0) data = fetchedData;
+      }
+      if (data === undefined) return false;
+    } else {
+      const schema = new SpaceType().contains(delegateType)
+        ? engine.SPACE_SCHEMA
+        : new EntityType().contains(delegateType)
+          ? engine.ENTITY_SCHEMA
+          : new PathType().contains(delegateType)
+            ? engine.PATH_SCHEMA
+            : engine.SPG_SCHEMA;
+      data = (await fetchData(schema, subject)) as engine.SpatialTypeEntity;
+      if (Object.keys(data).length === 0) return false;
+    }
+    if (data.structJSON !== undefined)
+      return condition.type.contains(new SpacePathGraphType());
+    let constructedType = spatialTypeDictionary[data._type];
+    Array.from(properties.keys())
+      .reverse()
+      .forEach((property) => {
+        if (property === "motion")
+          constructedType =
+            (<engine.DynamicEntity>data).motion === "mobile"
+              ? new MobileDecorator(<DynamicEntityType>constructedType)
+              : new StationaryDecorator(<DynamicEntityType>constructedType);
+        if (property === "isControlled")
+          constructedType = (<engine.SpatialObject>data).isControlled
+            ? new ControlledDecorator(<SpatialObjectType>constructedType)
+            : new NotControlledDecorator(<SpatialObjectType>constructedType);
+        if (property === "locality")
+          constructedType =
+            data.locality === "physical"
+              ? new PhysicalDecorator(constructedType)
+              : new VirtualDecorator(constructedType);
+      });
+    return (condition.type as CompositionType).contains(constructedType);
   }
 
   children(): ASTNode[] {
@@ -927,6 +897,13 @@ export const libDeclarations: (
   new UnionDeclaration(
     new UnionType(new Identifier("SpacePathGraphOrString")),
     [new SpacePathGraphType(), DefaultBaseTypeInstance.STRING],
+  ),
+  new UnionDeclaration(
+    new UnionType(new Identifier("UnhandledSpaceListsOrString")),
+    [
+      new ArrayType(new ArrayType(new SpaceType()), 2),
+      DefaultBaseTypeInstance.STRING,
+    ],
   ),
 ];
 

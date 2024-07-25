@@ -47,7 +47,7 @@ export type Assignment = VarDeclaration | BinaryExpr;
 
 export type RuntimeType = Type | Identifier;
 
-export type Location = { x: number; y: number };
+export type LocationRecord = { x: number; y: number };
 
 export type SPGStruct = { root: string; table: Map<string, string[]> };
 

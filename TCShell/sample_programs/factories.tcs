@@ -18,7 +18,7 @@ var r1 = new Resistor(Location {5, 7.5}, 1, "R1")
 var r2 = new Resistor(Location {5, 2.5}, 1, "R2")
 var vO = new Source(Location {5, 5}, 1, "Vo")
 var gnd = new Source(Location {2.5, 0}, 1, "GND")
-var voltageDividerTemplate = new SpacePathGraph(vI)
+var voltageDividerTemplate = new SpacePathGraph((Space) vI)
 
 if !handleMaybeString(voltageDividerTemplate
   .addPathSpace((Path) new Wire(), (Space) r1))
@@ -59,19 +59,37 @@ if !handleMaybeString(voltageDividerTemplate.finalize())
 
 var vIn = new Source(Location {0, 5}, 1, "Vin")
 var vOut = new Source(Location {7.5, 5}, 1, "Vout")
+var GND = new Source(Location {0, 0}, 1, "Absolute GND")
 var inToOutWire = new Wire("Wire")
 
-var voltageDividerFactory = new SpacePathGraphFactory(voltageDividerTemplate)
+var voltageDividerFactory = new SpacePathGraphFactory(voltageDividerTemplate, (Space) vO)
 
 ((Path) inToOutWire).setFactory(voltageDividerFactory)
 
-var voltageDivider = new SpacePathGraph(vIn)
+var voltageDivider = new SpacePathGraph((Space) vIn)
 
 if !handleMaybeString(voltageDivider.addPathSpace((Path) inToOutWire, (Space) vOut)) {
   return
 }
 
 print(voltageDivider.getStructJSON())
+
+match voltageDivider.activateFactories() {
+  var error: string => {
+    print(error)
+    return
+  }
+  var unhandledIO: Space[][] => {
+    if len(unhandledIO[0]) != 0 || len(unhandledIO[1]) != 1
+      return
+    if unhandledIO[1][0].getName() == "GND" {
+      if !handleMaybeString(voltageDivider.setRoot(unhandledIO[1][0]))
+        return
+      if !handleMaybeString(voltageDivider.addPathSpace((Path) new Wire(), (Space) GND))
+        return
+    }
+  }
+}
 
 if !handleMaybeString(voltageDivider.finalize()) {
   return

@@ -4,6 +4,8 @@ import {
   fetchAll,
   fetchData,
   isControlSpace,
+  Location,
+  LOCATION_SCHEMA,
   MergeSpace,
   OpenSpace,
   Path,
@@ -13,6 +15,8 @@ import {
   Space,
   SPACE_SCHEMA,
   SpacePathGraph,
+  SpacePathGraphFactory,
+  SPG_FACTORY_SCHEMA,
   SPG_SCHEMA,
 } from "../../../SpatialComputingEngine/src/index.js";
 import {
@@ -172,9 +176,9 @@ export const splitPath = async (...args: unknown[]): Promise<string> => {
   await updateSegmentCounts(originalPath);
   const struct: SPGStruct = JSON.parse(spg.structJSON, jsonReviver);
   const endSpace = originalPath.target;
-  const intermediateSpaceLocation = JSON.stringify(
-    { x: 0, y: 0 },
-    jsonReplacer,
+  const intermediateSpaceLocation = await saveData(
+    LOCATION_SCHEMA,
+    new Location({ x: 0, y: 0 }),
   );
   const intermediateSpace = new OpenSpace(
     "virtual",
@@ -223,6 +227,7 @@ export const sendEntityThrough = async (
   );
   const journeyStack = new Array<string>();
   while (journeyEndNode !== null) {
+    if (journeyEndNode === undefined) return "Cannot reach end location!";
     journeyStack.push(journeyEndNode.spaceId);
     journeyEndNode = journeyEndNode.parent;
   }
@@ -260,7 +265,7 @@ export const createMergeSpace = async (...args: unknown[]): Promise<string> => {
       args[2] as string,
       args[4] as string,
       "virtual",
-      JSON.stringify({ x: 0, y: 0 }, jsonReplacer),
+      await saveData(LOCATION_SCHEMA, new Location({ x: 0, y: 0 })),
     ),
   );
   let addPathResult = await addPathSpaceFunctionality(
@@ -292,7 +297,7 @@ export const createSelectionSpace = async (
       args[3] as string,
       args[5] as string,
       "virtual",
-      JSON.stringify({ x: 0, y: 0 }, jsonReplacer),
+      await saveData(LOCATION_SCHEMA, new Location({ x: 0, y: 0 })),
     ),
   );
   let addPathResult = await addPathSpace(args[0], args[1], selectionSpaceId);
@@ -324,6 +329,28 @@ export const createSelectionSpace = async (
 };
 
 export const finalize = async (...args: unknown[]): Promise<string | void> => {
+  const spg: SpacePathGraph = (await fetchData(
+    SPG_SCHEMA,
+    args[0] as string,
+  )) as SpacePathGraph;
+  if (spg.structJSON === undefined) return SPG_ERROR.DNE;
+  if (spg.final) return SPG_ERROR.IS_FINAL;
+  const struct: SPGStruct = JSON.parse(spg.structJSON, jsonReviver);
+  const allPathIds = [].concat(...Array.from(struct.table.values()));
+  for await (const path of fetchAll(
+    PATH_SCHEMA,
+    allPathIds,
+  ) as AsyncGenerator<Path>) {
+    path.reachable = await updateReachable(struct, path.target);
+    await saveData(PATH_SCHEMA, path);
+  }
+  spg.final = true;
+  await saveData(SPG_SCHEMA, spg);
+};
+
+export const activateFactories = async (
+  ...args: unknown[]
+): Promise<string | [string[], string[]]> => {
   let spg: SpacePathGraph = (await fetchData(
     SPG_SCHEMA,
     args[0] as string,
@@ -331,14 +358,13 @@ export const finalize = async (...args: unknown[]): Promise<string | void> => {
   if (spg.structJSON === undefined) return SPG_ERROR.DNE;
   if (spg.final) return SPG_ERROR.IS_FINAL;
   let struct: SPGStruct = JSON.parse(spg.structJSON, jsonReviver);
-  let allPathIds = [].concat(...Array.from(struct.table.values()));
-  let hasFactoryPath = false;
+  const allPathIds = [].concat(...Array.from(struct.table.values()));
+  const unhandledIOSpaces: [string[], string[]] = [[], []];
   for await (const factoryPath of fetchAll(
     PATH_SCHEMA,
     allPathIds,
   ) as AsyncGenerator<Path>) {
     if (factoryPath.factory === undefined) continue;
-    hasFactoryPath = true;
     const factoryPathSegmentId = await splitPath(
       args[0] as string,
       (factoryPath as Entity)[EntityId],
@@ -357,6 +383,12 @@ export const finalize = async (...args: unknown[]): Promise<string | void> => {
       SPG_SCHEMA,
       await createSPG(factoryPathUpdated.factory),
     )) as SpacePathGraph;
+    const primaryOutputSpaceId = (
+      (await fetchData(
+        SPG_FACTORY_SCHEMA,
+        factoryPathUpdated.factory,
+      )) as SpacePathGraphFactory
+    ).primaryOutputSpaceId;
     const generatedStruct: SPGStruct = JSON.parse(
       generatedSPG.structJSON,
       jsonReviver,
@@ -364,9 +396,23 @@ export const finalize = async (...args: unknown[]): Promise<string | void> => {
     struct.table = new Map([...struct.table, ...generatedStruct.table]);
     spg.structJSON = JSON.stringify(struct, jsonReplacer, 4);
     await saveData(SPG_SCHEMA, spg);
+    const reachableSpacesSet = new Set<string>();
+    reachableSpacesSet.add(generatedStruct.root);
+    const allSpaceSet = new Set<string>();
     for (const [spaceId, pathIds] of generatedStruct.table.entries()) {
-      if (pathIds.length > 0) continue;
-
+      allSpaceSet.add(spaceId);
+      if (pathIds.length > 0) {
+        for await (const path of fetchAll(
+          PATH_SCHEMA,
+          pathIds,
+        ) as AsyncGenerator<Path>)
+          path.reachable.forEach(reachableSpacesSet.add, reachableSpacesSet);
+        continue;
+      }
+      if (spaceId !== primaryOutputSpaceId) {
+        unhandledIOSpaces[1].push(spaceId);
+        continue;
+      }
       await updateSegmentCounts(factoryPathUpdated);
       const newPathId = await saveData(
         PATH_SCHEMA,
@@ -384,6 +430,9 @@ export const finalize = async (...args: unknown[]): Promise<string | void> => {
         factoryPathUpdated.target,
       );
     }
+    unhandledIOSpaces[0].push(
+      ...[...allSpaceSet].filter((x) => !reachableSpacesSet.has(x)),
+    );
     factoryPathUpdated.target = generatedStruct.root;
     factoryPathUpdated.reachable.push(generatedStruct.root);
     await saveData(PATH_SCHEMA, factoryPathUpdated);
@@ -392,15 +441,6 @@ export const finalize = async (...args: unknown[]): Promise<string | void> => {
     spg = (await fetchData(SPG_SCHEMA, args[0] as string)) as SpacePathGraph;
     struct = JSON.parse(spg.structJSON, jsonReviver);
   }
-  if (hasFactoryPath)
-    allPathIds = [].concat(...Array.from(struct.table.values()));
-  for await (const path of fetchAll(
-    PATH_SCHEMA,
-    allPathIds,
-  ) as AsyncGenerator<Path>) {
-    path.reachable = await updateReachable(struct, path.target);
-    await saveData(PATH_SCHEMA, path);
-  }
-  spg.final = true;
   await saveData(SPG_SCHEMA, spg);
+  return unhandledIOSpaces;
 };

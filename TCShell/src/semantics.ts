@@ -872,14 +872,16 @@ const typeRuleApplicationDictionary: {
       return true;
     if (objectInstantiation.args.length === 0) return false;
     if (baseType instanceof SpacePathGraphFactoryType) {
-      if (objectInstantiation.args.length > 1) return false;
-      return new SpacePathGraphType().equals(
-        checkType(objectInstantiation.args[0]),
+      if (objectInstantiation.args.length !== 2) return false;
+      return (
+        new SpacePathGraphType().equals(
+          checkType(objectInstantiation.args[0]),
+        ) && new SpaceType().equals(checkType(objectInstantiation.args[1]))
       );
     }
     if (baseType instanceof SpacePathGraphType) {
       if (objectInstantiation.args.length > 1) return false;
-      return new SpaceType().contains(checkType(objectInstantiation.args[0]));
+      return new SpaceType().equals(checkType(objectInstantiation.args[0]));
     }
     if (!(baseType instanceof SpaceType))
       return (

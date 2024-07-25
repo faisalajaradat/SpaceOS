@@ -32,7 +32,10 @@ import {
 } from "./program.js";
 import hash from "object-hash";
 
-export async function intializeSPGFactory(spgId: string): Promise<string> {
+export async function intializeSPGFactory(
+  spgId: string,
+  primaryOutputSpaceId: string,
+): Promise<string> {
   const templateSPG: SpacePathGraph = (await fetchData(
     SPG_SCHEMA,
     spgId,
@@ -49,10 +52,10 @@ export async function intializeSPGFactory(spgId: string): Promise<string> {
   ) as AsyncGenerator<Space>) {
     if (space._type === "SelectionSpace")
       controlSpaces.push(space as Space & ControlSpace);
-    spaceMap.set(
-      (space as Entity)[EntityId],
-      await mapSpaceToSpaceLiteral(space),
-    );
+    const spaceLiteral = await mapSpaceToSpaceLiteral(space);
+    const spaceId = (space as Entity)[EntityId];
+    if (spaceId === primaryOutputSpaceId) spaceLiteral.isPrimaryOutput = true;
+    spaceMap.set(spaceId, spaceLiteral);
   }
   const pathMap: Map<string, PathLiteral> = new Map();
   for (const controlSpace of controlSpaces) {
@@ -111,7 +114,7 @@ export async function intializeSPGFactory(spgId: string): Promise<string> {
 }
 
 export const createSPG = async (...args: unknown[]): Promise<string> => {
-  const factory: SpacePathGraphFactory = (await fetchData(
+  let factory: SpacePathGraphFactory = (await fetchData(
     SPG_FACTORY_SCHEMA,
     args[0] as string,
   )) as SpacePathGraphFactory;
@@ -125,10 +128,18 @@ export const createSPG = async (...args: unknown[]): Promise<string> => {
   for (const spaceLiteral of factoryStruct.table.keys()) {
     if (spaceLiteral._type === "SelectionSpace")
       selectionSpaceLiterals.push(spaceLiteral);
-    spaceMap.set(
-      hash(spaceLiteral),
-      await saveData(SPACE_SCHEMA, mapSpaceLiteralToSpace(spaceLiteral)),
+    const spaceId = await saveData(
+      SPACE_SCHEMA,
+      await mapSpaceLiteralToSpace(spaceLiteral),
     );
+    if (spaceLiteral.isPrimaryOutput) {
+      factory.primaryOutputSpaceId = spaceId;
+      factory = (await fetchData(
+        SPG_FACTORY_SCHEMA,
+        await saveData(SPG_FACTORY_SCHEMA, factory),
+      )) as SpacePathGraphFactory;
+    }
+    spaceMap.set(hash(spaceLiteral), spaceId);
   }
   const pathMap: Map<string, string> = new Map<string, string>();
   for (const selectionSpaceLiteral of selectionSpaceLiterals) {
