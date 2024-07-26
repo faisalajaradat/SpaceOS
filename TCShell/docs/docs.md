@@ -22,10 +22,14 @@ for the SpaceOS shell.
     * [Type Aliases](#type-aliases)
     * [Union Types](#union-types)
 * [Spatial Types](#spatial-types)
+
+</td><td width=33% valign=top>
+
 * [Pattern Matching](#pattern-matching)
     * [Value Pattern](#value-pattern)
     * [Type Pattern](#type-pattern)
-</td><td width=33% valign=top>
+
+</td>
 </tr>
 </table>
 
