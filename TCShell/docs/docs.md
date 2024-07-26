@@ -25,9 +25,14 @@ for the SpaceOS shell.
 
 </td><td width=33% valign=top>
 
+* [Control Flow Statements](#control-flow-statements)
+    * [If & Else](#if-&-else)
+    * [While](#while)
+    * [Defer](#defer)
 * [Pattern Matching](#pattern-matching)
     * [Value Pattern](#value-pattern)
     * [Type Pattern](#type-pattern)
+
 
 </td>
 </tr>
@@ -308,6 +313,22 @@ var bar: string = (string) foo
 The only way to turn a union typed value to its actual type is through [type pattern matching](#type-pattern).
 
 ## Spatial Types
+
+todo
+
+## Control Flow Statements
+
+todo
+
+### If & Else
+
+todo
+
+### While
+
+todo
+
+### Defer
 
 todo
 
