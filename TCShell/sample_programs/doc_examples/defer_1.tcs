@@ -1,0 +1,11 @@
+var counter = fn (var id: number, var end: number) {
+    var count = 0
+    while count < end  {
+        count = count + 1
+        print("counter " + id + ": " + count)
+    }
+}
+
+defer counter(1, 3)
+defer counter(2, 3)
+defer counter(3, 3)

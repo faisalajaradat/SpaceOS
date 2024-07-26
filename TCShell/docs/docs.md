@@ -318,19 +318,73 @@ todo
 
 ## Control Flow Statements
 
-todo
-
 ### If & Else
 
-todo
+`if` and `if-else` statements are like most languages, but there are no `()` surrounding the condition.
+A condition must be of `bool` type.
+
+```
+var x = 10
+
+if x < 10
+    print("wrong")
+else if x > 10
+    print("wrong")
+else {
+    print("right")
+}
+```
 
 ### While
 
-todo
+`while` loop statements are like most languages, but there are no `()` surrounding the condition.
+A condition must be of `bool` type.
+
+```
+var iterations = 0
+while iterations < 10 {
+    iterations = iterations + 1
+    print(iterations)
+}
+```
 
 ### Defer
 
-todo
+The `defer` keyword turns the following statement into a coroutine that immediately begins executing 
+asynchronously. It is functionally similar to using the go keyword in Go. The program will wait for all 
+coroutines to finish before ending execution.
+
+When a coroutine is started, the lexical scope is copied and passed as the new scope for the coroutine. 
+This means the state of the program is the same entering the coroutine, but any state changes that occur 
+within the coroutine will not be reflected outside the coroutine.
+
+```
+var counter = fn (var id: number, var end: number) {
+    var count = 0
+    while count < end  {
+        count = count + 1
+        print("counter " + id + ": " + count)
+    }
+}
+
+defer counter(1, 3)
+defer counter(2, 3)
+defer counter(3, 3)
+```
+
+output:
+
+```
+counter 1: 1
+counter 2: 1
+counter 3: 1
+counter 1: 2
+counter 2: 2
+counter 3: 2
+counter 1: 3
+counter 2: 3
+counter 3: 3
+```
 
 ## Pattern Matching
 
