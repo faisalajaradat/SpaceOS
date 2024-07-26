@@ -20,7 +20,11 @@ for the SpaceOS shell.
     * [Arrays](#arrays)
     * [Records](#records)
     * [Type Aliases](#type-aliases)
-
+    * [Union Types](#union-types)
+* [Spatial Types](#spatial-types)
+* [Pattern Matching](#pattern-matching)
+    * [Value Pattern](#value-pattern)
+    * [Type Pattern](#type-pattern)
 </td><td width=33% valign=top>
 </tr>
 </table>
@@ -254,10 +258,63 @@ sam.name == "Sam"
 ### Type Aliases
 
 The `type` keyword allows for assigning a type to an identifier. A declaration using a type alias
-can be used anywhere that expecting the aliased type.
+can be used anywhere that expecting the aliased type. Defined types are immutable, so an identifier cannot
+refer to a different type after declaration.
 
 ```
 type Name = string
 
 var sam: Name = "Sam"
 ```
+
+### Union Types
+
+When extending a type alias with more types seperated by `|`, the type alias becomes a union type. A variable
+declared as a union type means that the value within that variable could be any of the types within the union
+at any given time.
+
+```
+type EitherStringOrNumber = string | number
+```
+
+#### Typecasting
+
+A union type is not equal to each individual type within the union. The following is invalid:
+
+```
+var foo: EitherStringOrNumber = "foo"
+```
+
+We are attempting to assign the variable `foo` of type `EitherStringOrNumber` to an expression of type `string`.
+A `string` is not a `string | number`, but rather belongs to `string | number`. To make the above example valid,
+we must cast the `string` expression to an `EitherStringOrNumber` through typecasting.
+
+```
+var foo: EitherStringOrNumber = (EitherStringOrNumber) "foo"
+```
+
+Typecasting is only valid when casting a value of a type that belongs to the desired type. The inverse of the
+above example (casting an `EitherStringOrNumber` to a `string`) is not allowed since a `string | number` is still
+not a `string`, nor does a `string | number` belong to a `string`. The following is invalid:
+
+```
+var bar: string = (string) foo
+```
+
+The only way to turn a union typed value to its actual type is through [type pattern matching](#type-pattern).
+
+## Spatial Types
+
+todo
+
+## Pattern Matching
+
+todo
+
+### Value Pattern
+
+todo
+
+### Type Pattern
+
+todo
