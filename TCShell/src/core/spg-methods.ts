@@ -123,7 +123,7 @@ export const addPathSpace = async (
     args[0] as string,
   )) as SpacePathGraph;
   if (spg.structJSON === undefined) return SPG_ERROR.DNE;
-  if (spg.final) return SPG_ERROR.IS_FINAL;
+  spg.final = false;
   const struct: SPGStruct = JSON.parse(
     spg.structJSON,
     jsonReviver,
@@ -172,7 +172,7 @@ export const splitPath = async (...args: unknown[]): Promise<string> => {
   if (spg.structJSON === undefined) return SPG_ERROR.DNE;
   if (originalPath.target === undefined || originalPath.reachable.length < 1)
     return "Path is not in SPG!";
-  if (spg.final) return SPG_ERROR.IS_FINAL;
+  spg.final = false;
   await updateSegmentCounts(originalPath);
   const struct: SPGStruct = JSON.parse(spg.structJSON, jsonReviver);
   const endSpace = originalPath.target;
@@ -256,7 +256,7 @@ export const createMergeSpace = async (...args: unknown[]): Promise<string> => {
     args[0] as string,
   )) as SpacePathGraph;
   if (spg.structJSON === undefined) return SPG_ERROR.DNE;
-  if (spg.final) return SPG_ERROR.IS_FINAL;
+  spg.final = false;
   const struct: SPGStruct = JSON.parse(spg.structJSON, jsonReviver);
   const mergeSpaceId = await saveData(
     SPACE_SCHEMA,
@@ -356,7 +356,7 @@ export const activateFactories = async (
     args[0] as string,
   )) as SpacePathGraph;
   if (spg.structJSON === undefined) return SPG_ERROR.DNE;
-  if (spg.final) return SPG_ERROR.IS_FINAL;
+  spg.final = false;
   let struct: SPGStruct = JSON.parse(spg.structJSON, jsonReviver);
   const allPathIds = [].concat(...Array.from(struct.table.values()));
   const unhandledIOSpaces: [string[], string[]] = [[], []];
