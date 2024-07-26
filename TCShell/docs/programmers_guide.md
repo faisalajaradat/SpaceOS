@@ -32,6 +32,7 @@ for the SpaceOS shell.
 * [Pattern Matching](#pattern-matching)
     * [Value Pattern](#value-pattern)
     * [Type Pattern](#type-pattern)
+    * [Wildcard Pattern](#wildcard-pattern)
 
 
 </td>
@@ -386,14 +387,44 @@ counter 2: 3
 counter 3: 3
 ```
 
+#### Non-Blocking System Calls
+
+Coroutines using `defer` can be very useful to not stall on synchronous, blocking code. A great 
+example is using `defer` in conjunction with the `sendEntityThrough` method. By the nature of 
+`sendEntityThrough`, if ran synchronously, execution might stall for a long time depending on factors
+such as the distance of the entity's journey, the speed of the entity's movement, and the number of
+entities enqueued waiting for their turn to go. To avoid forcing unrelated logic waiting on the entity to finish
+its journey before executing, we can do the following:
+
+```
+var printErrorIfFailed = fn (var maybeError: MaybeString) {
+    match maybeError {
+        var error: string => print(error)
+        var _nothing : void => {}
+    }
+}
+
+defer printErrorIfFailed(spg.sendEntityThrough(entity1, startSpace, endSpace, 500))
+defer printErrorIfFailed(spg.sendEntityThrough(entity2, startSpace, endSpace, 500))
+
+print("Time Sensitive Data!")
+```
+
+In this example, entities `entity1` and `entity2` get to begin their journeys concurrently, and the time
+sensitive data does not have to wait on their journeys to either finish or fail.
+
 ## Pattern Matching
 
-todo
+`match` statements allow for changing control flow by pattern matching on a specific expression. 
+There are three patterns supported. In order of precedence, they are the [value pattern](#value-pattern), 
+the [type pattern](#type-pattern), and the [wildcard pattern](#wildcard-pattern).  
 
 ### Value Pattern
 
-todo
+Matching by value means 
 
 ### Type Pattern
 
 todo
+
+### Wildcard Pattern
