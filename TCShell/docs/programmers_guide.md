@@ -1,4 +1,4 @@
-# TCShell Documentation
+# TCShell Programmer's Guide
 
 ## Introduction
 
