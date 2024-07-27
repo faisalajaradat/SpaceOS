@@ -22,9 +22,16 @@ for the SpaceOS shell.
     * [Type Aliases](#type-aliases)
     * [Union Types](#union-types)
 * [Spatial Types](#spatial-types)
+    * [Spaces](#spaces)
+    * [Entities](#entities)
+    * [Paths](#paths)
+    * [Space Path Graphs](#space-path-graphs)
+    * [Space Path Graph Factories](#space-path-graph-factories)
 
 </td><td width=33% valign=top>
 
+* [Typecasting](#typecasting)
+    * [Casting to Union Type](#casting-to-union-type)
 * [Control Flow Statements](#control-flow-statements)
     * [If & Else](#if-&-else)
     * [While](#while)
@@ -33,6 +40,7 @@ for the SpaceOS shell.
     * [Value Pattern](#value-pattern)
     * [Type Pattern](#type-pattern)
     * [Wildcard Pattern](#wildcard-pattern)
+* [Imports](#imports)
 
 
 </td>
@@ -283,27 +291,53 @@ declared as a union type means that the value within that variable could be any 
 at any given time.
 
 ```
-type EitherStringOrNumber = string | number
+type StringOrBool = string | bool
 ```
 
-#### Typecasting
+## Spatial Types
 
-A union type is not equal to each individual type within the union. The following is invalid:
+The ability to natively describe and operate on spatial types is the primary motive for TCShell.
+
+### Spaces
+
+todo
+
+### Entities
+
+todo
+
+### Paths
+
+todo
+
+### Space Path Graphs
+
+todo
+
+### Space Path Graph Factories
+
+todo
+
+## Typecasting
+
+### Casting to Union Type
+
+A [union type](#union-types) is not equal to each individual type within the union. The following is invalid:
 
 ```
-var foo: EitherStringOrNumber = "foo"
+var foo: StringOrNumber = "foo"
 ```
 
-We are attempting to assign the variable `foo` of type `EitherStringOrNumber` to an expression of type `string`.
+We are attempting to assign the variable `foo` of type `StringOrNumber` to an expression of type `string`.
 A `string` is not a `string | number`, but rather belongs to `string | number`. To make the above example valid,
-we must cast the `string` expression to an `EitherStringOrNumber` through typecasting.
+we must cast the `string` expression to an `StringOrNumber` through typecasting.
 
 ```
-var foo: EitherStringOrNumber = (EitherStringOrNumber) "foo"
+var foo: StringOrNumber = (StringOrNumber) "foo"
 ```
 
 Typecasting is only valid when casting a value of a type that belongs to the desired type. The inverse of the
-above example (casting an `EitherStringOrNumber` to a `string`) is not allowed since a `string | number` is still
+above example (casting an `StringOrNumber` to a `string`) is not allowed since a `string | number` is still
 not a `string`, nor does a `string | number` belong to a `string`. The following is invalid:
 
 ```
@@ -312,9 +346,10 @@ var bar: string = (string) foo
 
 The only way to turn a union typed value to its actual type is through [type pattern matching](#type-pattern).
 
-## Spatial Types
+### Casting to Less Defined Spatial Type
 
-todo
+There many reasons to use less defined spatial types like writing a function that could be applied to any
+`Space`, or creating an array to pack all `virtual SpatialType`(s) together.
 
 ## Control Flow Statements
 
@@ -658,3 +693,5 @@ Error!
 Welcome!
 Wrong Client!
 ```
+
+## Imports

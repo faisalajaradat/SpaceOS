@@ -68,14 +68,14 @@ async function sendEntity(
     ENTER_SPACE_SCHEMA,
     enterSpaceMessageId,
   )) as EnterSpaceRequestMessage;
-  console.log(
+  /*console.log(
     "Sending entity: " +
       enterSpaceMessage.entity +
       " down path: " +
       enterSpaceMessage.path +
       " to space: " +
       enterSpaceMessage.space,
-  );
+  );*/
   enterSpaceMessage.status = "ARRIVED";
   await saveData(ENTER_SPACE_SCHEMA, enterSpaceMessage);
 }
