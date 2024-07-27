@@ -473,7 +473,11 @@ var validateCount = fn (var count: number): NumberOrString {
 var incrementCount = fn (var count: number): NumberOrString 
     return (NumberOrString) (count + 1)
 
-var positiveOnlyCounter = fn (var id: number, var start: number, var maxIterations: number) {
+var positiveOnlyCounter = fn (
+    var id: number, 
+    var start: number, 
+    var maxIterations: number) {
+    
     var errors = ""
     var count = start
     var iteration = 0
