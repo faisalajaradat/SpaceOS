@@ -421,10 +421,104 @@ the [type pattern](#type-pattern), and the [wildcard pattern](#wildcard-pattern)
 
 ### Value Pattern
 
-Matching by value means 
+Matching by value means that it is matched if match expression `==` case expression is `true`. 
+This behaviour is really the classic case-switch statement. If multiple cases are matched by value, 
+the first case in order is selected.
+
+```
+var name = "Sam"
+
+match name {
+    "Sam" => print("Welcome!")
+    "Marc" => {
+        print("Wrong user!")
+        return
+    }
+}
+```
 
 ### Type Pattern
 
-todo
+Matching by type means that it is matched if the match expression's type is structurally similar to the
+case's type. A case is declared the same way as declaring a variable with explicit typing enforced. 
+Enforcing explicit typing for this use case is to ensure clear and readable code.
+
+```
+var foo = "foo"
+
+match foo {
+    var s: string => print(s)
+}
+```
+
+#### Union Type Narrowing
+
+[Union types](#union-types) can be very powerful in conjunction with type pattern matching as it allows for
+`maybe`/`option` and `either`/`result` behaviour.
+
+```
+var applyFunction = fn (var either: NumberOrString, var operation): NumberOrString {
+    match either {
+        var num: number => return operation(num)
+        var error: string => return (NumberOrString) error
+    }
+}
+
+var validateCount = fn (var count: number): NumberOrString {
+    if count < 0
+        return (NumberOrString) "Count cannot be negative!"
+    return (NumberOrString) count
+}
+
+var incrementCount = fn (var count: number): NumberOrString 
+    return (NumberOrString) (count + 1)
+
+var positiveOnlyCounter = fn (var id: number, var start: number, var maxIterations: number) {
+    var errors = ""
+    var count = start
+    var iteration = 0
+    var result = (NumberOrString) 0
+    while iteration < maxIterations {
+        match applyFunction(
+            applyFunction(
+                (NumberOrString) count, validateCount), incrementCount) {
+            var newCount: number => {
+                count = newCount
+                print("Counter " + id + ": " + count)
+            }
+            var error: string => {
+                errors = errors + error + " "
+                count = count + 1
+            }
+        }
+        iteration = iteration + 1
+    }
+    print("Counter " + id + " errors: " + errors)
+}
+
+positiveOnlyCounter(1, 0, 4)
+positiveOnlyCounter(2, -2, 4)
+```
+
+output:
+```
+Counter 1: 1
+Counter 1: 2
+Counter 1: 3
+Counter 1: 4
+Counter 1 errors:
+Counter 2: 1
+Counter 2: 2
+Counter 2 errors: Count cannot be negative! Count cannot be negative!
+```
+
+In the example above, the `applyFunction` is created to allow safely executing a chain of dependent functions
+that may return an error without needing to check the result of the previous. When considering the two errors
+that occured during Counter 2's lifecycle, both times `applyFunction` automatically skips `incrementCount` due
+to the erroneous result from `validateCount`. 
+
+#### Spatial Type Narrowing
+
+As defined in [Spatial Type](#spatial-types) 
 
 ### Wildcard Pattern

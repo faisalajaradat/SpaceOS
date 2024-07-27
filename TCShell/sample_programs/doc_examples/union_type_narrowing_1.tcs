@@ -1,0 +1,41 @@
+var applyFunction = fn (var either: NumberOrString, var operation): NumberOrString {
+    match either {
+        var num: number => return operation(num)
+        var error: string => return (NumberOrString) error
+    }
+}
+
+var validateCount = fn (var count: number): NumberOrString {
+    if count < 0
+        return (NumberOrString) "Count cannot be negative!"
+    return (NumberOrString) count
+}
+
+var incrementCount = fn (var count: number): NumberOrString 
+    return (NumberOrString) (count + 1)
+
+var positiveOnlyCounter = fn (var id: number, var start: number, var maxIterations: number) {
+    var errors = ""
+    var count = start
+    var iteration = 0
+    var result = (NumberOrString) 0
+    while iteration < maxIterations {
+        match applyFunction(
+            applyFunction(
+                (NumberOrString) count, validateCount), incrementCount) {
+            var newCount: number => {
+                count = newCount
+                print("Counter " + id + ": " + count)
+            }
+            var error: string => {
+                errors = errors + error + " "
+                count = count + 1
+            }
+        }
+        iteration = iteration + 1
+    }
+    print("Counter " + id + " errors: " + errors)
+}
+
+positiveOnlyCounter(1, 0, 4)
+positiveOnlyCounter(2, -2, 4)
