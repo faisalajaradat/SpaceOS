@@ -38,7 +38,7 @@ export class RecordType extends Type {
     return thisFields.filter((field, pos) => {
       const otherField = _typeFields[pos];
       return field.identifier.value !== otherField.identifier.value
-        || field.type.equals(otherField.type);
+        || !field.type.equals(otherField.type);
     }).length === 0;
   }
 }

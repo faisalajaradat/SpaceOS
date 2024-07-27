@@ -573,6 +573,28 @@ is mutable EnclosedSpace
 
 #### Record Structure Matching
 
-Record types are not matched nominally rather structurally 
+Record types are not matched nominally rather structurally. If two record declarations have identical
+fields, then an instance of one will match the pattern of the other.
+
+```
+record Person {
+    var name: string,
+    var age: number
+}
+
+record Client {
+    var name: string,
+    var age: number
+}
+
+var sam = Client {"Sam", 21}
+
+match sam {
+    var p: Person => {
+        print(p.name)
+        print(p.age)
+    }
+}
+```
 
 ### Wildcard Pattern
