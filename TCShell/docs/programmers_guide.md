@@ -32,6 +32,7 @@ for the SpaceOS shell.
 
 * [Typecasting](#typecasting)
     * [Casting to Union Type](#casting-to-union-type)
+    * [Casting to Less Defined Spatial Type](#casting-to-less-defined-spatial-type)
 * [Control Flow Statements](#control-flow-statements)
     * [If & Else](#if-&-else)
     * [While](#while)
