@@ -1,0 +1,30 @@
+var car = new physical mutable mobile SmartEntity()
+var tree = new physical immutable StaticEntity()
+var virtualSpace = new virtual mutable EnclosedSpace(Location {0, 0})
+
+var spatialObjects: SpatialType[] = [(SpatialType) car, (SpatialType) tree, (SpatialType) virtualSpace]
+
+var length = len(spatialObjects)
+var i = 0
+
+while i < length {
+    match spatialObjects[i] {
+        var vst: virtual SpatialType => {
+            print("is virtual")
+            match vst {
+                var vme: virtual mutable EnclosedSpace => 
+                    print("is mutable EnclosedSpace")
+            }
+        }
+        var pst: physical SpatialType => {
+            print("is physical")
+            match pst {
+                var pmmse: physical mutable mobile SmartEntity => 
+                    print("is mutable mobile SmartEntity")
+                var pise: physical immutable StaticEntity => 
+                    print("is immutable StaticEntity")
+            }
+        }
+    }
+    i = i + 1
+}

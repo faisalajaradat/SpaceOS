@@ -142,9 +142,8 @@ void
 
 #### Numbers
 
-The `number` type works the same as in JavaScript, so it is a double-precision 64-bit
-binary format IEEE 754 value. They are no integers at the moment. Literals can be defined
-in decimal form, or in scientific notation.
+The `number` type works the same as in JavaScript, so it is a double-precision 64-bit binary format IEEE 754 
+value. They are no integers at the moment. Literals can be defined in decimal form, or in scientific notation.
 
 ```
 var PI: number = 3.14
@@ -505,6 +504,7 @@ positiveOnlyCounter(2, -2, 4)
 ```
 
 output:
+
 ```
 Counter 1: 1
 Counter 1: 2
@@ -523,6 +523,56 @@ to the erroneous result from `validateCount`.
 
 #### Spatial Type Narrowing
 
-As defined in [Spatial Types](#spatial-types) 
+As defined in [Spatial Types](#spatial-types), each spatial type have various properties that it could have in
+common or in contrast of others. It can be very useful to group values by their types similarities, and later
+seperate them by their differences.
+
+```
+var car = new physical mutable mobile SmartEntity()
+var tree = new physical immutable StaticEntity()
+var virtualSpace = new virtual mutable EnclosedSpace(Location {0, 0})
+
+var spatialObjects: SpatialType[] = [(SpatialType) car, (SpatialType) tree, (SpatialType) virtualSpace]
+
+var length = len(spatialObjects)
+var i = 0
+
+while i < length {
+    match spatialObjects[i] {
+        var vst: virtual SpatialType => {
+            print("is virtual")
+            match vst {
+                var vme: virtual mutable EnclosedSpace => 
+                    print("is mutable EnclosedSpace")
+            }
+        }
+        var pst: physical SpatialType => {
+            print("is physical")
+            match pst {
+                var pmmse: physical mutable mobile SmartEntity => 
+                    print("is mutable mobile SmartEntity")
+                var pise: physical immutable StaticEntity => 
+                    print("is immutable StaticEntity")
+            }
+        }
+    }
+    i = i + 1
+}
+```
+
+output:
+
+```
+is physical
+is mutable mobile SmartEntity
+is physical
+is immutable StaticEntity
+is virtual
+is mutable EnclosedSpace
+```
+
+#### Record Structure Matching
+
+Record types are not matched nominally rather structurally 
 
 ### Wildcard Pattern

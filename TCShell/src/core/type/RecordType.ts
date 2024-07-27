@@ -1,8 +1,12 @@
-import { isAnyType } from "../../utils.js";
-import { Identifier } from "../expr/Expr.js";
-import { ASTNode, dotString, newNodeId } from "../program.js";
-import { RecordDeclaration } from "../stmts.js";
-import { Type } from "./primitive-types.js";
+import { isAnyType } from '../../utils.js';
+import { Identifier } from '../expr/Expr.js';
+import {
+  ASTNode,
+  dotString,
+  newNodeId,
+} from '../program.js';
+import { RecordDeclaration } from '../stmts.js';
+import { Type } from './primitive-types.js';
 
 export class RecordType extends Type {
   identifier: Identifier;
@@ -27,17 +31,14 @@ export class RecordType extends Type {
   equals(_type: Type): boolean {
     if (isAnyType(_type)) return true;
     if (!(_type instanceof RecordType)) return false;
-    const thisFieldTypes = (
-      this.identifier.declaration as RecordDeclaration
-    ).fields.map((field) => field.type);
-    const _typeFieldTypes = (
-      (_type as RecordType).identifier.declaration as RecordDeclaration
-    ).fields.map((field) => field.type);
-    if (thisFieldTypes.length !== _typeFieldTypes.length) return false;
-    return (
-      thisFieldTypes.filter(
-        (fieldType, pos) => !fieldType.equals(_typeFieldTypes[pos]),
-      ).length === 0
-    );
+    const thisFields = (this.identifier.declaration as RecordDeclaration).fields;
+    const _typeFields = ((_type as RecordType).identifier.declaration as RecordDeclaration).fields;
+    if (thisFields.length !== _typeFields.length)
+      return false;
+    return thisFields.filter((field, pos) => {
+      const otherField = _typeFields[pos];
+      return field.identifier.value !== otherField.identifier.value
+        || field.type.equals(otherField.type);
+    }).length === 0;
   }
 }
