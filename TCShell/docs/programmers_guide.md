@@ -532,7 +532,10 @@ var car = new physical mutable mobile SmartEntity()
 var tree = new physical immutable StaticEntity()
 var virtualSpace = new virtual mutable EnclosedSpace(Location {0, 0})
 
-var spatialObjects: SpatialType[] = [(SpatialType) car, (SpatialType) tree, (SpatialType) virtualSpace]
+var spatialObjects: SpatialType[] = [
+    (SpatialType) car, 
+    (SpatialType) tree, 
+    (SpatialType) virtualSpace]
 
 var length = len(spatialObjects)
 var i = 0
@@ -597,4 +600,12 @@ match sam {
 }
 ```
 
+output:
+
+```
+Sam
+21
+```
+
 ### Wildcard Pattern
+
