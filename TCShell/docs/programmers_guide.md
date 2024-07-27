@@ -523,6 +523,6 @@ to the erroneous result from `validateCount`.
 
 #### Spatial Type Narrowing
 
-As defined in [Spatial Type](#spatial-types) 
+As defined in [Spatial Types](#spatial-types) 
 
 ### Wildcard Pattern
