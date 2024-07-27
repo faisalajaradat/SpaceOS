@@ -1,0 +1,17 @@
+var getClientNameFromId = fn (var id: number): MaybeString {
+    match id {
+        1 => return (MaybeString) "Sam"
+        2 => return (MaybeString) "Marc"
+        _ => return (MaybeString) none
+    }
+}
+
+var iter = 0
+while iter < 3 {
+    match getClientNameFromId(iter) {
+        _ => print("Error!")
+        var name: string => print("Wrong Client!")
+        "Sam" => print("Welcome!")
+    }
+    iter = iter + 1
+}

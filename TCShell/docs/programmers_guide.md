@@ -639,4 +639,22 @@ var getClientNameFromId = fn (var id: number): MaybeString {
         _ => return (MaybeString) none
     }
 }
+
+var iter = 0
+while iter < 3 {
+    match getClientNameFromId(iter) {
+        _ => print("Error!")
+        var name: string => print("Wrong Client!")
+        "Sam" => print("Welcome!")
+    }
+    iter = iter + 1
+}
+```
+
+output:
+
+```
+Error!
+Welcome!
+Wrong Client!
 ```
