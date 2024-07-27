@@ -428,7 +428,7 @@ the first case in order is selected.
 var name = "Sam"
 
 match name {
-    "Sam" => print("Welcome!")
+    "Sam" => print("Welcome " + name + "!")
     "Marc" => {
         print("Wrong user!")
         return
@@ -609,3 +609,34 @@ Sam
 
 ### Wildcard Pattern
 
+Using `_` as a case will match anything. This can be used to offer a default/else case.
+
+```
+var foo: NumberOrString = (NumberOrString) "foo"
+
+match foo {
+    _ => print(foo)
+}
+```
+
+### Multi Patterns
+
+It is possible to attempt to match different patterns within the same `match` statement. Each pattern
+has an associated precendence to determine order of being matched regardless of order written. 
+The precedence is as follows:
+
+1. [Value Pattern](#value-pattern)
+2. [Type Pattern](#type-pattern)
+3. [Wildcard Pattern](#wildcard-pattern)
+
+Any cases of the same precedence will match the first of the sequence.
+
+```
+var getClientNameFromId = fn (var id: number): MaybeString {
+    match id {
+        1 => return (MaybeString) "Sam"
+        2 => return (MaybeString) "Marc"
+        _ => return (MaybeString) none
+    }
+}
+```
