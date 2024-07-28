@@ -61,8 +61,9 @@ it makes it very clear how to augment this CLI.
 ## Grammar
 
 TCShell's grammar rules are defined in 
-[TCShell.ohm](https://github.com/citelab/spaceOS/blob/main/TCShell/src/TCShell.ohm), and are loaded in and applied 
-within [grammar.ts](https://github.com/citelab/spaceOS/blob/main/TCShell/src/grammar.ts). The lexer and CST parser 
+[TCShell.ohm](https://github.com/citelab/spaceOS/blob/main/TCShell/src/TCShell.ohm), and are loaded in and 
+applied within 
+[grammar.ts](https://github.com/citelab/spaceOS/blob/main/TCShell/src/grammar.ts). The lexer and CST parser 
 are generated as described within 
 [TCShell.ohm](https://github.com/citelab/spaceOS/blob/main/TCShell/src/TCShell.ohm) using 
 [ohm.js](https://www.npmjs.com/package/ohm-js/v/0.10.0). The number one peice to understanding and augmenting
@@ -75,7 +76,60 @@ prior to making any alterations to
 
 ### AST Nodes
 
-todo
+The AST follows an Object-Oriented design to describe it's nodes. All the class and interface 
+implementations can be found within [core/](https://github.com/citelab/spaceOS/tree/main/TCShell/src/core).
+Though it would be a waste of time describe every single node class, this document will describe the most 
+important parent nodes to add context for when you look at the implementations of any of the child node 
+classes.
+
+#### ASTNode
+
+Every node in the AST either implement the ASTNode interface directly, or inherit the implementation from a
+parent. The unique attribute(s) of an ASTNode are as follows:
+
+1. line: A number that is equal to the line number of the syntax that the node was parsed from. The default 
+value of -1 signifies that the node was generated independent of the file being parsed.
+2. column: A number that is equalt to the column number on a line of the start of the syntax that the node 
+was parsed from. The default value of -1 signifies that the node was generated independent of the file being 
+parsed.
+3. getFilePos: A method that returns a string describing both the line number and column number of the node.
+4. children: A method that returns an array of ASTNodes that are the immediate children to the node in the 
+AST.
+5. print: A method that appends its generated DOT representation string to the dotString array and returns
+its DOT node id.
+6. evaluate: An async method that executes the desired behaviour of the 
+node, and returns a promise of the result of the behaviour if there is any. 
+The method takes in a map of SymbolDeclration to stack to use the runtime 
+symbol table.
+
+#### Type
+
+Type is an abstract class that implements ASTNode, but only line, column, getFilePos, and evaluate are 
+implemented in Type. The rest of ASTNode is left to be implemented by its children classes. Every node 
+meant to be a part of TCShell's type system should extend Type. The unique attribute(s) of a Type are as follows:
+
+1. equals: A method that takes another Type as input, and returns true if this type is equivalent to the 
+inputted Type.
+
+#### CompositionType
+
+CompositionType is an abstract class that extends Type. Any type that has a subset of types that are not
+equal to itself should extend CompositionType. The unique attribute(s) of a CompositionType are as follows:
+
+1. contains: A method that takes another Type as input, and returns true if the inputted type belongs to this 
+type.
+
+#### ExprStmt
+
+A TCShell program is made up of a sequence of statements where a statement is either a compound statement or 
+an expression. To represent this, there is the defined type ExprStmt which is the union of classes Expr 
+and Stmt. Expr and Stmt are both abstract classes that implement ASTNode, but only line, column, and getFilePos are implemented in Expr and Stmt. The rest of ASTNode is left to be implemented by theire children 
+classes. Every node that is not a Type or the Program node is an ExprStmt. The unique attribute(s) of an ExprStmt
+are as follows:
+
+1. _type: A RuntimeType that is equal to the type the value represented by the ExprStmt. A RuntimeType can 
+either be a Type or an Identifier of a defined type. _type is protected and requires a getter method that is 
+in charge of retreiving the Type the Identifier represents.
 
 ### AST Generator
 
