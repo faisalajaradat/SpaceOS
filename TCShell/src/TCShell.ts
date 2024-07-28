@@ -1,24 +1,26 @@
-import * as fs from "fs";
-import * as core from "./core/program.js";
-import { grammar } from "./grammar.js";
-import { ast } from "./ast.js";
-import { Command } from "commander";
-import { graphviz } from "node-graphviz";
-import analyze from "./semantics.js";
-import { disconnect } from "../../SpatialComputingEngine/src/spatial-computing-engine.js";
-import { SymbolDeclaration } from "./core/program.js";
-import { begin } from "../../SpatialComputingEngine/src/dummy-driver.js";
+import { Command } from 'commander';
+import * as fs from 'fs';
+import { graphviz } from 'node-graphviz';
+
+import { begin } from '../../SpatialComputingEngine/src/dummy-driver.js';
+import {
+  disconnect,
+} from '../../SpatialComputingEngine/src/spatial-computing-engine.js';
+import { ast } from './ast.js';
+import * as core from './core/program.js';
+import { SymbolDeclaration } from './core/program.js';
+import { grammar } from './grammar.js';
+import analyze from './semantics.js';
+
 //Entrypoint and CLI for using TCShell interpreter
 
 const program = new Command();
 
 program
-  .name("TCShell")
+  .name("tcshell")
   .description("A spatial-oriented scripting language")
-  .version("0.2.0");
-
-program
-  .command("interpret <path>")
+  .version("0.2.0")
+  .argument("<path>", "path to file")
   .description("interpret tcs files")
   .option("-t, --trace", "output match trace in case of syntax errors")
   .option("-d, --dot <path>", "save DOT representation of AST to path")
