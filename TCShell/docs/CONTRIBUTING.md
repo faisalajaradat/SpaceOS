@@ -43,8 +43,9 @@ The interpreter's architecture can be broken down to five easy steps:
 
 The entrypoint of the program is the CLI in 
 [TCShell.ts](https://github.com/citelab/spaceOS/blob/main/TCShell/src/TCShell.ts). TCShell's CLI enables the 
-interpretation of any user-specified `.tcs` file along with flags for optional behaviour. The CLI is implemented 
-using [commander.js](https://www.npmjs.com/package/commander). This drastically reduces boiler plate for the CLI, 
+interpretation of any user-specified `.tcs` file along with flags for optional behaviour. The CLI is 
+implemented using 
+[commander.js](https://www.npmjs.com/package/commander). This drastically reduces boiler plate for the CLI, 
 and provides a scalable framework for future flags and commands. There is only one command to the CLI, and it 
 executes the steps in order defined above.
 
@@ -106,7 +107,8 @@ symbol table.
 
 Type is an abstract class that implements ASTNode, but only line, column, getFilePos, and evaluate are 
 implemented in Type. The rest of ASTNode is left to be implemented by its children classes. Every node 
-meant to be a part of TCShell's type system should extend Type. The unique attribute(s) of a Type are as follows:
+meant to be a part of TCShell's type system should extend Type. The unique attribute(s) of a Type are as 
+follows:
 
 1. equals: A method that takes another Type as input, and returns true if this type is equivalent to the 
 inputted Type.
@@ -123,8 +125,10 @@ type.
 
 A TCShell program is made up of a sequence of statements where a statement is either a compound statement or 
 an expression. To represent this, there is the defined type ExprStmt which is the union of classes Expr 
-and Stmt. Expr and Stmt are both abstract classes that implement ASTNode, but only line, column, and getFilePos are implemented in Expr and Stmt. The rest of ASTNode is left to be implemented by theire children 
-classes. Every node that is not a Type or the Program node is an ExprStmt. The unique attribute(s) of an ExprStmt
+and Stmt. Expr and Stmt are both abstract classes that implement ASTNode, but only line, column, and 
+getFilePos are implemented in Expr and Stmt. The rest of ASTNode is left to be implemented by theire children 
+classes. Every node that is not a Type or the Program node is an ExprStmt. The unique attribute(s) of an 
+ExprStmt
 are as follows:
 
 1. _type: A RuntimeType that is equal to the type the value represented by the ExprStmt. A RuntimeType can 
