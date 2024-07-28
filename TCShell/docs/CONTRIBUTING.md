@@ -67,11 +67,11 @@ applied within
 [grammar.ts](https://github.com/citelab/spaceOS/blob/main/TCShell/src/grammar.ts). The lexer and CST parser 
 are generated as described within 
 [TCShell.ohm](https://github.com/citelab/spaceOS/blob/main/TCShell/src/TCShell.ohm) using 
-[ohm.js](https://www.npmjs.com/package/ohm-js/v/0.10.0). The number one peice to understanding and augmenting
-TCShell's grammar is knowing [ohm.js](https://www.npmjs.com/package/ohm-js/v/0.10.0) front-to-back, so please, 
+[Ohm.js](https://www.npmjs.com/package/ohm-js/v/0.10.0). The number one peice to understanding and augmenting
+TCShell's grammar is knowing [Ohm.js](https://www.npmjs.com/package/ohm-js/v/0.10.0) front-to-back, so please, 
 prior to making any alterations to 
 [TCShell.ohm](https://github.com/citelab/spaceOS/blob/main/TCShell/src/TCShell.ohm), read all of 
-[ohm.js's documentation](https://ohmjs.org/docs/intro) and refer to some language implementations in ohm.
+[Ohm.js's documentation](https://ohmjs.org/docs/intro) and refer to some language implementations in ohm.
 
 ## Parser
 
@@ -137,7 +137,9 @@ in charge of retreiving the Type the Identifier represents.
 
 ### AST Generator
 
-todo
+The code responsible for generating the AST can be found in 
+[ast.ts](https://github.com/citelab/spaceOS/blob/main/TCShell/src/ast.ts). The AST generation is performed 
+by creating the [Semantics Object](https://ohmjs.org/docs/api-reference#semantics-objects) `ast`.
 
 ## Semantics
 
