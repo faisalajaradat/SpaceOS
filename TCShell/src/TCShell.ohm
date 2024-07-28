@@ -1,8 +1,8 @@
 TCShell {
 
-    Program = Stmt*
+    Program = Stmt*   // script entrypoint
 
-    Interactive = StmtNewline
+    Interactive = StmtNewline   // interactive mode entrypoint
 
 	  StmtNewline = defer? CompoundStmt #newline	--compound
     						| defer? SimpleStmts	--simple
