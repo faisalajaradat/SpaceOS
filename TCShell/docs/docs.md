@@ -345,12 +345,19 @@ not a `string`, nor does a `string | number` belong to a `string`. The following
 var bar: string = (string) foo
 ```
 
-The only way to turn a union typed value to its actual type is through [type pattern matching](#type-pattern).
+The only way to turn a union typed value to its actual type is through [type pattern matching](#union-type-narrowing).
 
 ### Casting to Less Defined Spatial Type
 
 There many reasons to use less defined spatial types like writing a function that could be applied to any
-`Space`, or creating an array to pack all `virtual SpatialType`(s) together.
+`Space`, or creating an array to pack all `virtual SpatialType`(s) together. Typecasting can be used to acheive
+this.
+
+```
+var space: Space = (Space) new virtual mutable EnclosedSpace()
+```
+
+The only way to reassign the original, more specific type is through [type pattern matching](#spatial-type-narrowing).
 
 ## Control Flow Statements
 
