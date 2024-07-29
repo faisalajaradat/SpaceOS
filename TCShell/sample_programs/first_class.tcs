@@ -1,6 +1,6 @@
 var y = 0
 
-var executeOperationsSequentialOnNumber = fn (var x: number, var operations): void {
+var executeOperationsSequentiallyOnNumber = fn (var x: number, var operations) {
   var numOfOperations = len(operations)
   var iteration = 0
   while iteration < numOfOperations {
@@ -15,6 +15,10 @@ var incrementAndLogNumber = fn (var x) {
   return incremented
 }
 
-var operations = [incrementAndLogNumber, incrementAndLogNumber, incrementAndLogNumber, incrementAndLogNumber]
+var operations = [
+    incrementAndLogNumber,
+    incrementAndLogNumber, 
+    incrementAndLogNumber, 
+    incrementAndLogNumber]
 
-executeOperationsSequentialOnNumber(y, operations)
+executeOperationsSequentiallyOnNumber(y, operations)

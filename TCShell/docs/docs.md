@@ -12,6 +12,7 @@ for the SpaceOS shell.
 
 * [Hello World](#hello-world)
 * [Functions](#functions)
+    * [First Class Functions](#first-class-functions)
 * [Symbol Visibility](#symbol-visibility)
 * [Variables](#variables)
 * [Type Analysis](#type-analysis)
@@ -85,6 +86,47 @@ Variables assigned to a function are immutable. Parameters are declared the same
 Function declarations expect a statement after defining parameters, so this can a block, or any
 other statement. Functions cannot be overloaded. Declarations are in order, so you may not use
 functions before declaration.
+
+### First Class Functions
+
+Functions in TCShell are first class values meaning they can be passed as arguments to other functions, 
+and called within that function.
+
+```
+var y = 0
+
+var executeOperationsSequentiallyOnNumber = fn (var x: number, var operations) {
+  var numOfOperations = len(operations)
+  var iteration = 0
+  while iteration < numOfOperations {
+    x = operations[iteration](x)
+    iteration = iteration + 1
+  }
+}
+
+var incrementAndLogNumber = fn (var x) {
+  var incremented = x + 1
+  print(incremented)
+  return incremented
+}
+
+var operations = [
+    incrementAndLogNumber,
+    incrementAndLogNumber, 
+    incrementAndLogNumber, 
+    incrementAndLogNumber]
+
+executeOperationsSequentiallyOnNumber(y, operations)
+```
+
+output:
+
+```
+1
+2
+3
+4
+```
 
 ## Symbol Visibility
 
