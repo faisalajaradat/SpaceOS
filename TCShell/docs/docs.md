@@ -339,7 +339,8 @@ type StringOrBool = string | bool
 
 ## Spatial Types
 
-The ability to natively describe and operate on spatial types is the primary motive for TCShell.
+The ability to natively describe and operate on spatial types is the primary motive for TCShell. These features 
+enable the developper to build both physical and virtual autonomous systems in an expressive and scalable way.
 
 ### Spaces
 
@@ -745,3 +746,19 @@ Wrong Client!
 ```
 
 ## Imports
+
+To use `pub` declarations in another file, you can use an import statement.
+This can be performed with the following syntax:
+
+```
+import "path/to/script" as identifier
+```
+
+The variables can then be accessed by using the `.` operator on the identifier
+following `as` followed by the identifier of the desired variable.
+
+```
+var foo = identifier.foo
+```
+
+Imported variables are immutable, so can only be retrieved. 
