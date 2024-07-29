@@ -29,12 +29,12 @@ export const addEntities = async (
     args[0] as string,
   )) as Space;
   if (space._type === undefined) return SPACE_ERROR.DNE;
-  if (
-    (await fetchAll(ENTITY_SCHEMA, args[1] as string[])).filter(
-      (entity: SpatialEntity) => entity._type === undefined,
-    ).length > 0
-  )
-    return "Not all input entities exist!";
+  for await (const entity of fetchAll(
+    ENTITY_SCHEMA,
+    args[1] as string[],
+  ) as AsyncGenerator<SpatialEntity>) {
+    if (entity._type === undefined) return "Not all input entities exist!";
+  }
   space.entities.push(...(args[1] as string[]));
   await saveData(SPACE_SCHEMA, space);
 };
@@ -152,4 +152,10 @@ export const receiveEntity = async (
   const path: Path = (await fetchData(PATH_SCHEMA, message.path)) as Path;
   path.isFull = false;
   await saveData(PATH_SCHEMA, path);
+};
+
+export const getName = async (...args: unknown[]): Promise<string> => {
+  const space = (await fetchData(SPACE_SCHEMA, args[0] as string)) as Space;
+  if (space._type === undefined) return "Space does not exist!";
+  return space.name ?? "Space does not have name!";
 };

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web-Speech API Testing</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0; 
+            padding: 0px 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            overflow-y: hidden;
+        }
+        h1 {
+            color: #4A90E2;
+            justify-content: start;
+        }
+        button{
+            padding: 10px 20px;
+            background-color: #4A90E2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }select{
+            padding: 10px 20px;
+            background-color: #4A90E2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background-color: #357ABD;
+        }.button-container {
+            display: flex; 
+            gap: 10px; /* space in between buttons*/
+        }.transcript {
+            display: flex;
+            margin-top: 20px;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ccc;
+            height: 65vh;
+            border-radius: 5px;
+            font-size: 16px;
+            color: #555;
+            width: calc(100% - 42px); 
+            overflow-y:scroll;
+            flex-direction: column;
+        }.transcript > *{
+            padding: 1rem;
+            margin: .5rem 0;
+        }.bot {
+            width: fit-content;
+            align-self: flex-start;
+            background-color: #e7e7e7; /* light gray for bot */
+        }
+        .user {
+            width: fit-content;
+            align-self: flex-end;
+            background-color: #d1e7dd; /* Light green background for user */
+        }
+        p {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ccc;
+            min-height: 100px;
+            border-radius: 5px;
+            font-size: 16px;
+            color: #555;
+            width: calc(100% - 42px); 
+            flex-grow: 1;
+        } input[type="text"]  {
+            width: calc(100% - 42px); 
+            height: 50px;
+            border-width: 0;
+            border-color: blue;
+            margin: 0,auto;
+        }
+    </style>
+    
+</head>
+<body>
+    
+    <h1>SpaceOS LLM interface</h1>
+    <div>
+        <label for="temperature">Temperature</label>
+        <input type="range" id="temperature" min="0" max="2" value="1" step= "0.01">
+        <span id="temperaturevalue">50</span>
+        <label for="topP">top P</label>
+        <input type="range" id="topP" min="0" max="100" value="50">
+        <span id="topPValue">50</span>
+    </div>
+    <div class="button-container">
+        <select id="locationSelector">
+            <option value="chatgpt">OpenAI</option>
+            <option value="groq">Groq</option>
+            <option value="local">Ollama (Local)</option>
+        </select>
+        <select id ="modelTypeSelector"> </select>
+        <button id="speakBtn">Speak</button>
+        <button id="stopBtn">Stop speaking</button>
+        <button id="TestBtn">Run Tests</button>
+    </div>
+    <div class="transcript" id="transcript">Transcript will appear here...</div>
+    <div class="button-container" style="width:100%">
+        <input type="text" id="inputField" placeholder="Type here...">
+        <button id="LLM" style="padding: 0; width: 10%;">Call LLM</button>
+    </div>
+    <script src="js/testsuite.js" type="module" ></script>
+    <script src="js/utilityFunctions.js" type="module"></script>
+    <script src="js/main.js" type="module"></script>
+    
+</body>
+</html>
+
+
+<!-- try {
+    const response = await fetch('/chat', { //express chat endpoint
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userInput })
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    transcript.textContent = data.response; // Display the server's response all in one go
+    speakResponse(data.response); //speak the response
+} catch (e) { //error handling
+    console.error('Error fetching data:', e);
+    transcript.textContent = "Failed to process input.";
+} -->

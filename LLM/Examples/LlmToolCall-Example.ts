@@ -10,14 +10,14 @@ import getAllJsonDataTool from '../src/Tools&Functions/Redis/getAllJsonDataTool.
 import getJsonDataTool from '../src/Tools&Functions/Redis/getJsonDataTool.js';
 
 
-const llm = new ChatOpenAI({
-    model: "gpt-3.5-turbo-0125",
-    temperature: 0
-});
-// const llm = new ChatGLM4({
-//     temperature: 0,
-//     baseURL: "http://192.168.2.18:9091/v1/", // baseURL should look like: http://localhost:8000/v1/
-//   });
+// const llm = new ChatOpenAI({
+//     model: "gpt-3.5-turbo-0125",
+//     temperature: 0
+// });
+const llm = new ChatGLM4({
+    temperature: 0,
+    baseURL: "http://192.168.2.18:9091/v1/", // baseURL should look like: http://localhost:8000/v1/
+  });
 
 const prompt = await pull<ChatPromptTemplate>(
   "hwchase17/structured-chat-agent"

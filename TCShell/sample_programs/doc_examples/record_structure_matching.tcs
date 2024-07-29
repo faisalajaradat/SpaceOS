@@ -1,0 +1,18 @@
+record Person {
+    var name: string,
+    var age: number
+}
+
+record Client {
+    var name: string,
+    var age: number
+}
+
+var sam = Client {"Sam", 21}
+
+match sam {
+    var p: Person => {
+        print(p.name)
+        print(p.age)
+    }
+}

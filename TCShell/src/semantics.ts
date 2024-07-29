@@ -782,18 +782,22 @@ const typeRuleApplicationDictionary: {
       while (isDecorator(spatialBaseType))
         spatialBaseType = spatialBaseType.delegate;
       if (
+        spatialBaseType instanceof SpacePathGraphFactoryType ||
         spatialBaseType instanceof SpacePathGraphType ||
         spatialBaseType instanceof SpaceType ||
         spatialBaseType instanceof PathType
       ) {
-        const mapFunction =
-          spatialBaseType instanceof SpacePathGraphType
-            ? SpacePathGraphType.mapMethodNameToMethodType
-            : spatialBaseType instanceof ControlSpaceType
-              ? ControlSpaceType.mapMethodNameToMethodType
-              : spatialBaseType instanceof SpaceType
-                ? SpaceType.mapMethodNameToMethodType
-                : PathType.mapMethodNameToMethodType;
+        const mapFunction = (
+          spatialBaseType instanceof SpacePathGraphFactoryType
+            ? SpacePathGraphFactoryType
+            : spatialBaseType instanceof SpacePathGraphType
+              ? SpacePathGraphType
+              : spatialBaseType instanceof ControlSpaceType
+                ? ControlSpaceType
+                : spatialBaseType instanceof SpaceType
+                  ? SpaceType
+                  : PathType
+        ).mapMethodNameToMethodType;
         return (
           mapFunction(funCall.identifier.symbol.value).paramTypes.filter(
             (paramType, pos) => !paramType.equals(checkType(funCall.args[pos])),
@@ -868,14 +872,16 @@ const typeRuleApplicationDictionary: {
       return true;
     if (objectInstantiation.args.length === 0) return false;
     if (baseType instanceof SpacePathGraphFactoryType) {
-      if (objectInstantiation.args.length > 1) return false;
-      return new SpacePathGraphType().equals(
-        checkType(objectInstantiation.args[0]),
+      if (objectInstantiation.args.length !== 2) return false;
+      return (
+        new SpacePathGraphType().equals(
+          checkType(objectInstantiation.args[0]),
+        ) && new SpaceType().equals(checkType(objectInstantiation.args[1]))
       );
     }
     if (baseType instanceof SpacePathGraphType) {
       if (objectInstantiation.args.length > 1) return false;
-      return new SpaceType().contains(checkType(objectInstantiation.args[0]));
+      return new SpaceType().equals(checkType(objectInstantiation.args[0]));
     }
     if (!(baseType instanceof SpaceType))
       return (
@@ -940,6 +946,7 @@ const typeRuleApplicationDictionary: {
     while (isDecorator(locationType)) locationType = locationType.delegate;
     symbolAccess.locationExpr.type =
       locationType instanceof RecordType ||
+      locationType instanceof SpacePathGraphFactoryType ||
       locationType instanceof SpacePathGraphType ||
       locationType instanceof SpaceType ||
       locationType instanceof PathType
@@ -967,32 +974,41 @@ const typeRuleApplicationDictionary: {
     while (isDecorator(spatialBaseType))
       spatialBaseType = spatialBaseType.delegate;
     if (
+      spatialBaseType instanceof SpacePathGraphFactoryType ||
       spatialBaseType instanceof SpacePathGraphType ||
       spatialBaseType instanceof SpaceType ||
       spatialBaseType instanceof PathType
     ) {
+      const isFactoryType =
+        spatialBaseType instanceof SpacePathGraphFactoryType;
       const isSPGType = spatialBaseType instanceof SpacePathGraphType;
       const isControlSpaceType = spatialBaseType instanceof ControlSpaceType;
       const isSpaceType = spatialBaseType instanceof SpaceType;
       symbolAccess.type =
         Array.from(
-          isSPGType
-            ? SpacePathGraphType.libMethods.keys()
-            : isControlSpaceType
-              ? ControlSpaceType.libMethods.keys()
-              : isSpaceType
-                ? SpaceType.libMethods.keys()
-                : PathType.libMethods.keys(),
+          (isFactoryType
+            ? SpacePathGraphFactoryType
+            : isSPGType
+              ? SpacePathGraphType
+              : isControlSpaceType
+                ? ControlSpaceType
+                : isSpaceType
+                  ? SpaceType
+                  : PathType
+          ).libMethods.keys(),
         )
           .filter((methodName) => methodName === symbolAccess.symbol.value)
           .map(
-            isSPGType
-              ? SpacePathGraphType.mapMethodNameToMethodType
-              : isControlSpaceType
-                ? ControlSpaceType.mapMethodNameToMethodType
-                : isSpaceType
-                  ? SpaceType.mapMethodNameToMethodType
-                  : PathType.mapMethodNameToMethodType,
+            (isFactoryType
+              ? SpacePathGraphFactoryType
+              : isSPGType
+                ? SpacePathGraphType
+                : isControlSpaceType
+                  ? ControlSpaceType
+                  : isSpaceType
+                    ? SpaceType
+                    : PathType
+            ).mapMethodNameToMethodType,
           )[0] ?? DefaultBaseTypeInstance.NONE;
     } else if (symbolAccess.locationExpr.type instanceof RecordType) {
       symbolAccess.type =

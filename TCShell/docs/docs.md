@@ -1,4 +1,4 @@
-# TCShell Documentation
+# TCShell Programmer's Guide
 
 ## Introduction
 
@@ -12,14 +12,40 @@ for the SpaceOS shell.
 
 * [Hello World](#hello-world)
 * [Functions](#functions)
+    * [First Class Functions](#first-class-functions)
 * [Symbol Visibility](#symbol-visibility)
 * [Variables](#variables)
-* [Types](#types)
+* [Type Analysis](#type-analysis)
+* [Conventional Types](#conventional-types)
     * [Base Types](#base-types)
-    * [Numbers](#numbers)
-    * [Strings](#strings)
+    * [Arrays](#arrays)
+    * [Records](#records)
+    * [Type Aliases](#type-aliases)
+    * [Union Types](#union-types)
+* [Spatial Types](#spatial-types)
+    * [Spaces](#spaces)
+    * [Entities](#entities)
+    * [Paths](#paths)
+    * [Space Path Graphs](#space-path-graphs)
+    * [Space Path Graph Factories](#space-path-graph-factories)
 
 </td><td width=33% valign=top>
+
+* [Typecasting](#typecasting)
+    * [Casting to Union Type](#casting-to-union-type)
+    * [Casting to Less Defined Spatial Type](#casting-to-less-defined-spatial-type)
+* [Control Flow Statements](#control-flow-statements)
+    * [If & Else](#if-&-else)
+    * [While](#while)
+    * [Defer](#defer)
+* [Pattern Matching](#pattern-matching)
+    * [Value Pattern](#value-pattern)
+    * [Type Pattern](#type-pattern)
+    * [Wildcard Pattern](#wildcard-pattern)
+* [Imports](#imports)
+
+
+</td>
 </tr>
 </table>
 
@@ -61,6 +87,47 @@ Function declarations expect a statement after defining parameters, so this can 
 other statement. Functions cannot be overloaded. Declarations are in order, so you may not use
 functions before declaration.
 
+### First Class Functions
+
+Functions in TCShell are first class values meaning they can be passed as arguments to other functions, 
+and called within that function.
+
+```
+var y = 0
+
+var executeOperationsSequentiallyOnNumber = fn (var x: number, var operations) {
+  var numOfOperations = len(operations)
+  var iteration = 0
+  while iteration < numOfOperations {
+    x = operations[iteration](x)
+    iteration = iteration + 1
+  }
+}
+
+var incrementAndLogNumber = fn (var x) {
+  var incremented = x + 1
+  print(incremented)
+  return incremented
+}
+
+var operations = [
+    incrementAndLogNumber,
+    incrementAndLogNumber, 
+    incrementAndLogNumber, 
+    incrementAndLogNumber]
+
+executeOperationsSequentiallyOnNumber(y, operations)
+```
+
+output:
+
+```
+1
+2
+3
+4
+```
+
 ## Symbol Visibility
 
 
@@ -89,7 +156,28 @@ the type of a declared variable.
 
 Excluding functions, all variables are mutable. To reassign the value of a variable, you reuse `=` with the new value.
 
-## Types
+## Type Analysis
+
+By default, the type of expressions are inferenced by the first hint of the type. There is always the option to
+explicitly type a declaration.
+
+```
+var add = fn (var x: number, var y: number): number
+    return x+y
+
+var one: number = 1
+var two: number = 2
+
+print(add(one, two))
+```
+
+In most cases, it is not required to explicitly type a declaration. In the example above, the type hints for vars
+`one` and `two` can be dropped as the assignment to a `number` gives enough information. There are cases where the
+hints to the type are insufficient to infer and explicit typing is required or else an error will be raised. In the
+example above, when considering the `add` function, the parameters `x` and `y` are required to be explicitly type
+as their only use is with the `+` operator which can be used with both `number` and `string`.
+
+## Conventional Types
 
 ### Base Types
 
@@ -103,22 +191,574 @@ number
 void
 ```
 
-### Numbers
+#### Numbers
 
-The `number` type works the same as in JavaScript, so it is a double-precision 64-bit
-binary format IEEE 754 value. They are no integers at the moment. Literals can be defined
-in decimal form, or in scientific notation.
+The `number` type works the same as in JavaScript, so it is a double-precision 64-bit binary format IEEE 754 
+value. They are no integers at the moment. Literals can be defined in decimal form, or in scientific notation.
 
 ```
-var PI = 3.14
+var PI: number = 3.14
 var AVAGADRO = 6.02214076e23
 ```
 
-### Strings
+The `number` type supports many of the standard math operators:
+
+```
+var x = 2 + ((5*5) - 2) / 4 % 6
+```
+
+#### Strings
 
 String literals can be defined using either single or double quotes.
 
 ```
 var sam = "Sam"
-var marc = 'Marc'
+var marc: string = 'Marc'
 ```
+
+To concatenate `string` types, use the `+` operator.
+
+```
+var samAndMarc = sam + " and " + marc
+```
+
+When using the `+` operator on a `number` and a `string`, the `number` will be coerced into a string.
+
+```
+"Sam is " + 21 + " years old!"
+```
+
+The following can be done to check string equality:
+
+```
+sam == "Sam"
+
+marc != sam
+```
+
+#### Bools
+
+The `bool` type is used for boolean logic. A `bool` can be either `true` or `false`. The common boolean operators
+are supported.
+
+```
+var notTrue: bool = false
+true != notTrue
+true == !notTrue
+true || notTrue == true
+true && notTrue == false
+```
+
+### Arrays
+
+An array type can be defined by appending `[]` to a type for each dimension of the array. An array can be initialized
+by enclosing a comma seperated list of expressions within `[]`. Arrays initialized with no contents must be explicitly
+type.
+
+```
+var names = ["Sam", "Marc"]
+
+var nums: number[] = []
+```
+
+An array is accessed by appending an index enclosed with `[]`.
+
+```
+names[0] == "Sam"
+```
+
+The length of an array can be found with the `len` function.
+
+```
+len(names) == 2
+```
+
+To append an element to the end of an array, use the `push` function.
+
+```
+push(nums, 5)
+
+nums[0] == 5
+
+push(names, "Alec")
+
+names[2] == "Alec"
+```
+
+To remove a specific number of elements starting from a specific index of an array, use the `removeElement` function.
+
+```
+removeElement(names, 1, 1)
+
+names[1] == "Alec"
+```
+
+
+### Records
+
+Records allow encapsulating data within. Records are defined with explicitly typed fields before use. After
+definition, a record can be initialized by invoking the record name, and passing the desired field values as
+inputs in the same order as the fields were declared within `{}`.
+
+```
+record Person {
+    var name: string,
+    var age: number
+}
+
+var sam = Person {"Sam", 21}
+```
+
+Fields can be accessed with `.`. Record fields are immutable, so they can only be retreived and not set.
+
+```
+sam.name == "Sam"
+```
+
+### Type Aliases
+
+The `type` keyword allows for assigning a type to an identifier. A declaration using a type alias
+can be used anywhere that expecting the aliased type. Defined types are immutable, so an identifier cannot
+refer to a different type after declaration.
+
+```
+type Name = string
+
+var sam: Name = "Sam"
+```
+
+### Union Types
+
+When extending a type alias with more types seperated by `|`, the type alias becomes a union type. A variable
+declared as a union type means that the value within that variable could be any of the types within the union
+at any given time.
+
+```
+type StringOrBool = string | bool
+```
+
+## Spatial Types
+
+The ability to natively describe and operate on spatial types is the primary motive for TCShell. These features 
+enable the developper to build both physical and virtual autonomous systems in an expressive and scalable way.
+
+### Spaces
+
+todo
+
+### Entities
+
+todo
+
+### Paths
+
+todo
+
+### Space Path Graphs
+
+todo
+
+### Space Path Graph Factories
+
+todo
+
+## Typecasting
+
+### Casting to Union Type
+
+A [union type](#union-types) is not equal to each individual type within the union. The following is invalid:
+
+```
+var foo: StringOrNumber = "foo"
+```
+
+We are attempting to assign the variable `foo` of type `StringOrNumber` to an expression of type `string`.
+A `string` is not a `string | number`, but rather belongs to `string | number`. To make the above example valid,
+we must cast the `string` expression to an `StringOrNumber` through typecasting.
+
+```
+var foo: StringOrNumber = (StringOrNumber) "foo"
+```
+
+Typecasting is only valid when casting a value of a type that belongs to the desired type. The inverse of the
+above example (casting an `StringOrNumber` to a `string`) is not allowed since a `string | number` is still
+not a `string`, nor does a `string | number` belong to a `string`. The following is invalid:
+
+```
+var bar: string = (string) foo
+```
+
+The only way to turn a union typed value to its actual type is through [type pattern matching](#union-type-narrowing).
+
+### Casting to Less Defined Spatial Type
+
+There many reasons to use less defined spatial types like writing a function that could be applied to any
+`Space`, or creating an array to pack all `virtual SpatialType`(s) together. Typecasting can be used to acheive
+this.
+
+```
+var space: Space = (Space) new virtual mutable EnclosedSpace()
+```
+
+The only way to reassign the original, more specific type is through [type pattern matching](#spatial-type-narrowing).
+
+## Control Flow Statements
+
+### If & Else
+
+`if` and `if-else` statements are like most languages, but there are no `()` surrounding the condition.
+A condition must be of `bool` type.
+
+```
+var x = 10
+
+if x < 10
+    print("wrong")
+else if x > 10
+    print("wrong")
+else {
+    print("right")
+}
+```
+
+### While
+
+`while` loop statements are like most languages, but there are no `()` surrounding the condition.
+A condition must be of `bool` type.
+
+```
+var iterations = 0
+while iterations < 10 {
+    iterations = iterations + 1
+    print(iterations)
+}
+```
+
+### Defer
+
+The `defer` keyword turns the following statement into a coroutine that immediately begins executing 
+asynchronously. It is functionally similar to using the go keyword in Go. The program will wait for all 
+coroutines to finish before ending execution.
+
+When a coroutine is started, the lexical scope is copied and passed as the new scope for the coroutine. 
+This means the state of the program is the same entering the coroutine, but any state changes that occur 
+within the coroutine will not be reflected outside the coroutine.
+
+```
+var counter = fn (var id: number, var end: number) {
+    var count = 0
+    while count < end  {
+        count = count + 1
+        print("counter " + id + ": " + count)
+    }
+}
+
+defer counter(1, 3)
+defer counter(2, 3)
+defer counter(3, 3)
+```
+
+output:
+
+```
+counter 1: 1
+counter 2: 1
+counter 3: 1
+counter 1: 2
+counter 2: 2
+counter 3: 2
+counter 1: 3
+counter 2: 3
+counter 3: 3
+```
+
+#### Non-Blocking System Calls
+
+Coroutines using `defer` can be very useful to not stall on synchronous, blocking code. A great 
+example is using `defer` in conjunction with the `sendEntityThrough` method. By the nature of 
+`sendEntityThrough`, if ran synchronously, execution might stall for a long time depending on factors
+such as the distance of the entity's journey, the speed of the entity's movement, and the number of
+entities enqueued waiting for their turn to go. To avoid forcing unrelated logic waiting on the entity to finish
+its journey before executing, we can do the following:
+
+```
+var printErrorIfFailed = fn (var maybeError: MaybeString) {
+    match maybeError {
+        var error: string => print(error)
+        var _nothing : void => {}
+    }
+}
+
+defer printErrorIfFailed(spg.sendEntityThrough(entity1, startSpace, endSpace, 500))
+defer printErrorIfFailed(spg.sendEntityThrough(entity2, startSpace, endSpace, 500))
+
+print("Time Sensitive Data!")
+```
+
+In this example, entities `entity1` and `entity2` get to begin their journeys concurrently, and the time
+sensitive data does not have to wait on their journeys to either finish or fail.
+
+## Pattern Matching
+
+`match` statements allow for changing control flow by pattern matching on a specific expression. 
+There are three patterns supported. In order of precedence, they are the [value pattern](#value-pattern), 
+the [type pattern](#type-pattern), and the [wildcard pattern](#wildcard-pattern).  
+
+### Value Pattern
+
+Matching by value means that it is matched if match expression `==` case expression is `true`. 
+This behaviour is really the classic case-switch statement. If multiple cases are matched by value, 
+the first case in order is selected.
+
+```
+var name = "Sam"
+
+match name {
+    "Sam" => print("Welcome " + name + "!")
+    "Marc" => {
+        print("Wrong user!")
+        return
+    }
+}
+```
+
+### Type Pattern
+
+Matching by type means that it is matched if the match expression's type is structurally similar to the
+case's type. A case is declared the same way as declaring a variable with explicit typing enforced. 
+Enforcing explicit typing for this use case is to ensure clear and readable code.
+
+```
+var foo = "foo"
+
+match foo {
+    var s: string => print(s)
+}
+```
+
+#### Union Type Narrowing
+
+[Union types](#union-types) can be very powerful in conjunction with type pattern matching as it allows for
+`maybe`/`option` and `either`/`result` behaviour.
+
+```
+var applyFunction = fn (var either: NumberOrString, var operation): NumberOrString {
+    match either {
+        var num: number => return operation(num)
+        var error: string => return (NumberOrString) error
+    }
+}
+
+var validateCount = fn (var count: number): NumberOrString {
+    if count < 0
+        return (NumberOrString) "Count cannot be negative!"
+    return (NumberOrString) count
+}
+
+var incrementCount = fn (var count: number): NumberOrString 
+    return (NumberOrString) (count + 1)
+
+var positiveOnlyCounter = fn (
+    var id: number, 
+    var start: number, 
+    var maxIterations: number) {
+    
+    var errors = ""
+    var count = start
+    var iteration = 0
+    var result = (NumberOrString) 0
+    while iteration < maxIterations {
+        match applyFunction(
+            applyFunction(
+                (NumberOrString) count, validateCount), incrementCount) {
+            var newCount: number => {
+                count = newCount
+                print("Counter " + id + ": " + count)
+            }
+            var error: string => {
+                errors = errors + error + " "
+                count = count + 1
+            }
+        }
+        iteration = iteration + 1
+    }
+    print("Counter " + id + " errors: " + errors)
+}
+
+positiveOnlyCounter(1, 0, 4)
+positiveOnlyCounter(2, -2, 4)
+```
+
+output:
+
+```
+Counter 1: 1
+Counter 1: 2
+Counter 1: 3
+Counter 1: 4
+Counter 1 errors:
+Counter 2: 1
+Counter 2: 2
+Counter 2 errors: Count cannot be negative! Count cannot be negative!
+```
+
+In the example above, the `applyFunction` is created to allow safely executing a chain of dependent functions
+that may return an error without needing to check the result of the previous. When considering the two errors
+that occured during Counter 2's lifecycle, both times `applyFunction` automatically skips `incrementCount` due
+to the erroneous result from `validateCount`. 
+
+#### Spatial Type Narrowing
+
+As defined in [Spatial Types](#spatial-types), each spatial type have various properties that it could have in
+common or in contrast of others. It can be very useful to group values by their types similarities, and later
+seperate them by their differences.
+
+```
+var car = new physical mutable mobile SmartEntity()
+var tree = new physical immutable StaticEntity()
+var virtualSpace = new virtual mutable EnclosedSpace(Location {0, 0})
+
+var spatialObjects: SpatialType[] = [
+    (SpatialType) car, 
+    (SpatialType) tree, 
+    (SpatialType) virtualSpace]
+
+var length = len(spatialObjects)
+var i = 0
+
+while i < length {
+    match spatialObjects[i] {
+        var vst: virtual SpatialType => {
+            print("is virtual")
+            match vst {
+                var vme: virtual mutable EnclosedSpace => 
+                    print("is mutable EnclosedSpace")
+            }
+        }
+        var pst: physical SpatialType => {
+            print("is physical")
+            match pst {
+                var pmmse: physical mutable mobile SmartEntity => 
+                    print("is mutable mobile SmartEntity")
+                var pise: physical immutable StaticEntity => 
+                    print("is immutable StaticEntity")
+            }
+        }
+    }
+    i = i + 1
+}
+```
+
+output:
+
+```
+is physical
+is mutable mobile SmartEntity
+is physical
+is immutable StaticEntity
+is virtual
+is mutable EnclosedSpace
+```
+
+#### Record Structure Matching
+
+Record types are not matched nominally rather structurally. If two record declarations have identical
+fields, then an instance of one will match the pattern of the other.
+
+```
+record Person {
+    var name: string,
+    var age: number
+}
+
+record Client {
+    var name: string,
+    var age: number
+}
+
+var sam = Client {"Sam", 21}
+
+match sam {
+    var p: Person => {
+        print(p.name)
+        print(p.age)
+    }
+}
+```
+
+output:
+
+```
+Sam
+21
+```
+
+### Wildcard Pattern
+
+Using `_` as a case will match anything. This can be used to offer a default/else case.
+
+```
+var foo: NumberOrString = (NumberOrString) "foo"
+
+match foo {
+    _ => print(foo)
+}
+```
+
+### Multi Patterns
+
+It is possible to attempt to match different patterns within the same `match` statement. Each pattern
+has an associated precendence to determine order of being matched regardless of order written. 
+The precedence is as follows:
+
+1. [Value Pattern](#value-pattern)
+2. [Type Pattern](#type-pattern)
+3. [Wildcard Pattern](#wildcard-pattern)
+
+Any cases of the same precedence will match the first of the sequence.
+
+```
+var getClientNameFromId = fn (var id: number): MaybeString {
+    match id {
+        1 => return (MaybeString) "Sam"
+        2 => return (MaybeString) "Marc"
+        _ => return (MaybeString) none
+    }
+}
+
+var iter = 0
+while iter < 3 {
+    match getClientNameFromId(iter) {
+        _ => print("Error!")
+        var name: string => print("Wrong Client!")
+        "Sam" => print("Welcome!")
+    }
+    iter = iter + 1
+}
+```
+
+output:
+
+```
+Error!
+Welcome!
+Wrong Client!
+```
+
+## Imports
+
+To use `pub` declarations in another file, you can use an import statement.
+This can be performed with the following syntax:
+
+```
+import "path/to/script" as identifier
+```
+
+The variables can then be accessed by using the `.` operator on the identifier
+following `as` followed by the identifier of the desired variable.
+
+```
+var foo = identifier.foo
+```
+
+Imported variables are immutable, so can only be retrieved. 

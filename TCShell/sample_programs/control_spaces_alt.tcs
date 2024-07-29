@@ -2,10 +2,6 @@ type ConveyorBelt = LandPath
 type AssemblyMachine = physical mutable OpenSpace
 type Twix = physical mutable mobile SmartEntity
 
-var MERGE_DISPATCH_ERROR = "Entity blocked by control signal!"
-var SELECTION_DISPATCH_ERROR = "Path blocked by control signal!"
-var MISSING_ENTITY_ERROR = "Space does not contain inputted entity!"
-
 var handleMaybeString = fn (var maybeString: MaybeString): bool {
   match maybeString {
     var error: string => {
@@ -38,16 +34,31 @@ var beginAssemblyLine = fn (var assemblyLine: SpacePathGraph,
   var leftEntities = startSpace1.getEntities()
   var rightEntities = startSpace2.getEntities()
 
-  var arrived = false
   while iter < len(leftEntities) + len(rightEntities) {
-    var curEntity = leftEntities[index]
-    var result = assemblyLine.sendEntity(curEntity, startSpace1, endSpace1, 500)
-    while (!arrived) {
-      match result {
-        var _v: void => arrived = true
+    if mergeControl {
+      if selectionControl {
+        if !handleMaybeString(
+          assemblyLine.sendEntityThrough(leftEntities[index], startSpace1, endSpace1, 500))
+          return
+      }
+      else {
+        if !handleMaybeString(
+          assemblyLine.sendEntityThrough(leftEntities[index], startSpace1, endSpace2, 500))
+          return
       }
     }
-    arrived = false
+    else {
+      if selectionControl {
+        if !handleMaybeString(
+          assemblyLine.sendEntityThrough(rightEntities[index], startSpace2, endSpace1, 500))
+          return
+      }
+      else {
+        if !handleMaybeString(
+          assemblyLine.sendEntityThrough(rightEntities[index], startSpace2, endSpace2, 500))
+          return
+      }
+    }
     mergeControl = !mergeControl
     mergeSpace.setControl(mergeControl)
     if iter == len(leftEntities) - 1 {
@@ -56,6 +67,8 @@ var beginAssemblyLine = fn (var assemblyLine: SpacePathGraph,
     }
 
     iter = iter + 1
+    if (iter % 2 == 0)
+      index = index + 1
   }
 }
 

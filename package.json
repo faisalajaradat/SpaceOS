@@ -7,7 +7,6 @@
     "scripts": {
         "clean": "rm -rf ./dist",
         "build": "rm -rf ./dist && tsc && cp ./TCShell/src/TCShell.ohm ./dist/TCShell/src",
-        "build-windows": "powershell -Command \"Remove-Item -Recurse -Force ./dist; tsc; Copy-Item -Path ./TCShell/src/TCShell.ohm -Destination ./dist/TCShell/src/\"",
         "test": "NODE_OPTIONS='--experimental-vm-modules' jest ./dist",
         "test-windows": "cross-env NODE_OPTIONS='--experimental-vm-modules' jest ./dist"
     },
@@ -60,6 +59,7 @@
         "langchain": "^0.1.36",
         "langsmith": "^0.1.31",
         "node-graphviz": "^0.1.1",
+        "object-hash": "^3.0.0",
         "ohm-js": "^17.1.0",
         "path-browserify": "^1.0.1",
         "querystring-es3": "^0.2.1",

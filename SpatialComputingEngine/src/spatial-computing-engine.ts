@@ -1,7 +1,8 @@
 import "dotenv/config";
-import { Entity, EntityId, Repository, Schema } from "redis-om";
-import * as engine from "./frontend-objects.js";
 import { createClient } from "redis";
+import { Entity, EntityId, Repository, Schema } from "redis-om";
+
+import * as engine from "./frontend-objects.js";
 
 const client = await createClient({ url: process.env.REDIS_URL })
   .on("error", (err) => console.log("Redis Client Error", err))
@@ -33,11 +34,6 @@ export async function fetchData(
   return (await repo.fetch(id)) as engine.EngineEntity;
 }
 
-export async function fetchAll(
-  schema: Schema,
-  ids: Array<string>,
-): Promise<Array<engine.EngineEntity>> {
-  return await Promise.all(
-    ids.map(async (entityId) => await fetchData(schema, entityId)),
-  );
+export async function* fetchAll(schema: Schema, ids: Array<string>) {
+  for (const id of ids) yield await fetchData(schema, id);
 }

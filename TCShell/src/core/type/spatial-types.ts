@@ -1,25 +1,23 @@
-import { ASTNode, dotString, newNodeId } from "../program.js";
-import {
-  ArrayType,
-  CompositionType,
-  DefaultBaseTypeInstance,
-  FunctionType,
-  Type,
-} from "./primitive-types.js";
-import { isAnyType, isDecorator } from "../../utils.js";
 import {
   fetchData,
-  saveData,
   isControlSpace,
-  Path,
-  PATH_SCHEMA,
+  saveData,
   Space,
   SPACE_SCHEMA,
 } from "../../../../SpatialComputingEngine/src/index.js";
-import { UnionType } from "./UnionType.js";
+import { isAnyType, isDecorator } from "../../utils.js";
 import { Identifier } from "../expr/Expr.js";
-import { libDeclarations } from "../stmts.js";
+import { getReachableSpaces, setFactory } from "../path-methods.js";
+import { ASTNode, dotString, newNodeId } from "../program.js";
 import {
+  addEntities,
+  getEntities,
+  getName,
+  receiveEntity,
+  sendEntity,
+} from "../space-methods.js";
+import {
+  activateFactories,
   addPathSpace,
   createMergeSpace,
   createSelectionSpace,
@@ -29,12 +27,16 @@ import {
   setRoot,
   splitPath,
 } from "../spg-methods.js";
+import { libDeclarations } from "../stmts.js";
+import { SpacePathGraphFactoryType } from "./factory-types.js";
 import {
-  addEntities,
-  getEntities,
-  receiveEntity,
-  sendEntity,
-} from "../space-methods.js";
+  ArrayType,
+  CompositionType,
+  DefaultBaseTypeInstance,
+  FunctionType,
+  Type,
+} from "./primitive-types.js";
+import { UnionType } from "./UnionType.js";
 
 export class SpatialType extends CompositionType {
   constructor(line: number = -1, column: number = -1) {
@@ -156,19 +158,20 @@ export class PathType extends SpatialType {
       string,
       (...args: unknown[]) => Promise<unknown>
     >();
-    PathType.libMethods.set("getReachableSpaces", async (...args) => {
-      const path: Path = (await fetchData(
-        PATH_SCHEMA,
-        args[0] as string,
-      )) as Path;
-      return path.reachable;
-    });
+    PathType.libMethods.set("getReachableSpaces", getReachableSpaces);
+    PathType.libMethods.set("setFactory", setFactory);
   }
 
   static mapMethodNameToMethodType(methodName): FunctionType {
+    const maybeStringType = new UnionType(new Identifier("MaybeString"));
+    maybeStringType.identifier.declaration = libDeclarations[1];
     switch (methodName) {
       case "getReachableSpaces":
         return new FunctionType(new ArrayType(new SpaceType()), []);
+      case "setFactory":
+        return new FunctionType(maybeStringType, [
+          new SpacePathGraphFactoryType(),
+        ]);
     }
   }
 
@@ -340,6 +343,7 @@ export class SpaceType extends SpatialObjectType {
     SpaceType.libMethods.set("getEntities", getEntities);
     SpaceType.libMethods.set("sendEntity", sendEntity);
     SpaceType.libMethods.set("receiveEntity", receiveEntity);
+    SpaceType.libMethods.set("getName", getName);
   }
 
   static mapMethodNameToMethodType(methodName: string): FunctionType {
@@ -363,6 +367,8 @@ export class SpaceType extends SpatialObjectType {
           new EntityType(),
           DefaultBaseTypeInstance.NUMBER,
         ]);
+      case "getName":
+        return new FunctionType(DefaultBaseTypeInstance.STRING, []);
     }
   }
 
@@ -676,6 +682,7 @@ export class SpacePathGraphType extends SpatialType {
       createSelectionSpace,
     );
     SpacePathGraphType.libMethods.set("finalize", finalize);
+    SpacePathGraphType.libMethods.set("activateFactories", activateFactories);
   }
 
   static mapMethodNameToMethodType(methodName: string): FunctionType {
@@ -691,6 +698,10 @@ export class SpacePathGraphType extends SpatialType {
       new Identifier("SelectionSpaceOrString"),
     );
     selectionSpaceOrStringType.identifier.declaration = libDeclarations[6];
+    const unhandledSpaceListsOrStringType = new UnionType(
+      new Identifier("UnhandledSpaceListsOrString"),
+    );
+    unhandledSpaceListsOrStringType.identifier.declaration = libDeclarations[8];
     switch (methodName) {
       case "setRoot":
         return new FunctionType(maybeStringType, [new SpaceType()]);
@@ -726,7 +737,9 @@ export class SpacePathGraphType extends SpatialType {
           new PathType(),
         ]);
       case "finalize":
-        return new FunctionType(DefaultBaseTypeInstance.VOID, []);
+        return new FunctionType(maybeStringType, []);
+      case "activateFactories":
+        return new FunctionType(unhandledSpaceListsOrStringType, []);
     }
   }
 
@@ -811,3 +824,16 @@ export class MergeSpaceType extends ControlSpaceType {
     );
   }
 }
+
+export const spatialTypeDictionary: { [key in string]: SpatialType } = {
+  ["Path"]: new PathType(),
+  ["AirPath"]: new AirPathType(),
+  ["LandPath"]: new LandPathType(),
+  ["OpenSpace"]: new OpenSpaceType(),
+  ["EnclosedSpace"]: new EnclosedSpaceType(),
+  ["MergeSpace"]: new MergeSpaceType(),
+  ["SelectionSpace"]: new SelectionSpaceType(),
+  ["StaticEntity"]: new StaticEntityType(),
+  ["AnimateEntity"]: new AnimateEntityType(),
+  ["SmartEntity"]: new SmartEntityType(),
+};
