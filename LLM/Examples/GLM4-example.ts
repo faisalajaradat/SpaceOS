@@ -1,6 +1,6 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { GLM4ChatModel } from '../Types/GLM4.js';
-import weatherTool from '../Tools&Functions/weatherTool.js';
+import weatherTool from './WeatherTool-example/weatherTool.js';
+import { ChatGLM4 } from '../src/Types/GLM4.js';
 
 const messages = [
     new SystemMessage("Translate the following from English into Italian"),
@@ -8,7 +8,7 @@ const messages = [
   ];
   
 // Initialize the model
-const model = new GLM4ChatModel({
+const model = new ChatGLM4({
   temperature: 0.9,
   topP: 0.8,
   maxTokens: 25,
@@ -29,7 +29,7 @@ async function exampleCall() {
   }
 }
 
-// streaming not supported by the model API server at the moment
+// GLM4 streaming working
 async function exampleStream() {
     try {
       const stream = await model.stream(messages);

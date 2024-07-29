@@ -11,11 +11,10 @@ import { InMemoryChatMessageHistory } from "@langchain/core/chat_history";
 import { traceable } from "langsmith/traceable";
 
 //Env Variables
-import * as dotenv from 'dotenv';
+import 'dotenv/config';
 import getUserInput from './getUserInput.js';
 
 
-dotenv.config();
 
 export let systemPrompt:string;
 

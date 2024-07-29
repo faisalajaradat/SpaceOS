@@ -1,7 +1,6 @@
-import * as dotenv from 'dotenv';
+import 'dotenv/config';
 
 
-dotenv.config();
 const preferRemote = process.env.PREFER_REMOTE === 'true'; 
 
 

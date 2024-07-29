@@ -1,8 +1,6 @@
 import axios from 'axios';
-import * as dotenv from 'dotenv';
+import 'dotenv/config';
 
-
-dotenv.config();
 
 interface WeatherData {
   location: string;
@@ -19,7 +17,6 @@ const getWeather = async (location: string): Promise<WeatherData> => {
   try {
     const response = await axios.get(url);
     const data = response.data;
-    console.log("datais " +data);
 
     const weather: WeatherData = {
       location: data.name,

@@ -1,11 +1,11 @@
 import { ChatOpenAI } from '@langchain/openai';
-import * as dotenv from 'dotenv';
-import { GLM4ChatModel } from '../../Types/GLM4.js';
-import getJsonDataTool from './getJsonDatatool.js';
-import getAllJsonDataTool from './getAllJsonDataTool.js';
+import 'dotenv/config';
+import { ChatGLM4 } from '../Types/GLM4.js';
+import getJsonDataTool from './Redis/getJsonDataTool.js';
+import getAllJsonDataTool from './Redis/getAllJsonDataTool.js';
 import { createToolCallingAgent, AgentExecutor, createOpenAIToolsAgent } from "langchain/agents";
 import { ChatPromptTemplate } from '@langchain/core/prompts';
-import { createTrailsFromFile as RDPtrail } from '../../trail-generation/RDP-trail.js';
+import { createTrailsFromFile as RDPtrail } from '../trail-generation/RDP-trail.js';
 
 const filePath = './LLM/src/formatted_data.json'; 
 
@@ -14,7 +14,6 @@ const epsilon = 1; //threshold for simplification level according to RDP algo --
 const RDPsimplifiedTrails = JSON.stringify(RDPtrail(filePath, epsilon));
 
 
-dotenv.config();
 
 const tools = [getAllJsonDataTool, getJsonDataTool];
 
@@ -29,7 +28,7 @@ const llm = new ChatOpenAI({
     model: "gpt-3.5-turbo-0125",
     temperature: 0
 });
-// const llm = new GLM4ChatModel({
+// const llm = new ChatGLM4({
 //     temperature: 0,
 //     baseURL: "http://192.168.2.18:9091/v1/", // baseURL should look like: http://localhost:8000/v1/
 //   });

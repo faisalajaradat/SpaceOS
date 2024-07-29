@@ -8,7 +8,7 @@ export interface GLM4Input {
   baseURL: string;
 }
 
-export class GLM4ChatModel extends ChatOpenAI {
+export class ChatGLM4 extends ChatOpenAI {
   baseURL: string;
   temperature: number;
   topP: number;

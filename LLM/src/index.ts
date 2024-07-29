@@ -4,13 +4,13 @@ import expressWs from 'express-ws';
 import listAudioFiles  from './TestSuite/testingscript.js';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { CSVHandler } from './generateCSV.js';
+
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const { app, getWss, applyTo } = expressWs(express());
 const router = express.Router() as expressWs.Router;
-const CSV = new CSVHandler()
+
 const AUDIOFILEPATH= path.join(__dirname, '../../public/Voice_Recordings');
 
 
@@ -67,15 +67,6 @@ app.post('/chat', async (req, res) => { //chat API endpoint for use with front-e
     }
 });
 
-
-app.post('/sendrow', (req, res) => {
-    const row = req.body.row; //get the row
-    CSV.addRow(row); //push the row
-});
-
-app.get('/savedocument', (req, res) => {
-    CSV.saveToFile();
-});
 
 
 

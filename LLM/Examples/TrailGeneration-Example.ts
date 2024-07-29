@@ -1,5 +1,5 @@
-import { createTrailsFromFile as RDPtrail } from "./RDP-trail.js";
-import { createTrailsFromFile as VWtrail } from "./VW-trail.js";
+import { createTrailsFromFile as RDPtrail } from "../src/trail-generation/RDP-trail.js";
+import { createTrailsFromFile as VWtrail } from "../src/trail-generation/VW-trail.js";
 
 const filePath = './LLM/src/formatted_data.json'; 
 

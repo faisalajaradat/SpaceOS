@@ -7,5 +7,5 @@
     "outDir": "dist"
   },
   "include": ["TCShell/src/**/*", "TCShell/tests/**/*", "SpatialComputingEngine/src/**/*",
-  "SpatialComputingEngine/tests/**/*", "LLM/src/**/*"]
+  "SpatialComputingEngine/tests/**/*", "LLM/src/**/*", "LLM/Examples/**/*"]
 }

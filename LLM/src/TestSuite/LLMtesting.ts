@@ -5,10 +5,10 @@ import { ChatOllama } from 'langchain/chat_models/ollama';
 import { HumanMessage } from 'langchain/schema';
 import { performance } from 'perf_hooks';
 
-import * as dotenv from 'dotenv';
-import { GLM4ChatModel } from '../Types/GLM4.js';
-dotenv.config();
+import 'dotenv/config';
+import { ChatGLM4 } from '../Types/GLM4.js';
 
+//change to include your models
 const models = ['phi3:latest', "phi3:mini", "wizard-math:7b", "wizard-math:13b", "phi3:14b", "mixtral:8x22b", "mistral:latest"]; //'wizardlm2:latest', 'deepseek-coder:latest', "gemma:latest", "llama2:latest","llama3:latest", "llama3:70b", "mistral:latest", "mixtral:8x22b","wizard-math:13b", "wizard-math:7b"
 //'GLM4'
 
@@ -32,7 +32,7 @@ async function processModel(model: string, useStreaming: boolean) {
     topP: 0.5,
     keepAlive: "60s",
   });
-  // const chatModel = new GLM4ChatModel({
+  // const chatModel = new ChatGLM4({
   //   temperature: 0.9,
   //   topP: 0.8,
   //   baseURL: "http://192.168.2.18:9091/v1/", // baseURL should look like: http://localhost:8000/v1/
