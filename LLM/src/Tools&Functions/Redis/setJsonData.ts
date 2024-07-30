@@ -1,24 +1,14 @@
-import { createClient } from 'redis';
+import { Entity, EntityId, Schema } from "redis-om";
+import * as engine from '../../../../SpatialComputingEngine/src/frontend-objects.js';
 import 'dotenv/config';
 
-const client = createClient({ url: process.env.REDIS_URL });
-
-client.on('error', (err) => console.log('Redis Client Error', err));
-
-interface JsonData {
-  [key: string]: any;
+async function setJsonData(
+  schema: Schema,
+  data: engine.EngineEntity,
+): Promise<string> {
+  //const repo = await connectAndGetRepo(schema);
+  //return ((await repo.save(data)) as Entity)[EntityId];
+  return;
 }
-
-const setJsonData = async (key: string, data: JsonData): Promise<void> => {
-  try {
-    await client.connect();
-    await client.json.set(key, '$', data);
-    console.log(`JSON data set for key: ${key}`);
-  } catch (error) {
-    console.error('Error setting JSON data:', error);
-  } finally {
-    await client.disconnect();
-  }
-};
 
 export default setJsonData;

@@ -1,7 +1,7 @@
 import { createTrailsFromFile as RDPtrail } from "../src/trail-generation/RDP-trail.js";
 import { createTrailsFromFile as VWtrail } from "../src/trail-generation/VW-trail.js";
 
-const filePath = './LLM/src/formatted_data.json'; 
+const filePath = './LLM/src/trail-generation/formatted_data.json'; 
 
 
 const epsilon = 1; //threshold for simplification level according to RDP algo --no effect on these straight lines

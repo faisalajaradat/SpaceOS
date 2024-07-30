@@ -1,4 +1,3 @@
-import { createClient } from 'redis';
 
 import 'dotenv/config';
 import * as engine from '../../../../SpatialComputingEngine/src/frontend-objects.js';
@@ -21,7 +20,6 @@ type Schemas =
 const getItemById = async (schema: Schemas, id: string): Promise<any> => {
   try { 
     let repo = await redis.connectAndGetRepo(schema);
-    console.log(repo)
     const item = await repo.fetch(id);
     return item;
   } catch (error) {
