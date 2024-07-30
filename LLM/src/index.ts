@@ -66,18 +66,6 @@ app.post('/chat', async (req, res) => { //chat API endpoint for use with front-e
 });
 
 
-<<<<<<< HEAD
-=======
-app.post('/sendrow', (req, res) => {
-    const row = req.body.row; //get the row
-    CSV.addRow(row); //push the row
-});
-
-app.get('/savedocument', (req, res) => {
-    CSV.saveToFile();
-});
-
->>>>>>> origin/main
 
 
 app.listen(PORT, () => {

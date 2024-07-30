@@ -1,5 +1,5 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { GLM4ChatModel } from '../Types/GLM4.js';
+import { ChatGLM4 } from '../Types/GLM4.js';
 import weatherTool from '../Tools&Functions/weatherTool.js';
 
 const messages = [
@@ -8,7 +8,7 @@ const messages = [
   ];
   
 // Initialize the model
-const model = new GLM4ChatModel({
+const model = new ChatGLM4({
   temperature: 0.9,
   topP: 0.8,
   maxTokens: 25,

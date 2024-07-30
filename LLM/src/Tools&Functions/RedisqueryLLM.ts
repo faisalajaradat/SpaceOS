@@ -7,7 +7,7 @@ import { createToolCallingAgent, AgentExecutor, createOpenAIToolsAgent } from "l
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { createTrailsFromFile as RDPtrail } from '../trail-generation/RDP-trail.js';
 
-const filePath = './LLM/src/formatted_data.json'; 
+const filePath = './LLM/src/trail-generation/formatted_data.json'; 
 
 
 const epsilon = 1; //threshold for simplification level according to RDP algo --no effect on these straight lines
@@ -18,14 +18,14 @@ const RDPsimplifiedTrails = JSON.stringify(RDPtrail(filePath, epsilon));
 const tools = [getAllJsonDataTool, getJsonDataTool];
 
 const prompt = ChatPromptTemplate.fromMessages([
-  ["system", "Given the information from the trails and objects in the database, match them"],
+  ["system", "Given the information from the trails and objects in the database, find the corresponding entities"],
   ["human", "{input}"],
   ["human", "here is a following list of trails: {trails}"],
   ["placeholder", "{agent_scratchpad}"],
 ]);
 
 const llm = new ChatOpenAI({
-    model: "gpt-3.5-turbo-0125",
+    model: "gpt-4o",
     temperature: 0
 });
 // const llm = new ChatGLM4({
@@ -45,27 +45,14 @@ const agentExecutor = new AgentExecutor({
 
 const main = async () => {
   const res = await agentExecutor.invoke({
-    input: 'find the Space Path Graph in the database by searching all JSON data, and tell which trails correspond to which objects',
+    input: 'find the Space Path Graph in the database by searching all JSON data, and tell which entities correspond to which objects',
     trails: RDPsimplifiedTrails ,
+    // tools
   });
   // console.log(agentExecutor)
   console.log(res);
+  console.log("all done");
 
-
-
-  
-    // Check if there are any tool calls in the response
-    if (res.tool_calls && res.tool_calls.length > 0) {
-      for (const toolCall of res.tool_calls) {
-        if (toolCall.name === 'GetAllJsonData') {
-          console.log(`Tool Call: ${JSON.stringify(toolCall.args)}`);
-          const weatherResponse = await getAllJsonDataTool.func(toolCall.args);
-          console.log(`JsonDataTool Response: ${weatherResponse}`);
-        }
-      }
-    } else {
-      console.log('No tool calls made by the LLM.');
-    }
   };
   
   main();

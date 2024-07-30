@@ -1,7 +1,7 @@
 import { ChatOpenAI } from '@langchain/openai';
 import weatherTool from './weatherTool.js';
 import * as dotenv from 'dotenv';
-import { GLM4ChatModel } from '../Types/GLM4.js';
+import { ChatGLM4 } from '../Types/GLM4.js';
 import { ChatOllama } from '@langchain/community/chat_models/ollama';
 
 
@@ -11,7 +11,7 @@ const llm = new ChatOpenAI({
     model: "gpt-3.5-turbo-0125",
     temperature: 0
 });
-// const llm = new GLM4ChatModel({
+// const llm = new ChatGLM4({
 //     temperature: 0,
 //     baseURL: "http://192.168.2.18:9091/v1/", // baseURL should look like: http://localhost:8000/v1/
 //   });

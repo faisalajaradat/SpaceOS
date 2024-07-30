@@ -17,7 +17,7 @@ var Main = fn () {
   var bike3 = new Bike()
   var bike4 = new Bike()
   var bike5 = new Bike()
-  var bikeSPG = new SpacePathGraph(bikePathStart)
+  var bikeSPG = new SpacePathGraph((Space) bikePathStart)
 
   bikePathStart.addEntities([(Entity) bike1, (Entity) bike2,(Entity) bike3, (Entity) bike4,(Entity) bike5])
 
