@@ -1,4 +1,4 @@
-import { initializedChatModel } from './Types/chatModelTypes.js';
+import { initializedChatModel } from '../Types/chatModelTypes.js';
 
 
 

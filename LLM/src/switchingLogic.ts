@@ -3,7 +3,7 @@ import { initializedChatModel, isChatModelInstance, ChatModelType } from "./Type
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatGroq } from '@langchain/groq';
 import { ChatOllama } from '@langchain/community/chat_models/ollama';
-import { fetchConfig } from './fetchconfig.js';
+import { fetchConfig } from './utils/fetchconfig.js';
 import { systemPrompt } from './chatModelInitializer.js';
 import { ChatGenerationChunk } from 'langchain/schema';
 

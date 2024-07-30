@@ -12,7 +12,7 @@ import { traceable } from "langsmith/traceable";
 
 //Env Variables
 import 'dotenv/config';
-import getUserInput from './getUserInput.js';
+import getUserInput from './utils/getUserInput.js';
 
 
 
