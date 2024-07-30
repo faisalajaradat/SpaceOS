@@ -25,7 +25,7 @@ const prompt = ChatPromptTemplate.fromMessages([
 ]);
 
 const llm = new ChatOpenAI({
-    model: "gpt-4o",
+    model: "gpt-3.5-turbo",
     temperature: 0
 });
 // const llm = new ChatGLM4({
@@ -45,9 +45,9 @@ const agentExecutor = new AgentExecutor({
 
 const main = async () => {
   const res = await agentExecutor.invoke({
-    input: 'find the Space Path Graph in the database by searching all JSON data, and tell which entities correspond to which objects',
+    input: 'find the Space Path Graph in the database by searching all JSON data, and map which entities correspond to which objects',
     trails: RDPsimplifiedTrails ,
-    // tools
+    tools
   });
   // console.log(agentExecutor)
   console.log(res);

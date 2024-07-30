@@ -1,5 +1,5 @@
 import { ChatOpenAI } from '@langchain/openai';
-import weatherTool from './weatherTool.js';
+import weatherTool from '../../Examples/WeatherTool-example/weatherTool.js';
 import * as dotenv from 'dotenv';
 import { ChatGLM4 } from '../Types/GLM4.js';
 import { ChatOllama } from '@langchain/community/chat_models/ollama';
