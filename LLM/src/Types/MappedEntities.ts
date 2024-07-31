@@ -1,6 +1,11 @@
-import { Schema, SchemaDefinition } from "redis-om";
+import "dotenv/config";
+import { createClient } from "redis";
+import { Schema, SchemaDefinition, Repository, Entity, EntityId } from "redis-om";
 
 
+const client = await createClient({ url: process.env.REDIS_URL })
+  .on("error", (err) => console.log("Redis Client Error", err))
+  .connect();
 
 
 const MAPPED_ENTITIES_SCHEMA_DEF: SchemaDefinition = {
@@ -13,15 +18,26 @@ const MAPPED_ENTITIES_SCHEMA_DEF: SchemaDefinition = {
   });
 
 export class MappedEntities {
+    private static instance: MappedEntities | null = null;
     private Entities: MappedEntities.MappedEntity[]
+    private repository: Repository
 
-    constructor(){
+    constructor(repository: Repository){
         this.Entities = []
+        this.repository = repository
     }
 
+    public static getInstance(repository:Repository): MappedEntities {
+        if (!MappedEntities.instance) {
+            MappedEntities.instance = new MappedEntities(repository);
+        }
+        return MappedEntities.instance;
+    }
 
-    updateDB(){
-        //todo
+    async updateDB(){
+        const repo: Repository = new Repository(MAPPED_ENTITIES_SCHEMA, client);
+        await repo.createIndex();
+        return(await repo.save(this.Entities)[EntityId])
 
     }
 
@@ -63,12 +79,38 @@ export class MappedEntities {
             console.log("No matching correlations found.");
         }
     }
-    updateCorrelation(){
-    //todo
+
+
+    //update correlations and remove old ones.
+    updateCorrelation(updatedSpaceBaseID: string, updatedTCShellID: string): void {
+        let entityIndex = this.Entities.findIndex(entity => entity.SpaceBaseID === updatedSpaceBaseID);
+
+        if (entityIndex !== -1) {
+            const existingTCShellIndex = this.Entities.findIndex(entity=> entity.TCShellID ==updatedTCShellID)
+            if(existingTCShellIndex !== -1 && this.Entities[existingTCShellIndex].SpaceBaseID !== updatedSpaceBaseID){
+                this.Entities.splice(existingTCShellIndex, 1);
+            }
+            this.Entities[entityIndex].TCShellID = updatedTCShellID;
+            console.log(`Updated correlation for SpaceBaseID: ${updatedSpaceBaseID} with new TCShellID: ${updatedTCShellID}`);
+        } else {
+            const existingTCShellIndex = this.Entities.findIndex(entity => entity.TCShellID === updatedTCShellID);
+            
+            if (existingTCShellIndex !== -1) {
+
+                const oldSpaceBaseID = this.Entities[existingTCShellIndex].SpaceBaseID;
+                this.Entities.splice(existingTCShellIndex, 1);
+                console.log(`Removed previous correlation: SpaceBaseID ${oldSpaceBaseID} - TCShellID ${updatedTCShellID}`);
+            }
+
+            this.Entities.push(new MappedEntities.MappedEntity(updatedSpaceBaseID, updatedTCShellID));
+            console.log(`Added new correlation: SpaceBaseID ${updatedSpaceBaseID} - TCShellID ${updatedTCShellID}`);
+        }
     }
-    getAllCorrelations(): JSON{
-    //todo
-    return;
+    getAllCorrelations(): { [key: string]: string } {
+        return this.Entities.reduce((acc, entity) => {
+            acc[entity.SpaceBaseID] = entity.TCShellID;
+            return acc;
+        }, {} as { [key: string]: string });
     }
 
     
